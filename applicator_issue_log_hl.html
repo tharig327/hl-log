@@ -1,0 +1,790 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --hl-bg:#111111;
+  --hl-surface:#1c1c1c;
+  --hl-surface2:#252525;
+  --hl-border:#333333;
+  --hl-border2:#444444;
+  --hl-red:#cc2222;
+  --hl-red-hover:#e02828;
+  --hl-red-dim:#3a0a0a;
+  --hl-text:#f0f0f0;
+  --hl-text2:#aaaaaa;
+  --hl-text3:#666666;
+}
+body{font-family:var(--font-sans);background:var(--hl-bg);color:var(--hl-text)}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+
+/* ── PIN SCREEN ── */
+#pinScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:420px;padding:2rem}
+.pin-card{background:var(--hl-surface);border:1px solid var(--hl-border2);border-top:2px solid var(--hl-red);border-radius:6px;padding:2rem 2rem 1.75rem;width:100%;max-width:320px;text-align:center}
+.pin-logo{width:44px;height:44px;background:var(--hl-red);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:500;color:#fff;margin:0 auto 1rem}
+.pin-title{font-size:15px;font-weight:500;color:var(--hl-text);margin-bottom:4px}
+.pin-sub{font-size:12px;color:var(--hl-text3);margin-bottom:1.5rem}
+.pin-dots{display:flex;justify-content:center;gap:10px;margin-bottom:1.5rem}
+.pin-dot{width:12px;height:12px;border-radius:50%;border:2px solid var(--hl-border2);background:transparent;transition:all 0.15s}
+.pin-dot.filled{background:var(--hl-red);border-color:var(--hl-red)}
+.pin-dot.error{background:#cc4444;border-color:#cc4444}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1rem}
+.pin-key{height:52px;border:1px solid var(--hl-border2);border-radius:4px;background:var(--hl-surface2);color:var(--hl-text);font-size:18px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;user-select:none;touch-action:manipulation;transition:background 0.1s}
+.pin-key:hover{background:var(--hl-border)}
+.pin-key:active{background:var(--hl-border2)}
+.pin-key.pin-del{font-size:14px;color:var(--hl-text2)}
+.pin-key.pin-blank{visibility:hidden}
+.pin-error{font-size:12px;color:#cc4444;min-height:18px;margin-bottom:0.5rem}
+.pin-setup-hint{font-size:11px;color:var(--hl-text3);margin-top:0.75rem}
+
+/* ── MAIN APP ── */
+#app{display:none}
+.header{padding:1rem 1.25rem 0.9rem;border-bottom:1px solid var(--hl-border);display:flex;align-items:center;justify-content:space-between;gap:12px}
+.header-left{display:flex;align-items:center;gap:12px}
+.hl-logo{width:32px;height:32px;background:var(--hl-red);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;color:#fff;letter-spacing:0.02em;flex-shrink:0}
+.header h1{font-size:15px;font-weight:500;color:var(--hl-text);letter-spacing:0.03em}
+.header p{font-size:11px;color:var(--hl-text3);margin-top:1px}
+.header-actions{display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap}
+.tab-bar{display:flex;border-bottom:1px solid var(--hl-border);padding:0 1.25rem}
+.tab{padding:9px 14px;font-size:12px;cursor:pointer;color:var(--hl-text3);border-bottom:2px solid transparent;margin-bottom:-1px;letter-spacing:0.04em;text-transform:uppercase;user-select:none}
+.tab.active{color:var(--hl-text);border-bottom-color:var(--hl-red)}
+.tab:hover:not(.active){color:var(--hl-text2)}
+.section{display:none}.section.active{display:block}
+.toolbar{display:flex;gap:8px;padding:0.75rem 1.25rem;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--hl-border);background:var(--hl-surface)}
+.toolbar input,.toolbar select{font-size:12px;height:34px;padding:0 10px;border:1px solid var(--hl-border2);border-radius:4px;background:var(--hl-surface2);color:var(--hl-text);min-width:0;-webkit-appearance:none}
+.toolbar input::placeholder{color:var(--hl-text3)}
+.toolbar input:focus,.toolbar select:focus{outline:none;border-color:var(--hl-red)}
+.toolbar select option{background:var(--hl-surface2);color:var(--hl-text)}
+.btn{height:34px;padding:0 14px;font-size:12px;border:1px solid var(--hl-border2);border-radius:4px;background:var(--hl-surface2);color:var(--hl-text);cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;letter-spacing:0.03em;touch-action:manipulation;user-select:none}
+.btn:hover{background:var(--hl-surface)}
+.btn-red{background:var(--hl-red);color:#fff;border-color:var(--hl-red)}
+.btn-red:hover{background:var(--hl-red-hover);border-color:var(--hl-red-hover)}
+.btn-sm{height:28px;padding:0 9px;font-size:11px;border:1px solid var(--hl-border2);border-radius:3px;background:var(--hl-surface2);color:var(--hl-text2);cursor:pointer;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;touch-action:manipulation;letter-spacing:0.03em}
+.btn-sm:hover{color:var(--hl-text);border-color:var(--hl-border2)}
+.btn-notify{border-color:#1a4a7a;color:#5b9bd5;background:rgba(26,74,122,0.2)}
+.btn-notify:hover{background:rgba(26,74,122,0.4);color:#7ab4e8}
+.btn-edit{border-color:var(--hl-border);color:var(--hl-text2)}
+.btn-edit:hover{color:var(--hl-text);border-color:var(--hl-border2)}
+.btn-del{border-color:#3a1010;color:#cc4444;background:rgba(58,16,16,0.3)}
+.btn-del:hover{background:rgba(80,20,20,0.5);color:#e05555;border-color:#552020}
+.btn-export{border-color:#1a5a1a;color:#50a870;background:rgba(26,90,26,0.2)}
+.btn-export:hover{background:rgba(26,90,26,0.4);color:#70c890}
+.btn-import{border-color:#4a3a0a;color:#c89030;background:rgba(74,58,10,0.2)}
+.btn-import:hover{background:rgba(74,58,10,0.4);color:#e8b050}
+.stats{display:flex;border-bottom:1px solid var(--hl-border);background:var(--hl-surface)}
+.stat{padding:10px 20px;flex:0 0 auto;border-right:1px solid var(--hl-border)}
+.stat-label{font-size:9px;color:var(--hl-text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:3px}
+.stat-val{font-size:22px;font-weight:500;color:var(--hl-text);line-height:1}
+.stat-over .stat-label{color:#cc4444}.stat-over .stat-val{color:#cc4444}
+.desktop-table{display:none;overflow-x:auto}
+.desktop-table table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed;min-width:700px}
+.desktop-table th{text-align:left;padding:8px 12px;font-size:9px;font-weight:500;color:var(--hl-text3);text-transform:uppercase;letter-spacing:0.1em;border-bottom:1px solid var(--hl-border);background:var(--hl-surface);white-space:nowrap}
+.desktop-table td{padding:10px 12px;border-bottom:1px solid var(--hl-border);vertical-align:middle;color:var(--hl-text)}
+.desktop-table tbody tr:hover td{background:var(--hl-surface)}
+.desktop-table tbody tr:last-child td{border-bottom:none}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:500;white-space:nowrap;letter-spacing:0.04em;text-transform:uppercase}
+.badge-open{background:rgba(180,60,20,0.25);color:#e07050;border:1px solid rgba(180,60,20,0.4)}
+.badge-inprog{background:rgba(160,120,20,0.25);color:#d4a030;border:1px solid rgba(160,120,20,0.4)}
+.badge-waiting{background:rgba(20,80,160,0.25);color:#5090d0;border:1px solid rgba(20,80,160,0.4)}
+.badge-done{background:rgba(30,120,60,0.25);color:#50a870;border:1px solid rgba(30,120,60,0.4)}
+.chip{display:inline-block;background:var(--hl-surface2);border:1px solid var(--hl-border);border-radius:3px;padding:1px 6px;font-size:10px;color:var(--hl-text2);margin-right:3px;margin-bottom:2px;white-space:nowrap;font-family:var(--font-mono)}
+.sub-text{font-size:11px;color:var(--hl-text3);margin-top:2px}
+.age-warn{color:#cc4444;font-weight:500}.age-ok{color:var(--hl-text3)}
+.card-list{padding:0.75rem 1.25rem 1.5rem;display:flex;flex-direction:column;gap:8px}
+.entry-card{background:var(--hl-surface);border:1px solid var(--hl-border);border-radius:4px;padding:12px 14px;border-left:3px solid var(--hl-border)}
+.entry-card.status-open{border-left-color:#cc4444}
+.entry-card.status-inprog{border-left-color:#cc8800}
+.entry-card.status-waiting{border-left-color:#1a5fa0}
+.entry-card.status-done{border-left-color:#207840}
+.entry-apn{font-size:14px;font-weight:500;color:var(--hl-text);font-family:var(--font-mono)}
+.entry-press{font-size:11px;color:var(--hl-text3);margin-top:1px}
+.entry-issue{font-size:13px;color:var(--hl-text);margin-bottom:2px}
+.entry-card-footer{display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:8px;border-top:1px solid var(--hl-border);gap:8px}
+.modal-overlay{display:none;min-height:560px;background:rgba(0,0,0,0.7);align-items:flex-start;justify-content:center;padding:24px 16px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--hl-surface);border:1px solid var(--hl-border2);border-radius:4px;padding:1.25rem 1.5rem;width:100%;max-width:480px;border-top:2px solid var(--hl-red)}
+.modal h2{font-size:13px;font-weight:500;color:var(--hl-text);margin-bottom:1rem;padding-bottom:0.75rem;border-bottom:1px solid var(--hl-border);text-transform:uppercase;letter-spacing:0.06em}
+.field{margin-bottom:10px}
+.field label{display:block;font-size:9px;color:var(--hl-text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.1em}
+.field input,.field select,.field textarea{width:100%;font-size:13px;padding:8px 10px;border:1px solid var(--hl-border2);border-radius:3px;background:var(--hl-bg);color:var(--hl-text);-webkit-appearance:none}
+.field input::placeholder,.field textarea::placeholder{color:var(--hl-text3)}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--hl-red)}
+.field textarea{height:66px;resize:vertical}
+.field select option{background:var(--hl-surface);color:var(--hl-text)}
+.parse-hint{font-size:10px;margin-top:4px;min-height:14px;display:flex;align-items:center;gap:4px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:1.25rem;padding-top:0.75rem;border-top:1px solid var(--hl-border)}
+.recipient-list{border:1px solid var(--hl-border2);border-radius:3px;background:var(--hl-bg);overflow:hidden}
+.recipient-row{display:flex;align-items:center;gap:0;cursor:pointer;border-bottom:1px solid var(--hl-border);transition:background 0.1s}
+.recipient-row:last-child{border-bottom:none}
+.recipient-row:hover{background:var(--hl-surface2)}
+.recipient-row.checked{background:rgba(204,34,34,0.08)}
+.recipient-check{width:44px;height:52px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border-right:1px solid var(--hl-border)}
+.check-box{width:18px;height:18px;border:2px solid var(--hl-border2);border-radius:3px;display:flex;align-items:center;justify-content:center;transition:all 0.1s;background:var(--hl-surface2)}
+.recipient-row.checked .check-box{background:var(--hl-red);border-color:var(--hl-red)}
+.check-icon{display:none;color:#fff;font-size:12px}
+.recipient-row.checked .check-icon{display:block}
+.recipient-info{flex:1;padding:10px 12px;min-width:0}
+.recipient-name{font-size:13px;font-weight:500;color:var(--hl-text)}
+.recipient-email{font-size:11px;color:var(--hl-text3);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.contact-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--hl-border)}
+.contact-row:last-child{border-bottom:none}
+.contact-avatar{width:32px;height:32px;border-radius:3px;background:var(--hl-red-dim);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:#cc4444;flex-shrink:0;border:1px solid #551515}
+.empty{text-align:center;padding:2.5rem 1rem;color:var(--hl-text3);font-size:13px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--hl-surface);border:1px solid var(--hl-border2);border-left:3px solid #50a870;color:var(--hl-text);font-size:12px;padding:10px 16px;border-radius:4px;z-index:999;opacity:0;transition:opacity 0.2s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+@media(min-width:600px){
+  .card-list{display:none}
+  .desktop-table{display:block}
+  .contacts-pad{padding:0 1.25rem 1.5rem}
+  .toolbar input[type=search]{width:200px}
+  .toolbar select{width:148px}
+}
+</style>
+
+<h2 class="sr-only">H&L Applicator Issue Log</h2>
+
+<!-- PIN SCREEN -->
+<div id="pinScreen">
+  <div class="pin-card">
+    <div class="pin-logo">H&L</div>
+    <div class="pin-title" id="pinTitle">Enter PIN</div>
+    <div class="pin-sub" id="pinSub">H&L Applicator Issue Log</div>
+    <div class="pin-dots" id="pinDots">
+      <div class="pin-dot" id="d0"></div>
+      <div class="pin-dot" id="d1"></div>
+      <div class="pin-dot" id="d2"></div>
+      <div class="pin-dot" id="d3"></div>
+    </div>
+    <div class="pin-error" id="pinError"></div>
+    <div class="pin-pad">
+      <div class="pin-key" onclick="pinKey('1')">1</div>
+      <div class="pin-key" onclick="pinKey('2')">2</div>
+      <div class="pin-key" onclick="pinKey('3')">3</div>
+      <div class="pin-key" onclick="pinKey('4')">4</div>
+      <div class="pin-key" onclick="pinKey('5')">5</div>
+      <div class="pin-key" onclick="pinKey('6')">6</div>
+      <div class="pin-key" onclick="pinKey('7')">7</div>
+      <div class="pin-key" onclick="pinKey('8')">8</div>
+      <div class="pin-key" onclick="pinKey('9')">9</div>
+      <div class="pin-key pin-blank"></div>
+      <div class="pin-key" onclick="pinKey('0')">0</div>
+      <div class="pin-key pin-del" onclick="pinDel()"><i class="ti ti-backspace" style="font-size:18px" aria-hidden="true"></i></div>
+    </div>
+    <div class="pin-setup-hint" id="pinSetupHint"></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <div class="header">
+    <div class="header-left">
+      <div class="hl-logo">H&L</div>
+      <div>
+        <h1>Applicator Issue Log</h1>
+        <p>Track incoming applicators and why you still have them</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-import" onclick="triggerImport()" title="Import JSON"><i class="ti ti-upload" style="font-size:13px" aria-hidden="true"></i> Import</button>
+      <button class="btn btn-export" onclick="exportJSON()" title="Export JSON"><i class="ti ti-download" style="font-size:13px" aria-hidden="true"></i> Export</button>
+      <button class="btn" onclick="openChangePIN()" title="Change PIN"><i class="ti ti-lock" style="font-size:13px" aria-hidden="true"></i> PIN</button>
+      <button class="btn" onclick="lockApp()" title="Lock"><i class="ti ti-logout" style="font-size:13px" aria-hidden="true"></i> Lock</button>
+    </div>
+  </div>
+  <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(event)">
+
+  <div class="tab-bar">
+    <div class="tab active" onclick="switchTab('log')">Issue log</div>
+    <div class="tab" onclick="switchTab('contacts')"><i class="ti ti-address-book" style="font-size:12px;margin-right:4px;vertical-align:-1px" aria-hidden="true"></i>Contacts</div>
+  </div>
+
+  <div id="tab-log" class="section active">
+    <div class="toolbar">
+      <input type="search" id="searchInput" placeholder="Search applicator, terminal, issue…" oninput="render()">
+      <select id="filterStatus" onchange="render()">
+        <option value="">All statuses</option>
+        <option value="open">Open</option>
+        <option value="inprog">In progress</option>
+        <option value="waiting">Waiting on parts</option>
+        <option value="done">Resolved</option>
+      </select>
+      <select id="filterAge" onchange="render()">
+        <option value="">Any age</option>
+        <option value="old">Overdue (&gt;3 days)</option>
+      </select>
+      <button class="btn btn-red" onclick="openModal()" style="margin-left:auto"><i class="ti ti-plus" style="font-size:14px" aria-hidden="true"></i> Log Issue</button>
+    </div>
+    <div class="stats" id="statsBar"></div>
+    <div class="card-list" id="cardList"></div>
+    <div id="emptyMobile" class="empty" style="display:none"><i class="ti ti-inbox" style="font-size:26px;display:block;margin-bottom:6px" aria-hidden="true"></i>No entries match</div>
+    <div class="desktop-table">
+      <table>
+        <thead><tr>
+          <th style="width:95px">Applicator #</th>
+          <th style="width:90px">Press</th>
+          <th style="width:155px">Terminal / Wire</th>
+          <th>Issue / Notes</th>
+          <th style="width:108px">Status</th>
+          <th style="width:52px">Days</th>
+          <th style="width:62px">By</th>
+          <th style="width:148px;text-align:right;padding-right:14px">Actions</th>
+        </tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div id="emptyDesktop" class="empty" style="display:none"><i class="ti ti-inbox" style="font-size:26px;display:block;margin-bottom:6px" aria-hidden="true"></i>No entries match</div>
+    </div>
+  </div>
+
+  <div id="tab-contacts" class="section">
+    <div class="contacts-pad" style="padding:0 1.25rem 1.5rem">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 0;border-bottom:1px solid var(--hl-border);margin-bottom:0.75rem;gap:8px">
+        <p style="font-size:12px;color:var(--hl-text2)">People to notify when a repair is complete.</p>
+        <button class="btn" onclick="openContactModal()"><i class="ti ti-plus" style="font-size:13px" aria-hidden="true"></i> Add Contact</button>
+      </div>
+      <div id="contactList"></div>
+      <div id="emptyContacts" class="empty" style="display:none"><i class="ti ti-users" style="font-size:26px;display:block;margin-bottom:6px" aria-hidden="true"></i>No contacts yet</div>
+    </div>
+  </div>
+</div>
+
+<!-- Issue modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h2 id="modalTitle">Log Applicator Issue</h2>
+    <div class="row2">
+      <div class="field"><label>Applicator # *</label><input id="fApn" placeholder="e.g. APL-042" autocomplete="off"></div>
+      <div class="field"><label>Press / Machine</label><input id="fPress" placeholder="e.g. KM-4T #3"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Terminal P/N</label><input id="fTerminal" placeholder="e.g. 794956-1"></div>
+      <div class="field"><label>Wire Gauge / Type</label><input id="fWire" placeholder="e.g. 0.5mm² TXL"></div>
+    </div>
+    <div class="field"><label>Issue Description *</label><textarea id="fIssue" placeholder="Crimp height off, blade worn, carrier jammed…"></textarea></div>
+    <div class="field"><label>Notes / Resolution Steps</label><textarea id="fNotes" placeholder="What's been done or what's pending…" style="height:52px"></textarea></div>
+    <div class="row2">
+      <div class="field"><label>Status</label>
+        <select id="fStatus">
+          <option value="open">Open</option>
+          <option value="inprog">In progress</option>
+          <option value="waiting">Waiting on parts</option>
+          <option value="done">Resolved</option>
+        </select>
+      </div>
+      <div class="field"><label>Logged By</label><input id="fBy" placeholder="Your name"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-red" onclick="saveEntry()">Save Entry</button>
+    </div>
+  </div>
+</div>
+
+<!-- Notify modal -->
+<div class="modal-overlay" id="notifyModal">
+  <div class="modal">
+    <h2>Repair Complete — Notify</h2>
+    <div style="background:var(--hl-bg);border:1px solid var(--hl-border);border-radius:3px;padding:10px 12px;margin-bottom:12px">
+      <div style="font-size:13px;font-weight:500;color:var(--hl-text);font-family:var(--font-mono)" id="notifyApnLabel"></div>
+      <div style="font-size:11px;color:var(--hl-text3);margin-top:3px" id="notifyDetailLabel"></div>
+    </div>
+    <div class="field">
+      <label>Recipients — click to select</label>
+      <div class="recipient-list" id="notifyContactList"></div>
+      <div style="font-size:10px;color:var(--hl-text3);margin-top:5px">Add contacts under the Contacts tab.</div>
+    </div>
+    <div class="field">
+      <label>Additional Note (optional)</label>
+      <textarea id="notifyNote" placeholder="e.g. Returned to storage bay 3, ready for production." style="height:54px"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeNotifyModal()">Cancel</button>
+      <button class="btn btn-red" onclick="sendNotify()"><i class="ti ti-mail" style="font-size:13px" aria-hidden="true"></i> Open in Email</button>
+    </div>
+  </div>
+</div>
+
+<!-- Contact modal -->
+<div class="modal-overlay" id="contactModal">
+  <div class="modal">
+    <h2 id="contactModalTitle">Add Contact</h2>
+    <div class="field"><label>Name *</label><input id="cName" placeholder="e.g. John Smith"></div>
+    <div class="field">
+      <label>Email Address *</label>
+      <input id="cEmail" type="text" placeholder='e.g. jsmith@hlmfg.com  —or—  "John Smith" &lt;jsmith@hlmfg.com&gt;' oninput="parseEmailField()" onpaste="setTimeout(parseEmailField,10)">
+      <div class="parse-hint" id="parseHint"></div>
+    </div>
+    <div class="field"><label>Role / Department</label><input id="cRole" placeholder="e.g. Production Supervisor"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeContactModal()">Cancel</button>
+      <button class="btn btn-red" onclick="saveContact()">Save Contact</button>
+    </div>
+  </div>
+</div>
+
+<!-- Change PIN modal -->
+<div class="modal-overlay" id="pinModal">
+  <div class="modal" style="max-width:340px">
+    <h2 id="pinModalTitle">Change PIN</h2>
+    <div class="field"><label>Current PIN</label><input id="pmCurrent" type="password" inputmode="numeric" maxlength="4" placeholder="Current 4-digit PIN" autocomplete="off"></div>
+    <div class="field"><label>New PIN</label><input id="pmNew" type="password" inputmode="numeric" maxlength="4" placeholder="New 4-digit PIN" autocomplete="off"></div>
+    <div class="field"><label>Confirm New PIN</label><input id="pmConfirm" type="password" inputmode="numeric" maxlength="4" placeholder="Repeat new PIN" autocomplete="off"></div>
+    <div style="font-size:11px;color:#cc4444;min-height:16px;margin-top:4px" id="pinModalErr"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closePINModal()">Cancel</button>
+      <button class="btn btn-red" onclick="savePIN()">Save PIN</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SK='appl_issue_log_v2',CK='appl_contacts_v1',PK='appl_pin_v1';
+const DEFAULT_PIN='1234';
+const SESSION_KEY='hl_pin_session';
+const INACTIVITY_MS=30*60*1000;
+
+let entries=[],contacts=[],editId=null,editCId=null,notifyId=null;
+let selectedRecipients=new Set();
+let pinBuffer='';
+let pinMode='unlock'; // 'unlock' | 'setup' | 'setup2'
+let pinSetupFirst='';
+let inactivityTimer=null;
+
+async function hashPIN(pin){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('hl_salt_'+pin));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+async function loadData(){
+  try{const r=await window.storage.get(SK);if(r?.value)entries=JSON.parse(r.value);else entries=seed();}catch(e){entries=seed();}
+  try{const r=await window.storage.get(CK);if(r?.value)contacts=JSON.parse(r.value);}catch(e){}
+}
+async function saveD(){try{await window.storage.set(SK,JSON.stringify(entries));}catch(e){}}
+async function saveC(){try{await window.storage.set(CK,JSON.stringify(contacts));}catch(e){}}
+async function getStoredHash(){try{const r=await window.storage.get(PK);return r?.value||null;}catch(e){return null;}}
+async function setStoredHash(h){try{await window.storage.set(PK,h);}catch(e){}}
+
+function toast(msg,color='#50a870'){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.style.borderLeftColor=color;
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+function resetInactivity(){
+  clearTimeout(inactivityTimer);
+  inactivityTimer=setTimeout(()=>lockApp(),INACTIVITY_MS);
+}
+
+function lockApp(){
+  clearTimeout(inactivityTimer);
+  sessionStorage.removeItem(SESSION_KEY);
+  document.getElementById('app').style.display='none';
+  document.getElementById('pinScreen').style.display='flex';
+  pinBuffer='';
+  pinMode='unlock';
+  updatePinDots();
+  document.getElementById('pinTitle').textContent='Enter PIN';
+  document.getElementById('pinSub').textContent='H&L Applicator Issue Log';
+  document.getElementById('pinError').textContent='';
+  document.getElementById('pinSetupHint').textContent='';
+}
+
+function unlockApp(){
+  sessionStorage.setItem(SESSION_KEY,'1');
+  document.getElementById('pinScreen').style.display='none';
+  document.getElementById('app').style.display='block';
+  resetInactivity();
+  ['mousemove','keydown','click','touchstart'].forEach(e=>document.addEventListener(e,resetInactivity,{passive:true}));
+  render();renderContacts();
+}
+
+function updatePinDots(){
+  for(let i=0;i<4;i++){
+    const d=document.getElementById('d'+i);
+    d.classList.remove('filled','error');
+    if(i<pinBuffer.length)d.classList.add('filled');
+  }
+}
+
+function pinErrorShake(){
+  const dots=document.getElementById('pinDots');
+  for(let i=0;i<4;i++)document.getElementById('d'+i).classList.add('error');
+  dots.style.animation='none';
+  setTimeout(()=>{updatePinDots();},600);
+}
+
+async function pinKey(k){
+  if(pinBuffer.length>=4)return;
+  pinBuffer+=k;
+  updatePinDots();
+  document.getElementById('pinError').textContent='';
+  if(pinBuffer.length===4) await handlePinComplete();
+}
+
+function pinDel(){
+  pinBuffer=pinBuffer.slice(0,-1);
+  updatePinDots();
+  document.getElementById('pinError').textContent='';
+}
+
+async function handlePinComplete(){
+  const storedHash=await getStoredHash();
+
+  if(pinMode==='setup'){
+    pinSetupFirst=pinBuffer;
+    pinBuffer='';
+    updatePinDots();
+    document.getElementById('pinTitle').textContent='Confirm PIN';
+    document.getElementById('pinSub').textContent='Enter the same PIN again';
+    pinMode='setup2';
+    return;
+  }
+
+  if(pinMode==='setup2'){
+    if(pinBuffer!==pinSetupFirst){
+      document.getElementById('pinError').textContent='PINs do not match — try again';
+      pinErrorShake();
+      pinBuffer='';pinSetupFirst='';pinMode='setup';
+      setTimeout(()=>{
+        document.getElementById('pinTitle').textContent='Set a PIN';
+        document.getElementById('pinSub').textContent='Choose a 4-digit PIN';
+        document.getElementById('pinSetupHint').textContent='';
+      },700);
+      return;
+    }
+    const h=await hashPIN(pinBuffer);
+    await setStoredHash(h);
+    toast('PIN set — you are now logged in');
+    await loadData();
+    unlockApp();
+    return;
+  }
+
+  // unlock mode
+  if(!storedHash){
+    // no PIN set yet — first run
+    pinSetupFirst=pinBuffer;
+    pinBuffer='';updatePinDots();
+    document.getElementById('pinTitle').textContent='Confirm PIN';
+    document.getElementById('pinSub').textContent='Enter the same PIN again';
+    pinMode='setup2';
+    return;
+  }
+
+  const h=await hashPIN(pinBuffer);
+  if(h===storedHash){
+    await loadData();
+    unlockApp();
+  } else {
+    document.getElementById('pinError').textContent='Incorrect PIN';
+    pinErrorShake();
+    pinBuffer='';
+  }
+}
+
+async function initPinScreen(){
+  const storedHash=await getStoredHash();
+  if(!storedHash){
+    document.getElementById('pinTitle').textContent='Set a PIN';
+    document.getElementById('pinSub').textContent='Choose a 4-digit PIN to protect this log';
+    document.getElementById('pinSetupHint').textContent='You\'ll need this every time you open the app';
+    pinMode='setup';
+  } else {
+    pinMode='unlock';
+  }
+  if(sessionStorage.getItem(SESSION_KEY)==='1'){
+    await loadData();unlockApp();
+  }
+}
+
+function openChangePIN(){
+  document.getElementById('pmCurrent').value='';
+  document.getElementById('pmNew').value='';
+  document.getElementById('pmConfirm').value='';
+  document.getElementById('pinModalErr').textContent='';
+  document.getElementById('pinModalTitle').textContent='Change PIN';
+  document.getElementById('pinModal').classList.add('open');
+}
+function closePINModal(){document.getElementById('pinModal').classList.remove('open');}
+
+async function savePIN(){
+  const cur=document.getElementById('pmCurrent').value.trim();
+  const nw=document.getElementById('pmNew').value.trim();
+  const cf=document.getElementById('pmConfirm').value.trim();
+  const err=document.getElementById('pinModalErr');
+  if(!/^\d{4}$/.test(cur)||!/^\d{4}$/.test(nw)||!/^\d{4}$/.test(cf)){err.textContent='All fields must be exactly 4 digits';return;}
+  if(nw!==cf){err.textContent='New PINs do not match';return;}
+  const storedHash=await getStoredHash();
+  const curHash=await hashPIN(cur);
+  if(curHash!==storedHash){err.textContent='Current PIN is incorrect';return;}
+  const newHash=await hashPIN(nw);
+  await setStoredHash(newHash);
+  closePINModal();
+  toast('PIN updated successfully');
+}
+
+function exportJSON(){
+  const data={exported:new Date().toISOString(),version:1,issues:entries,contacts:contacts};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`hl_applicator_log_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();URL.revokeObjectURL(url);
+  toast(`Exported ${entries.length} issues and ${contacts.length} contacts`);
+}
+function triggerImport(){document.getElementById('importFile').value='';document.getElementById('importFile').click();}
+function importJSON(evt){
+  const file=evt.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const data=JSON.parse(e.target.result);
+      if(!data.issues&&!data.contacts)throw new Error();
+      const ni=Array.isArray(data.issues)?data.issues:[];
+      const nc=Array.isArray(data.contacts)?data.contacts:[];
+      if(!confirm(`Import ${ni.length} issues and ${nc.length} contacts?\nThis will REPLACE your current data.`))return;
+      entries=ni;contacts=nc;
+      saveD();saveC();render();renderContacts();
+      toast(`Imported ${ni.length} issues and ${nc.length} contacts`);
+    }catch(err){alert('Could not read file — make sure it is a valid HL Applicator Log JSON export.');}
+  };
+  reader.readAsText(file);
+}
+
+function seed(){
+  const n=Date.now();
+  return[
+    {id:1,apn:'APL-007',press:'KM-4T #2',terminal:'794956-1',wire:'0.5mm² TXL',issue:'Crimp height out of spec — pulling low on MIN samples',notes:'Adjusted anvil height, re-running qual',status:'inprog',by:'Tyler',date:n-172800000},
+    {id:2,apn:'APL-014',press:'KM-4T #1',terminal:'39-00-0038',wire:'0.75mm² GXL',issue:'Carrier feed skip on every 3rd cycle',notes:'Waiting on new feed pawl from supplier',status:'waiting',by:'Tyler',date:n-432000000},
+    {id:3,apn:'APL-022',press:'KM-4T #3',terminal:'',wire:'18 AWG UL1015',issue:'Worn upper blade — insulation nicking',notes:'',status:'open',by:'Mike',date:n-86400000},
+  ];
+}
+
+function parseOutlookEmail(raw){
+  const t=raw.trim();
+  const m1=t.match(/^"?([^"<]+?)"?\s*<([^>]+)>\s*$/);
+  if(m1)return{name:m1[1].trim(),email:m1[2].trim()};
+  const m2=t.match(/^([^@\s]+@[^\s]+)$/);
+  if(m2)return{name:null,email:m2[1].trim()};
+  return null;
+}
+function parseEmailField(){
+  const raw=document.getElementById('cEmail').value;
+  const hint=document.getElementById('parseHint');
+  const p=parseOutlookEmail(raw);
+  if(p?.name)hint.innerHTML=`<i class="ti ti-check" style="font-size:12px;color:#50a870" aria-hidden="true"></i><span style="color:#50a870">Parsed — will fill name: <strong>${p.name}</strong></span>`;
+  else hint.innerHTML='';
+}
+function switchTab(t){
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));
+  document.querySelector(`.tab[onclick="switchTab('${t}')"]`).classList.add('active');
+  document.getElementById('tab-'+t).classList.add('active');
+}
+function days(ts){return Math.round((Date.now()-ts)/86400000);}
+function badge(s){
+  const m={open:['badge-open','Open'],inprog:['badge-inprog','In Progress'],waiting:['badge-waiting','Waiting Parts'],done:['badge-done','Resolved']};
+  const[c,l]=m[s]||m.open;return`<span class="badge ${c}">${l}</span>`;
+}
+function ini(n){return n.split(' ').map(w=>w[0]||'').join('').toUpperCase().slice(0,2);}
+function getFiltered(){
+  const q=document.getElementById('searchInput').value.toLowerCase();
+  const fs=document.getElementById('filterStatus').value;
+  const fa=document.getElementById('filterAge').value;
+  return entries.filter(e=>{
+    const mq=!q||[e.apn,e.issue,e.press,e.terminal,e.wire].some(v=>(v||'').toLowerCase().includes(q));
+    return mq&&(!fs||e.status===fs)&&(!fa||e.status!=='done'&&days(e.date)>3);
+  });
+}
+function render(){
+  const f=getFiltered();
+  const total=entries.filter(e=>e.status!=='done').length;
+  const open=entries.filter(e=>e.status==='open').length;
+  const wait=entries.filter(e=>e.status==='waiting').length;
+  const over=entries.filter(e=>e.status!=='done'&&days(e.date)>3).length;
+  document.getElementById('statsBar').innerHTML=
+    `<div class="stat"><div class="stat-label">On Hand</div><div class="stat-val">${total}</div></div>`+
+    `<div class="stat"><div class="stat-label">Open</div><div class="stat-val">${open}</div></div>`+
+    `<div class="stat"><div class="stat-label">Waiting Parts</div><div class="stat-val">${wait}</div></div>`+
+    `<div class="stat${over>0?' stat-over':''}"><div class="stat-label">Overdue &gt;3d</div><div class="stat-val">${over}</div></div>`;
+  renderCards(f);renderTable(f);
+}
+function renderCards(f){
+  const cl=document.getElementById('cardList'),em=document.getElementById('emptyMobile');
+  if(!f.length){cl.innerHTML='';em.style.display='block';return;}
+  em.style.display='none';
+  cl.innerHTML=f.map(e=>{
+    const d=days(e.date),ac=(e.status!=='done'&&d>3)?'age-warn':'age-ok';
+    const tw=[e.terminal,e.wire].filter(Boolean).map(t=>`<span class="chip">${t}</span>`).join('');
+    return`<div class="entry-card status-${e.status}">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;gap:8px">
+        <div><div class="entry-apn">${e.apn}</div>${e.press?`<div class="entry-press">${e.press}</div>`:''}</div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0"><span class="${ac}" style="font-size:11px">${d}d</span>${badge(e.status)}</div>
+      </div>
+      ${tw?`<div style="margin-bottom:6px">${tw}</div>`:''}
+      <div class="entry-issue">${e.issue}</div>
+      ${e.notes?`<div class="sub-text">${e.notes}</div>`:''}
+      <div class="entry-card-footer">
+        <div style="font-size:11px;color:var(--hl-text3)">${e.by||''}</div>
+        <div style="display:flex;gap:4px">
+          <button class="btn-sm btn-notify" onclick="openNotify(${e.id})"><i class="ti ti-mail" style="font-size:12px" aria-hidden="true"></i> Notify</button>
+          <button class="btn-sm btn-edit" onclick="editEntry(${e.id})"><i class="ti ti-edit" style="font-size:13px" aria-hidden="true"></i> Edit</button>
+          <button class="btn-sm btn-del" onclick="delEntry(${e.id})"><i class="ti ti-trash" style="font-size:13px" aria-hidden="true"></i> Del</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function renderTable(f){
+  const tb=document.getElementById('tbody'),em=document.getElementById('emptyDesktop');
+  if(!f.length){tb.innerHTML='';em.style.display='block';return;}
+  em.style.display='none';
+  tb.innerHTML=f.map(e=>{
+    const d=days(e.date),ac=(e.status!=='done'&&d>3)?'age-warn':'age-ok';
+    const tw=[e.terminal,e.wire].filter(Boolean).map(t=>`<span class="chip">${t}</span>`).join('')||`<span style="color:var(--hl-text3)">—</span>`;
+    return`<tr>
+      <td style="font-weight:500;font-family:var(--font-mono);font-size:12px">${e.apn}</td>
+      <td style="color:var(--hl-text2);font-size:12px">${e.press||'—'}</td>
+      <td>${tw}</td>
+      <td><div style="font-size:12px">${e.issue}</div>${e.notes?`<div class="sub-text">${e.notes}</div>`:''}</td>
+      <td>${badge(e.status)}</td>
+      <td class="${ac}" style="font-size:12px">${d}d</td>
+      <td style="color:var(--hl-text2);font-size:12px">${e.by||'—'}</td>
+      <td style="text-align:right;padding-right:1px">
+        <div style="display:flex;align-items:center;justify-content:flex-end;gap:4px">
+          <button class="btn-sm btn-notify" onclick="openNotify(${e.id})"><i class="ti ti-mail" style="font-size:11px" aria-hidden="true"></i> Notify</button>
+          <button class="btn-sm btn-edit" onclick="editEntry(${e.id})"><i class="ti ti-edit" style="font-size:12px" aria-hidden="true"></i> Edit</button>
+          <button class="btn-sm btn-del" onclick="delEntry(${e.id})"><i class="ti ti-trash" style="font-size:12px" aria-hidden="true"></i> Delete</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+function renderContacts(){
+  const list=document.getElementById('contactList'),em=document.getElementById('emptyContacts');
+  if(!contacts.length){list.innerHTML='';em.style.display='block';return;}
+  em.style.display='none';
+  list.innerHTML=contacts.map(c=>`
+    <div class="contact-row">
+      <div class="contact-avatar">${ini(c.name)}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:500;color:var(--hl-text)">${c.name}${c.role?` <span style="font-weight:400;font-size:11px;color:var(--hl-text3)">— ${c.role}</span>`:''}</div>
+        <div style="font-size:11px;color:var(--hl-text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.email}</div>
+      </div>
+      <div style="display:flex;gap:4px;flex-shrink:0">
+        <button class="btn-sm btn-edit" onclick="editContact(${c.id})"><i class="ti ti-edit" style="font-size:12px" aria-hidden="true"></i> Edit</button>
+        <button class="btn-sm btn-del" onclick="delContact(${c.id})"><i class="ti ti-trash" style="font-size:12px" aria-hidden="true"></i> Delete</button>
+      </div>
+    </div>`).join('');
+}
+function openModal(id=null){
+  editId=id;
+  const e=id?entries.find(x=>x.id===id):null;
+  document.getElementById('modalTitle').textContent=e?'Edit Entry':'Log Applicator Issue';
+  document.getElementById('fApn').value=e?.apn||'';
+  document.getElementById('fPress').value=e?.press||'';
+  document.getElementById('fTerminal').value=e?.terminal||'';
+  document.getElementById('fWire').value=e?.wire||'';
+  document.getElementById('fIssue').value=e?.issue||'';
+  document.getElementById('fNotes').value=e?.notes||'';
+  document.getElementById('fStatus').value=e?.status||'open';
+  document.getElementById('fBy').value=e?.by||'';
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal(){document.getElementById('modal').classList.remove('open');editId=null;}
+function saveEntry(){
+  const apn=document.getElementById('fApn').value.trim();
+  const issue=document.getElementById('fIssue').value.trim();
+  if(!apn||!issue){alert('Applicator # and issue description are required.');return;}
+  const entry={
+    id:editId||Date.now(),apn,
+    press:document.getElementById('fPress').value.trim(),
+    terminal:document.getElementById('fTerminal').value.trim(),
+    wire:document.getElementById('fWire').value.trim(),
+    issue,notes:document.getElementById('fNotes').value.trim(),
+    status:document.getElementById('fStatus').value,
+    by:document.getElementById('fBy').value.trim(),
+    date:editId?entries.find(e=>e.id===editId).date:Date.now()
+  };
+  if(editId){const i=entries.findIndex(e=>e.id===editId);entries[i]=entry;}
+  else entries.unshift(entry);
+  saveD();closeModal();render();
+}
+function editEntry(id){openModal(id);}
+function delEntry(id){if(!confirm('Remove this entry?'))return;entries=entries.filter(e=>e.id!==id);saveD();render();}
+function toggleRecipient(id){
+  if(selectedRecipients.has(id))selectedRecipients.delete(id);
+  else selectedRecipients.add(id);
+  const row=document.querySelector(`.recipient-row[data-id="${id}"]`);
+  if(row){
+    row.classList.toggle('checked',selectedRecipients.has(id));
+    const icon=row.querySelector('.check-icon');
+    if(icon)icon.style.display=selectedRecipients.has(id)?'block':'none';
+  }
+}
+function openNotify(id){
+  notifyId=id;selectedRecipients=new Set();
+  const e=entries.find(x=>x.id===id);
+  document.getElementById('notifyApnLabel').textContent=`Applicator ${e.apn}${e.press?' — '+e.press:''}`;
+  document.getElementById('notifyDetailLabel').textContent=[e.terminal,e.wire,e.issue].filter(Boolean).join(' | ');
+  document.getElementById('notifyNote').value='';
+  const cl=document.getElementById('notifyContactList');
+  if(!contacts.length){cl.innerHTML=`<div style="font-size:12px;color:var(--hl-text3);padding:12px">No contacts added yet.</div>`;}
+  else{cl.innerHTML=contacts.map(c=>`
+    <div class="recipient-row" data-id="${c.id}" onclick="toggleRecipient(${c.id})">
+      <div class="recipient-check"><div class="check-box"><i class="ti ti-check check-icon" style="display:none" aria-hidden="true"></i></div></div>
+      <div class="recipient-info">
+        <div class="recipient-name">${c.name}${c.role?` <span style="font-size:11px;font-weight:400;color:var(--hl-text3)">— ${c.role}</span>`:''}</div>
+        <div class="recipient-email">${c.email}</div>
+      </div>
+    </div>`).join('');}
+  document.getElementById('notifyModal').classList.add('open');
+}
+function closeNotifyModal(){document.getElementById('notifyModal').classList.remove('open');notifyId=null;}
+function sendNotify(){
+  const e=entries.find(x=>x.id===notifyId);
+  if(!selectedRecipients.size){alert('Select at least one recipient.');return;}
+  const to=[...selectedRecipients].map(id=>contacts.find(c=>c.id===id)?.email).filter(Boolean).join(',');
+  const note=document.getElementById('notifyNote').value.trim();
+  const body=['Hi,','',`Applicator ${e.apn}${e.press?' ('+e.press+')':''} has been repaired and is ready to return to production.`,'',
+    `Issue: ${e.issue}`,e.terminal?`Terminal P/N: ${e.terminal}`:null,e.wire?`Wire: ${e.wire}`:null,
+    e.notes?`Resolution: ${e.notes}`:null,note?'':null,note?`Note: ${note}`:null,'',
+    `Logged by: ${e.by||'—'}`,`Days in shop: ${days(e.date)}`].filter(l=>l!==null).join('\n');
+  window.location.href=`mailto:${to}?subject=${encodeURIComponent(`Applicator ${e.apn} — Repair Complete`)}&body=${encodeURIComponent(body)}`;
+  closeNotifyModal();
+}
+function openContactModal(id=null){
+  editCId=id;
+  const c=id?contacts.find(x=>x.id===id):null;
+  document.getElementById('contactModalTitle').textContent=c?'Edit Contact':'Add Contact';
+  document.getElementById('cName').value=c?.name||'';
+  document.getElementById('cEmail').value=c?.email||'';
+  document.getElementById('cRole').value=c?.role||'';
+  document.getElementById('parseHint').innerHTML='';
+  document.getElementById('contactModal').classList.add('open');
+}
+function closeContactModal(){document.getElementById('contactModal').classList.remove('open');editCId=null;}
+function saveContact(){
+  const emailRaw=document.getElementById('cEmail').value.trim();
+  const parsed=parseOutlookEmail(emailRaw);
+  const email=parsed?.email||emailRaw;
+  const nameField=document.getElementById('cName').value.trim();
+  const name=nameField||(parsed?.name||'');
+  if(!name){alert('Name is required.');return;}
+  if(!email||!email.includes('@')){alert('A valid email address is required.');return;}
+  if(!nameField&&parsed?.name)document.getElementById('cName').value=parsed.name;
+  const c={id:editCId||Date.now(),name,email,role:document.getElementById('cRole').value.trim()};
+  if(editCId){const i=contacts.findIndex(x=>x.id===editCId);contacts[i]=c;}
+  else contacts.push(c);
+  saveC();closeContactModal();renderContacts();
+}
+function editContact(id){openContactModal(id);}
+function delContact(id){if(!confirm('Remove this contact?'))return;contacts=contacts.filter(c=>c.id!==id);saveC();renderContacts();}
+
+['modal','notifyModal','contactModal','pinModal'].forEach(id=>{
+  document.getElementById(id).addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
+});
+
+initPinScreen();
+</script>
