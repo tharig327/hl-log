@@ -14,11 +14,26 @@
   --hl-text:#f0f0f0;--hl-text2:#aaaaaa;--hl-text3:#666666;
 }
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--hl-bg);color:var(--hl-text);min-height:100vh}
-#pinScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem}
-.pin-card{background:var(--hl-surface);border:1px solid var(--hl-border2);border-top:2px solid var(--hl-red);border-radius:6px;padding:2rem;width:100%;max-width:320px;text-align:center}
-.pin-logo{width:44px;height:44px;background:var(--hl-red);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;color:#fff;margin:0 auto 1rem}
-.pin-title{font-size:15px;font-weight:500;margin-bottom:4px}
-.pin-sub{font-size:12px;color:var(--hl-text3);margin-bottom:1.5rem}
+
+/* ── SETUP / PIN SCREENS ── */
+.screen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem}
+.screen.active{display:flex}
+.card{background:var(--hl-surface);border:1px solid var(--hl-border2);border-top:2px solid var(--hl-red);border-radius:6px;padding:2rem;width:100%;max-width:360px}
+.card-logo{width:44px;height:44px;background:var(--hl-red);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;color:#fff;margin:0 auto 1.25rem}
+.card-title{font-size:15px;font-weight:500;color:var(--hl-text);text-align:center;margin-bottom:4px}
+.card-sub{font-size:12px;color:var(--hl-text3);text-align:center;margin-bottom:1.5rem;line-height:1.5}
+.setup-field{margin-bottom:12px}
+.setup-field label{display:block;font-size:9px;color:var(--hl-text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px}
+.setup-field input{width:100%;font-size:13px;padding:9px 10px;border:1px solid var(--hl-border2);border-radius:3px;background:var(--hl-bg);color:var(--hl-text);font-family:monospace}
+.setup-field input:focus{outline:none;border-color:var(--hl-red)}
+.setup-field input::placeholder{color:var(--hl-text3);font-family:-apple-system,sans-serif}
+.setup-err{font-size:11px;color:#cc4444;min-height:16px;margin-bottom:8px}
+.setup-hint{font-size:10px;color:var(--hl-text3);margin-top:6px;line-height:1.5}
+.btn-full{width:100%;height:40px;font-size:13px;border:none;border-radius:4px;background:var(--hl-red);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:500;letter-spacing:.03em;margin-top:4px}
+.btn-full:hover{background:var(--hl-red-hover)}
+.btn-full:disabled{opacity:.5;cursor:not-allowed}
+
+/* PIN pad */
 .pin-dots{display:flex;justify-content:center;gap:10px;margin-bottom:1rem}
 .pin-dot{width:13px;height:13px;border-radius:50%;border:2px solid var(--hl-border2);transition:all .15s}
 .pin-dot.filled{background:var(--hl-red);border-color:var(--hl-red)}
@@ -26,11 +41,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1rem}
 .pin-key{height:54px;border:1px solid var(--hl-border2);border-radius:4px;background:var(--hl-surface2);color:var(--hl-text);font-size:20px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;user-select:none;touch-action:manipulation;transition:background .1s}
 .pin-key:hover{background:var(--hl-border)}
-.pin-key:active{background:var(--hl-border2)}
-.pin-key.pin-del{font-size:16px;color:var(--hl-text2)}
+.pin-key:active{opacity:.7}
 .pin-key.pin-blank{visibility:hidden}
-.pin-error{font-size:12px;color:#cc4444;min-height:18px;margin-bottom:.5rem}
-.pin-loading{font-size:12px;color:var(--hl-text3);margin-top:.75rem;min-height:18px}
+.pin-error{font-size:12px;color:#cc4444;min-height:18px;margin-bottom:.5rem;text-align:center}
+.pin-loading{font-size:11px;color:var(--hl-text3);text-align:center;min-height:18px;margin-top:.5rem}
+
+/* ── APP ── */
 #app{display:none}
 .header{padding:1rem 1.25rem .9rem;border-bottom:1px solid var(--hl-border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .header-left{display:flex;align-items:center;gap:12px}
@@ -130,6 +146,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--hl-surface);border:1px solid var(--hl-border2);border-left:3px solid #50a870;color:var(--hl-text);font-size:12px;padding:10px 16px;border-radius:4px;z-index:999;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap;max-width:90vw}
 .toast.show{opacity:1}
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.spin{animation:spin 1s linear infinite;display:inline-block}
 @media(min-width:600px){
   .card-list{display:none}
   .desktop-table{display:block}
@@ -141,34 +158,44 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </head>
 <body>
 
+<!-- SETUP SCREEN (first visit on new device) -->
+<div class="screen" id="setupScreen">
+  <div class="card">
+    <div class="card-logo">H&L</div>
+    <div class="card-title">Setup</div>
+    <div class="card-sub">Paste your GitHub token to connect this device.<br>It stays on this device only — never uploaded.</div>
+    <div class="setup-field">
+      <label>GitHub Personal Access Token (gist scope)</label>
+      <input type="password" id="setupToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" spellcheck="false">
+      <div class="setup-hint">Generate at github.com → Settings → Developer settings → Personal access tokens → Tokens (classic). Check the <strong style="color:var(--hl-text2)">gist</strong> scope only.</div>
+    </div>
+    <div class="setup-err" id="setupErr"></div>
+    <button class="btn-full" onclick="doSetup()"><i class="ti ti-plug-connected"></i> Connect</button>
+  </div>
+</div>
+
 <!-- PIN SCREEN -->
-<div id="pinScreen">
-  <div class="pin-card">
-    <div class="pin-logo">H&L</div>
-    <div class="pin-title" id="pinTitle">Enter PIN</div>
-    <div class="pin-sub" id="pinSub">H&L Applicator Issue Log</div>
+<div class="screen" id="pinScreen">
+  <div class="card" style="max-width:320px;text-align:center">
+    <div class="card-logo">H&L</div>
+    <div class="card-title" id="pinTitle">Enter PIN</div>
+    <div class="card-sub" id="pinSub" style="margin-bottom:1.25rem">H&L Applicator Issue Log</div>
     <div class="pin-dots" id="pinDots">
-      <div class="pin-dot" id="d0"></div>
-      <div class="pin-dot" id="d1"></div>
-      <div class="pin-dot" id="d2"></div>
-      <div class="pin-dot" id="d3"></div>
+      <div class="pin-dot" id="d0"></div><div class="pin-dot" id="d1"></div>
+      <div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div>
     </div>
     <div class="pin-error" id="pinError"></div>
     <div class="pin-pad">
-      <div class="pin-key" onclick="pinKey('1')">1</div>
-      <div class="pin-key" onclick="pinKey('2')">2</div>
-      <div class="pin-key" onclick="pinKey('3')">3</div>
-      <div class="pin-key" onclick="pinKey('4')">4</div>
-      <div class="pin-key" onclick="pinKey('5')">5</div>
-      <div class="pin-key" onclick="pinKey('6')">6</div>
-      <div class="pin-key" onclick="pinKey('7')">7</div>
-      <div class="pin-key" onclick="pinKey('8')">8</div>
-      <div class="pin-key" onclick="pinKey('9')">9</div>
-      <div class="pin-key pin-blank"></div>
-      <div class="pin-key" onclick="pinKey('0')">0</div>
-      <div class="pin-key pin-del" onclick="pinDel()"><i class="ti ti-backspace"></i></div>
+      <div class="pin-key" onclick="pinKey('1')">1</div><div class="pin-key" onclick="pinKey('2')">2</div><div class="pin-key" onclick="pinKey('3')">3</div>
+      <div class="pin-key" onclick="pinKey('4')">4</div><div class="pin-key" onclick="pinKey('5')">5</div><div class="pin-key" onclick="pinKey('6')">6</div>
+      <div class="pin-key" onclick="pinKey('7')">7</div><div class="pin-key" onclick="pinKey('8')">8</div><div class="pin-key" onclick="pinKey('9')">9</div>
+      <div class="pin-key pin-blank"></div><div class="pin-key" onclick="pinKey('0')">0</div>
+      <div class="pin-key" onclick="pinDel()"><i class="ti ti-backspace"></i></div>
     </div>
     <div class="pin-loading" id="pinLoading"></div>
+    <div style="margin-top:1rem">
+      <button class="btn" style="width:100%;justify-content:center;font-size:11px;color:var(--hl-text3)" onclick="showSetup()"><i class="ti ti-settings" style="font-size:12px"></i> Change token / reset</button>
+    </div>
   </div>
 </div>
 
@@ -177,14 +204,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="header">
     <div class="header-left">
       <div class="hl-logo">H&L</div>
-      <div>
-        <h1>Applicator Issue Log</h1>
-        <p>Track incoming applicators and why you still have them</p>
-      </div>
+      <div><h1>Applicator Issue Log</h1><p>Track incoming applicators and why you still have them</p></div>
     </div>
     <div class="header-actions">
       <span class="sync-status" id="syncStatus"></span>
-      <button class="btn btn-sync" onclick="pushGist(true)"><i class="ti ti-cloud-upload"></i> Sync</button>
+      <button class="btn btn-sync" onclick="pushData(false)"><i class="ti ti-cloud-upload"></i> Sync</button>
       <button class="btn btn-import" onclick="triggerImport()"><i class="ti ti-upload"></i> Import</button>
       <button class="btn btn-export" onclick="exportJSON()"><i class="ti ti-download"></i> Export</button>
       <button class="btn" onclick="openChangePIN()"><i class="ti ti-lock"></i> PIN</button>
@@ -202,15 +226,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="toolbar">
       <input type="search" id="searchInput" placeholder="Search applicator, terminal, issue…" oninput="render()">
       <select id="filterStatus" onchange="render()">
-        <option value="">All statuses</option>
-        <option value="open">Open</option>
-        <option value="inprog">In progress</option>
-        <option value="waiting">Waiting on parts</option>
-        <option value="done">Resolved</option>
+        <option value="">All statuses</option><option value="open">Open</option>
+        <option value="inprog">In progress</option><option value="waiting">Waiting on parts</option><option value="done">Resolved</option>
       </select>
       <select id="filterAge" onchange="render()">
-        <option value="">Any age</option>
-        <option value="old">Overdue (&gt;3 days)</option>
+        <option value="">Any age</option><option value="old">Overdue (&gt;3 days)</option>
       </select>
       <button class="btn btn-red" onclick="openModal()" style="margin-left:auto"><i class="ti ti-plus"></i> Log Issue</button>
     </div>
@@ -220,14 +240,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="desktop-table">
       <table>
         <thead><tr>
-          <th style="width:95px">Applicator #</th>
-          <th style="width:90px">Press</th>
-          <th style="width:155px">Terminal / Wire</th>
-          <th>Issue / Notes</th>
-          <th style="width:108px">Status</th>
-          <th style="width:52px">Days</th>
-          <th style="width:75px">By</th>
-          <th style="width:175px;text-align:right;padding-right:14px">Actions</th>
+          <th style="width:95px">Applicator #</th><th style="width:90px">Press</th>
+          <th style="width:155px">Terminal / Wire</th><th>Issue / Notes</th>
+          <th style="width:108px">Status</th><th style="width:52px">Days</th>
+          <th style="width:75px">By</th><th style="width:175px;text-align:right;padding-right:14px">Actions</th>
         </tr></thead>
         <tbody id="tbody"></tbody>
       </table>
@@ -247,7 +263,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
-<!-- Modals -->
+<!-- Issue modal -->
 <div class="modal-overlay" id="modal">
   <div class="modal">
     <h2 id="modalTitle">Log Applicator Issue</h2>
@@ -263,20 +279,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="field"><label>Notes / Resolution Steps</label><textarea id="fNotes" style="height:52px" placeholder="What's been done or what's pending…"></textarea></div>
     <div class="row2">
       <div class="field"><label>Status</label>
-        <select id="fStatus">
-          <option value="open">Open</option><option value="inprog">In progress</option>
-          <option value="waiting">Waiting on parts</option><option value="done">Resolved</option>
-        </select>
+        <select id="fStatus"><option value="open">Open</option><option value="inprog">In progress</option><option value="waiting">Waiting on parts</option><option value="done">Resolved</option></select>
       </div>
       <div class="field"><label>Logged By</label><input id="fBy" placeholder="Your name"></div>
     </div>
-    <div class="modal-actions">
-      <button class="btn" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-red" onclick="saveEntry()">Save Entry</button>
-    </div>
+    <div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-red" onclick="saveEntry()">Save Entry</button></div>
   </div>
 </div>
 
+<!-- Notify modal -->
 <div class="modal-overlay" id="notifyModal">
   <div class="modal">
     <h2>Repair Complete — Notify</h2>
@@ -290,13 +301,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div style="font-size:10px;color:var(--hl-text3);margin-top:5px">Add contacts under the Contacts tab.</div>
     </div>
     <div class="field"><label>Additional Note (optional)</label><textarea id="notifyNote" style="height:54px" placeholder="e.g. Returned to storage bay 3, ready for production."></textarea></div>
-    <div class="modal-actions">
-      <button class="btn" onclick="closeNotifyModal()">Cancel</button>
-      <button class="btn btn-red" onclick="sendNotify()"><i class="ti ti-mail"></i> Open in Email</button>
-    </div>
+    <div class="modal-actions"><button class="btn" onclick="closeNotifyModal()">Cancel</button><button class="btn btn-red" onclick="sendNotify()"><i class="ti ti-mail"></i> Open in Email</button></div>
   </div>
 </div>
 
+<!-- Contact modal -->
 <div class="modal-overlay" id="contactModal">
   <div class="modal">
     <h2 id="contactModalTitle">Add Contact</h2>
@@ -307,13 +316,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="parse-hint" id="parseHint"></div>
     </div>
     <div class="field"><label>Role / Department</label><input id="cRole" placeholder="e.g. Production Supervisor"></div>
-    <div class="modal-actions">
-      <button class="btn" onclick="closeContactModal()">Cancel</button>
-      <button class="btn btn-red" onclick="saveContact()">Save Contact</button>
-    </div>
+    <div class="modal-actions"><button class="btn" onclick="closeContactModal()">Cancel</button><button class="btn btn-red" onclick="saveContact()">Save Contact</button></div>
   </div>
 </div>
 
+<!-- Change PIN modal -->
 <div class="modal-overlay" id="pinModal">
   <div class="modal" style="max-width:340px">
     <h2>Change PIN</h2>
@@ -321,31 +328,27 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="field"><label>New PIN</label><input id="pmNew" type="password" inputmode="numeric" maxlength="4" placeholder="New 4-digit PIN" autocomplete="off"></div>
     <div class="field"><label>Confirm New PIN</label><input id="pmConfirm" type="password" inputmode="numeric" maxlength="4" placeholder="Repeat new PIN" autocomplete="off"></div>
     <div style="font-size:11px;color:#cc4444;min-height:16px;margin-top:4px" id="pinModalErr"></div>
-    <div class="modal-actions">
-      <button class="btn" onclick="closePINModal()">Cancel</button>
-      <button class="btn btn-red" onclick="savePIN()">Save PIN</button>
-    </div>
+    <div class="modal-actions"><button class="btn" onclick="closePINModal()">Cancel</button><button class="btn btn-red" onclick="savePIN()">Save PIN</button></div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-// ── CONFIG — token is the only thing baked in ──
-const TOKEN = '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';
-const DATA_FILE  = 'hl_applicator_data.json';   // issues + contacts
-const META_FILE  = 'hl_applicator_meta.json';   // pin hash stored in gist
+// ── CONSTANTS ──
+const DATA_FILE = 'hl_applicator_data.json';
+const META_FILE = 'hl_applicator_meta.json';
 const INACTIVITY = 30 * 60 * 1000;
 
+// ── STATE ──
 let entries = [], contacts = [], gistId = null;
 let editId = null, editCId = null, notifyId = null;
 let selectedRecipients = new Set();
 let pinBuffer = '', pinMode = 'unlock', pinSetupFirst = '';
 let inactivityTimer = null;
-let unlocked = false;
 
 // ── HELPERS ──
-function $(id){ return document.getElementById(id); }
+const $ = id => document.getElementById(id);
 function toast(msg, color='#50a870'){
   const t=$('toast'); t.textContent=msg; t.style.borderLeftColor=color;
   t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000);
@@ -354,65 +357,95 @@ async function sha256(str){
   const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('hl2024:'+str));
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; }}
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){}}
+function lsDel(k){ try{ localStorage.removeItem(k); }catch(e){}}
+function getToken(){ return lsGet('hl_token'); }
+
+// ── SCREEN MANAGEMENT ──
+function showScreen(id){
+  ['setupScreen','pinScreen'].forEach(s=>$(s).classList.remove('active'));
+  $('app').style.display='none';
+  if(id==='app'){ $('app').style.display='block'; }
+  else{ $(id).classList.add('active'); }
+}
+function showSetup(){
+  lockApp(true);
+  $('setupToken').value='';
+  $('setupErr').textContent='';
+  showScreen('setupScreen');
+}
+
+// ── SETUP (token entry) ──
+async function doSetup(){
+  const token=$('setupToken').value.trim();
+  $('setupErr').textContent='';
+  if(!token.startsWith('ghp_')&&!token.startsWith('github_pat_')){ $('setupErr').textContent='Paste a valid GitHub token starting with ghp_'; return; }
+  const btn=document.querySelector('#setupScreen .btn-full');
+  btn.disabled=true; btn.innerHTML='<i class="ti ti-loader spin"></i> Connecting…';
+  try{
+    // verify token works by listing gists
+    const r=await fetch('https://api.github.com/gists?per_page=1',{headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}});
+    if(!r.ok) throw new Error('Token invalid or no gist access ('+r.status+')');
+    lsSet('hl_token',token);
+    // now go to PIN screen
+    btn.disabled=false; btn.innerHTML='<i class="ti ti-plug-connected"></i> Connect';
+    showScreen('pinScreen');
+    // check if PIN already set in gist
+    await initPinScreen();
+  }catch(e){
+    btn.disabled=false; btn.innerHTML='<i class="ti ti-plug-connected"></i> Connect';
+    $('setupErr').textContent=e.message||'Could not connect — check token and try again';
+  }
+}
 
 // ── GIST API ──
 async function gistAPI(method, path, body){
-  const r = await fetch('https://api.github.com/'+path,{
+  const token=getToken();
+  if(!token) throw new Error('No token');
+  const r=await fetch('https://api.github.com/'+path,{
     method,
-    headers:{'Authorization':'token '+TOKEN,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},
-    body: body ? JSON.stringify(body) : undefined
+    headers:{'Authorization':'token '+token,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},
+    body:body?JSON.stringify(body):undefined
   });
-  if(!r.ok) throw new Error('GitHub '+r.status+' on '+path);
+  if(!r.ok) throw new Error('GitHub '+r.status);
   return r.json();
 }
 
-// Find or create our private gist — stores gistId in localStorage for speed
 async function ensureGist(){
   if(gistId) return gistId;
-  const cached = localStorage.getItem('hl_gist_id');
-  if(cached){
-    // verify it still exists
-    try{ await gistAPI('GET','gists/'+cached); gistId=cached; return gistId; }catch(e){ localStorage.removeItem('hl_gist_id'); }
-  }
-  // search existing gists for ours
-  const list = await gistAPI('GET','gists?per_page=100');
-  const found = list.find(g=>g.files&&(g.files[DATA_FILE]||g.files[META_FILE]));
-  if(found){ gistId=found.id; localStorage.setItem('hl_gist_id',gistId); return gistId; }
-  // create fresh
-  const created = await gistAPI('POST','gists',{
-    description:'H&L Applicator Issue Log',
-    public:false,
-    files:{
-      [DATA_FILE]:{content:JSON.stringify({issues:[],contacts:[]},null,2)},
-      [META_FILE]:{content:JSON.stringify({pinHash:null},null,2)}
-    }
+  const cached=lsGet('hl_gist_id');
+  if(cached){ try{ await gistAPI('GET','gists/'+cached); gistId=cached; return gistId; }catch(e){ lsDel('hl_gist_id'); } }
+  const list=await gistAPI('GET','gists?per_page=100');
+  const found=list.find(g=>g.files&&(g.files[DATA_FILE]||g.files[META_FILE]));
+  if(found){ gistId=found.id; lsSet('hl_gist_id',gistId); return gistId; }
+  const created=await gistAPI('POST','gists',{
+    description:'H&L Applicator Issue Log',public:false,
+    files:{[DATA_FILE]:{content:JSON.stringify({issues:[],contacts:[]},null,2)},[META_FILE]:{content:JSON.stringify({pinHash:null},null,2)}}
   });
-  gistId=created.id; localStorage.setItem('hl_gist_id',gistId);
-  return gistId;
+  gistId=created.id; lsSet('hl_gist_id',gistId); return gistId;
 }
 
 async function readGist(){
   const id=await ensureGist();
   const g=await gistAPI('GET','gists/'+id);
-  const data  = g.files[DATA_FILE] ? JSON.parse(g.files[DATA_FILE].content) : {issues:[],contacts:[]};
-  const meta  = g.files[META_FILE] ? JSON.parse(g.files[META_FILE].content) : {pinHash:null};
-  return {data, meta, raw:g};
+  const data=g.files[DATA_FILE]?JSON.parse(g.files[DATA_FILE].content):{issues:[],contacts:[]};
+  const meta=g.files[META_FILE]?JSON.parse(g.files[META_FILE].content):{pinHash:null};
+  return{data,meta};
 }
 
 async function writeGist(files){
   const id=await ensureGist();
   await gistAPI('PATCH','gists/'+id,{files});
-  setSyncStatus('ok');
 }
 
-async function pushData(silent=false){
+async function pushData(silent=true){
   setSyncStatus('syncing');
   try{
-    await writeGist({
-      [DATA_FILE]:{content:JSON.stringify({issues:entries,contacts:contacts},null,2)}
-    });
+    await writeGist({[DATA_FILE]:{content:JSON.stringify({issues:entries,contacts:contacts},null,2)}});
+    saveLocal(); setSyncStatus('ok');
     if(!silent) toast('Synced to GitHub');
-  }catch(e){ setSyncStatus('error'); if(!silent) toast('Sync failed','#cc4444'); }
+  }catch(e){ setSyncStatus('error'); if(!silent) toast('Sync failed — check connection','#cc4444'); console.error(e); }
 }
 
 async function pushMeta(pinHash){
@@ -422,19 +455,22 @@ async function pushMeta(pinHash){
 
 function setSyncStatus(s){
   const el=$('syncStatus');
-  if(s==='syncing') el.innerHTML='<i class="ti ti-loader" style="animation:spin 1s linear infinite;display:inline-block"></i> Syncing…';
+  if(s==='syncing') el.innerHTML='<i class="ti ti-loader spin"></i> Syncing…';
   else if(s==='ok')  el.innerHTML='<i class="ti ti-cloud-check" style="color:#50a870"></i> Synced';
   else if(s==='error') el.innerHTML='<i class="ti ti-cloud-x" style="color:#cc4444"></i> Error';
   else el.innerHTML='';
 }
 
-// ── PIN SCREEN ──
+// ── LOCAL STORAGE ──
+function saveLocal(){ lsSet('hl_data',JSON.stringify({issues:entries,contacts:contacts})); }
+function loadLocal(){
+  try{ const r=lsGet('hl_data'); if(r){ const d=JSON.parse(r); entries=d.issues||[]; contacts=d.contacts||[]; }}catch(e){}
+}
+
+// ── PIN ──
 function setPinLoading(msg){ $('pinLoading').textContent=msg||''; }
 function updateDots(){
-  for(let i=0;i<4;i++){
-    const d=$('d'+i); d.classList.remove('filled','error');
-    if(i<pinBuffer.length) d.classList.add('filled');
-  }
+  for(let i=0;i<4;i++){ const d=$('d'+i); d.classList.remove('filled','error'); if(i<pinBuffer.length) d.classList.add('filled'); }
 }
 function dotError(){ for(let i=0;i<4;i++) $('d'+i).classList.add('error'); setTimeout(updateDots,700); }
 
@@ -448,8 +484,7 @@ function pinDel(){ pinBuffer=pinBuffer.slice(0,-1); updateDots(); }
 async function handlePin(){
   if(pinMode==='setup1'){
     pinSetupFirst=pinBuffer; pinBuffer=''; updateDots();
-    $('pinTitle').textContent='Confirm PIN';
-    $('pinSub').textContent='Re-enter your new PIN';
+    $('pinTitle').textContent='Confirm PIN'; $('pinSub').textContent='Re-enter your new PIN';
     pinMode='setup2'; return;
   }
   if(pinMode==='setup2'){
@@ -461,124 +496,90 @@ async function handlePin(){
     }
     const h=await sha256(pinBuffer);
     setPinLoading('Saving PIN…');
+    lsSet('hl_pin_hash',h);
     await pushMeta(h);
-    localStorage.setItem('hl_pin_hash',h);
     setPinLoading('');
     toast('PIN set');
-    doUnlock();
-    return;
+    await loadFromGist();
+    doUnlock(); return;
   }
-  // unlock mode — verify against gist meta (or local cache if offline)
+  // unlock
   setPinLoading('Checking…');
   const h=await sha256(pinBuffer);
-  let storedHash = localStorage.getItem('hl_pin_hash');
-  // always try to refresh from gist for cross-device PIN changes
+  let storedHash=lsGet('hl_pin_hash');
   try{
     const {meta}=await readGist();
-    if(meta.pinHash){ storedHash=meta.pinHash; localStorage.setItem('hl_pin_hash',meta.pinHash); }
-  }catch(e){ /* offline — fall back to local */ }
+    if(meta.pinHash){ storedHash=meta.pinHash; lsSet('hl_pin_hash',meta.pinHash); }
+  }catch(e){ /* offline */ }
 
   if(!storedHash){
-    // first ever use — treat entered pin as new pin setup
     pinSetupFirst=pinBuffer; pinBuffer=''; updateDots();
-    $('pinTitle').textContent='Confirm PIN';
-    $('pinSub').textContent='Re-enter your new PIN';
-    setPinLoading('');
-    pinMode='setup2'; return;
+    $('pinTitle').textContent='Confirm PIN'; $('pinSub').textContent='Re-enter your new PIN';
+    setPinLoading(''); pinMode='setup2'; return;
   }
   if(h===storedHash){
     setPinLoading('Loading…');
     await loadFromGist();
-    setPinLoading('');
-    doUnlock();
+    setPinLoading(''); doUnlock();
   } else {
-    setPinLoading('');
-    $('pinError').textContent='Incorrect PIN';
+    setPinLoading(''); $('pinError').textContent='Incorrect PIN';
     dotError(); pinBuffer='';
   }
 }
 
 async function loadFromGist(){
   try{
-    const {data}=await readGist();
+    const{data}=await readGist();
     if(Array.isArray(data.issues))   entries=data.issues;
     if(Array.isArray(data.contacts)) contacts=data.contacts;
-  }catch(e){ console.warn('Could not load from gist, using local',e); loadLocal(); }
+    saveLocal();
+  }catch(e){ loadLocal(); }
 }
 
-function loadLocal(){
-  try{ const r=localStorage.getItem('hl_data'); if(r){ const d=JSON.parse(r); entries=d.issues||[]; contacts=d.contacts||[]; } }catch(e){}
-}
-function saveLocal(){
-  localStorage.setItem('hl_data',JSON.stringify({issues:entries,contacts:contacts}));
+async function initPinScreen(){
+  const storedHash=lsGet('hl_pin_hash');
+  if(!storedHash){
+    // check gist for existing hash
+    try{
+      setPinLoading('Connecting…');
+      const{meta}=await readGist();
+      if(meta.pinHash){ lsSet('hl_pin_hash',meta.pinHash); setPinLoading(''); pinMode='unlock'; }
+      else{ setPinLoading(''); $('pinTitle').textContent='Set a PIN'; $('pinSub').textContent='Choose a 4-digit PIN to protect this log'; pinMode='setup1'; }
+    }catch(e){ setPinLoading('Offline — enter PIN'); pinMode='unlock'; }
+  } else { pinMode='unlock'; }
 }
 
-function resetInactivity(){
-  clearTimeout(inactivityTimer);
-  inactivityTimer=setTimeout(lockApp, INACTIVITY);
-}
+function resetInactivity(){ clearTimeout(inactivityTimer); inactivityTimer=setTimeout(lockApp,INACTIVITY); }
+
 function doUnlock(){
-  unlocked=true;
   sessionStorage.setItem('hl_s','1');
-  $('pinScreen').style.display='none';
-  $('app').style.display='block';
-  resetInactivity();
+  showScreen('app'); resetInactivity();
   ['mousemove','keydown','click','touchstart'].forEach(e=>document.addEventListener(e,resetInactivity,{passive:true}));
-  render(); renderContacts();
-  setSyncStatus('ok');
+  render(); renderContacts(); setSyncStatus('ok');
 }
-function lockApp(){
-  clearTimeout(inactivityTimer); unlocked=false;
+
+function lockApp(silent=false){
+  clearTimeout(inactivityTimer);
   sessionStorage.removeItem('hl_s');
-  $('app').style.display='none'; $('pinScreen').style.display='flex';
+  showScreen('pinScreen');
   pinBuffer=''; updateDots();
   $('pinTitle').textContent='Enter PIN'; $('pinSub').textContent='H&L Applicator Issue Log';
   $('pinError').textContent=''; setPinLoading(''); pinMode='unlock';
 }
 
+// ── INIT ──
 async function initApp(){
-  // if same browser session, skip PIN and load local data
+  const token=getToken();
+  if(!token){ showScreen('setupScreen'); return; }
+  // token exists — go to PIN
+  showScreen('pinScreen');
   if(sessionStorage.getItem('hl_s')==='1'){
+    // already unlocked this session — load local and go straight in
     loadLocal(); doUnlock();
-    // quietly refresh from gist in background
-    loadFromGist().then(()=>{ saveLocal(); render(); renderContacts(); setSyncStatus('ok'); }).catch(()=>{});
+    loadFromGist().then(()=>{ render(); renderContacts(); setSyncStatus('ok'); }).catch(()=>{});
     return;
   }
-  // check if a PIN exists already (local cache)
-  const cached = localStorage.getItem('hl_pin_hash');
-  if(!cached){
-    // might be first time — try loading gist to get pin hash
-    setPinLoading('Connecting…');
-    try{
-      await ensureGist();
-      const {meta}=await readGist();
-      if(meta.pinHash){ localStorage.setItem('hl_pin_hash',meta.pinHash); }
-      setPinLoading('');
-      if(!meta.pinHash){
-        $('pinTitle').textContent='Set a PIN';
-        $('pinSub').textContent='Choose a 4-digit PIN to protect this log';
-        pinMode='setup1';
-      }
-    }catch(e){ setPinLoading('Offline — enter PIN'); }
-  }
-}
-
-// ── CHANGE PIN ──
-function openChangePIN(){
-  $('pmCurrent').value=''; $('pmNew').value=''; $('pmConfirm').value='';
-  $('pinModalErr').textContent=''; $('pinModal').classList.add('open');
-}
-function closePINModal(){ $('pinModal').classList.remove('open'); }
-async function savePIN(){
-  const cur=$('pmCurrent').value.trim(), nw=$('pmNew').value.trim(), cf=$('pmConfirm').value.trim();
-  const err=$('pinModalErr');
-  if(!/^\d{4}$/.test(cur)||!/^\d{4}$/.test(nw)||!/^\d{4}$/.test(cf)){ err.textContent='All fields must be exactly 4 digits'; return; }
-  if(nw!==cf){ err.textContent='New PINs do not match'; return; }
-  if(await sha256(cur)!==localStorage.getItem('hl_pin_hash')){ err.textContent='Current PIN is incorrect'; return; }
-  const h=await sha256(nw);
-  localStorage.setItem('hl_pin_hash',h);
-  await pushMeta(h);
-  closePINModal(); toast('PIN updated on all devices');
+  await initPinScreen();
 }
 
 // ── EXPORT / IMPORT ──
@@ -598,12 +599,24 @@ function importJSON(evt){
       if(!d.issues&&!d.contacts) throw 0;
       const ni=Array.isArray(d.issues)?d.issues:[], nc=Array.isArray(d.contacts)?d.contacts:[];
       if(!confirm(`Import ${ni.length} issues and ${nc.length} contacts?\nThis replaces current data.`)) return;
-      entries=ni; contacts=nc; saveLocal(); render(); renderContacts(); pushData();
+      entries=ni; contacts=nc; saveLocal(); render(); renderContacts(); pushData(false);
     }catch(e){ alert('Not a valid HL Applicator Log JSON file.'); }
   };
   r.readAsText(f);
 }
-function pushGist(manual){ saveLocal(); pushData(!manual); }
+
+// ── CHANGE PIN ──
+function openChangePIN(){ $('pmCurrent').value=''; $('pmNew').value=''; $('pmConfirm').value=''; $('pinModalErr').textContent=''; $('pinModal').classList.add('open'); }
+function closePINModal(){ $('pinModal').classList.remove('open'); }
+async function savePIN(){
+  const cur=$('pmCurrent').value.trim(), nw=$('pmNew').value.trim(), cf=$('pmConfirm').value.trim();
+  const err=$('pinModalErr');
+  if(!/^\d{4}$/.test(cur)||!/^\d{4}$/.test(nw)||!/^\d{4}$/.test(cf)){ err.textContent='All fields must be exactly 4 digits'; return; }
+  if(nw!==cf){ err.textContent='New PINs do not match'; return; }
+  if(await sha256(cur)!==lsGet('hl_pin_hash')){ err.textContent='Current PIN is incorrect'; return; }
+  const h=await sha256(nw); lsSet('hl_pin_hash',h); await pushMeta(h);
+  closePINModal(); toast('PIN updated on all devices');
+}
 
 // ── RENDER ──
 function switchTab(t){
@@ -687,7 +700,8 @@ function renderTable(f){
 function renderContacts(){
   const list=$('contactList'), em=$('emptyContacts');
   if(!contacts.length){list.innerHTML='';em.style.display='block';return;} em.style.display='none';
-  list.innerHTML=contacts.map(c=>`
+  const sorted=[...contacts].sort((a,b)=>a.name.localeCompare(b.name));
+  list.innerHTML=sorted.map(c=>`
     <div class="contact-row">
       <div class="contact-avatar">${ini(c.name)}</div>
       <div style="flex:1;min-width:0">
@@ -705,9 +719,8 @@ function renderContacts(){
 function openModal(id=null){
   editId=id; const e=id?entries.find(x=>x.id===id):null;
   $('modalTitle').textContent=e?'Edit Entry':'Log Applicator Issue';
-  $('fApn').value=e?.apn||''; $('fPress').value=e?.press||'';
-  $('fTerminal').value=e?.terminal||''; $('fWire').value=e?.wire||'';
-  $('fIssue').value=e?.issue||''; $('fNotes').value=e?.notes||'';
+  $('fApn').value=e?.apn||''; $('fPress').value=e?.press||''; $('fTerminal').value=e?.terminal||'';
+  $('fWire').value=e?.wire||''; $('fIssue').value=e?.issue||''; $('fNotes').value=e?.notes||'';
   $('fStatus').value=e?.status||'open'; $('fBy').value=e?.by||'';
   $('modal').classList.add('open');
 }
@@ -722,10 +735,10 @@ function saveEntry(){
     by:$('fBy').value.trim(), date:editId?entries.find(e=>e.id===editId).date:Date.now()
   };
   if(editId){const i=entries.findIndex(e=>e.id===editId);entries[i]=entry;} else entries.unshift(entry);
-  saveLocal(); closeModal(); render(); pushData(true);
+  closeModal(); render(); pushData(true);
 }
 function editEntry(id){ openModal(id); }
-function delEntry(id){ if(!confirm('Remove this entry?')) return; entries=entries.filter(e=>e.id!==id); saveLocal(); render(); pushData(true); }
+function delEntry(id){ if(!confirm('Remove this entry?')) return; entries=entries.filter(e=>e.id!==id); render(); pushData(true); }
 
 function toggleRecipient(id){
   if(selectedRecipients.has(id)) selectedRecipients.delete(id); else selectedRecipients.add(id);
@@ -753,14 +766,13 @@ function sendNotify(){
   if(!selectedRecipients.size){ alert('Select at least one recipient.'); return; }
   const to=[...selectedRecipients].map(id=>contacts.find(c=>c.id===id)?.email).filter(Boolean).join(',');
   const note=$('notifyNote').value.trim();
-  const body=['Hi,','',`Applicator ${e.apn}${e.press?' ('+e.press+')':''} has been repaired and is ready to return to production.`,'',
+  const body=['Hey,','',`Applicator ${e.apn}${e.press?' ('+e.press+')':''} has been repaired and is ready to return to production.`,'',
     `Issue: ${e.issue}`,e.terminal?`Terminal P/N: ${e.terminal}`:null,e.wire?`Wire: ${e.wire}`:null,
     e.notes?`Resolution: ${e.notes}`:null,note?'':null,note?`Note: ${note}`:null,'',
-    `Logged by: ${e.by||'—'}`,`Days in shop: ${days(e.date)}`].filter(l=>l!==null).join('\n');
+    `Logged by: ${e.by||'—'}`,`Days in lab: ${days(e.date)}`].filter(l=>l!==null).join('\n');
   window.location.href=`mailto:${to}?subject=${encodeURIComponent(`Applicator ${e.apn} — Repair Complete`)}&body=${encodeURIComponent(body)}`;
   closeNotifyModal();
 }
-
 function parseOutlookEmail(raw){
   const t=raw.trim();
   const m1=t.match(/^"?([^"<]+?)"?\s*<([^>]+)>\s*$/); if(m1)return{name:m1[1].trim(),email:m1[2].trim()};
@@ -786,14 +798,15 @@ function saveContact(){
   if(!nameField&&parsed?.name) $('cName').value=parsed.name;
   const c={id:editCId||Date.now(),name,email,role:$('cRole').value.trim()};
   if(editCId){const i=contacts.findIndex(x=>x.id===editCId);contacts[i]=c;} else contacts.push(c);
-  saveLocal(); closeContactModal(); renderContacts(); pushData(true);
+  closeContactModal(); renderContacts(); pushData(true);
 }
 function editContact(id){ openContactModal(id); }
-function delContact(id){ if(!confirm('Remove this contact?')) return; contacts=contacts.filter(c=>c.id!==id); saveLocal(); renderContacts(); pushData(true); }
+function delContact(id){ if(!confirm('Remove this contact?')) return; contacts=contacts.filter(c=>c.id!==id); renderContacts(); pushData(true); }
 
-['modal','notifyModal','contactModal','pinModal'].forEach(id=>{
-  $(id).addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
-});
+// Modals only close via Cancel / Save buttons — clicking outside does nothing
+
+// enter key on setup token field
+$('setupToken').addEventListener('keydown',e=>{ if(e.key==='Enter') doSetup(); });
 
 initApp();
 </script>
