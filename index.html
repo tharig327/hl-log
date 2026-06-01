@@ -766,10 +766,10 @@ function sendNotify(){
   if(!selectedRecipients.size){ alert('Select at least one recipient.'); return; }
   const to=[...selectedRecipients].map(id=>contacts.find(c=>c.id===id)?.email).filter(Boolean).join(',');
   const note=$('notifyNote').value.trim();
-  const body=['Hey,','',`Applicator ${e.apn}${e.press?' ('+e.press+')':''} has been repaired and is ready to return to production.`,'',
+  const body=['Hi,','',`Applicator ${e.apn}${e.press?' ('+e.press+')':''} has been repaired and is ready to return to production.`,'',
     `Issue: ${e.issue}`,e.terminal?`Terminal P/N: ${e.terminal}`:null,e.wire?`Wire: ${e.wire}`:null,
     e.notes?`Resolution: ${e.notes}`:null,note?'':null,note?`Note: ${note}`:null,'',
-    `Logged by: ${e.by||'—'}`,`Days in lab: ${days(e.date)}`].filter(l=>l!==null).join('\n');
+    `Logged by: ${e.by||'—'}`,`Days in shop: ${days(e.date)}`].filter(l=>l!==null).join('\n');
   window.location.href=`mailto:${to}?subject=${encodeURIComponent(`Applicator ${e.apn} — Repair Complete`)}&body=${encodeURIComponent(body)}`;
   closeNotifyModal();
 }
@@ -808,7 +808,32 @@ function delContact(id){ if(!confirm('Remove this contact?')) return; contacts=c
 // enter key on setup token field
 $('setupToken').addEventListener('keydown',e=>{ if(e.key==='Enter') doSetup(); });
 
+// Read URL params from QR scan and pre-fill the log form after unlock
+function checkQRParams(){
+  const p = new URLSearchParams(window.location.search);
+  if(p.get('action')==='log'||p.get('apn')){
+    openModal();
+    if(p.get('apn'))      $('fApn').value      = p.get('apn');
+    if(p.get('press'))    $('fPress').value    = p.get('press');
+    if(p.get('terminal')) $('fTerminal').value = p.get('terminal');
+    if(p.get('wire'))     $('fWire').value     = p.get('wire');
+    // focus the issue field so user can start typing right away
+    setTimeout(()=>$('fIssue').focus(), 100);
+    // clean URL so refresh doesn't reopen the form
+    window.history.replaceState({},'',window.location.pathname);
+  }
+}
+
+// Patch doUnlock to also check QR params after unlocking
+const _origDoUnlock = doUnlock;
+function doUnlock(){
+  _origDoUnlock();
+  checkQRParams();
+}
+
 initApp();
+
+
 </script>
 </body>
 </html>
