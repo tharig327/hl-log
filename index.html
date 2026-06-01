@@ -824,6 +824,24 @@ function delContact(id){ if(!confirm('Remove this contact?')) return; contacts=c
 // enter key on setup token field
 $('setupToken').addEventListener('keydown',e=>{ if(e.key==='Enter') doSetup(); });
 
+// Physical keyboard / numpad support for PIN screen
+document.addEventListener('keydown', function(e){
+  // Only fire when PIN screen is active and no modal/input is focused
+  const pinActive = document.getElementById('pinScreen').classList.contains('active');
+  if(!pinActive) return;
+  const tag = document.activeElement.tagName;
+  if(tag==='INPUT'||tag==='TEXTAREA') return;
+
+  // 0-9 on main keyboard or numpad
+  if((e.key>='0'&&e.key<='9')||
+     (e.code>='Numpad0'&&e.code<='Numpad9')){
+    const digit = e.key.length===1 ? e.key : e.code.replace('Numpad','');
+    pinKey(digit);
+  }
+  // Backspace or numpad delete
+  if(e.key==='Backspace'||e.key==='Delete') pinDel();
+});
+
 // Read URL params from QR scan and pre-fill the log form after unlock
 function checkQRParams(){
   const p = new URLSearchParams(window.location.search);
