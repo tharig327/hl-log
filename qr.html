@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>H&L Applicator QR Labels</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --hl-bg:#111111;--hl-surface:#1c1c1c;--hl-surface2:#252525;
+  --hl-border:#333333;--hl-border2:#444444;--hl-red:#cc2222;
+  --hl-red-hover:#e02828;--hl-text:#f0f0f0;--hl-text2:#aaaaaa;--hl-text3:#666666;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--hl-bg);color:var(--hl-text);min-height:100vh}
+
+.header{padding:1rem 1.25rem;border-bottom:1px solid var(--hl-border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.header-left{display:flex;align-items:center;gap:12px}
+.hl-logo{width:32px;height:32px;background:var(--hl-red);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff;flex-shrink:0}
+.header h1{font-size:15px;font-weight:500;letter-spacing:.03em}
+.header p{font-size:11px;color:var(--hl-text3);margin-top:1px}
+
+.layout{display:grid;grid-template-columns:340px 1fr;gap:0;min-height:calc(100vh - 65px)}
+.sidebar{border-right:1px solid var(--hl-border);padding:1.25rem;display:flex;flex-direction:column;gap:1rem;background:var(--hl-surface)}
+.preview-area{padding:1.5rem;overflow-y:auto}
+
+.section-title{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--hl-text3);margin-bottom:.6rem}
+.field{margin-bottom:10px}
+.field label{display:block;font-size:9px;color:var(--hl-text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.1em}
+.field input,.field select{width:100%;font-size:13px;padding:8px 10px;border:1px solid var(--hl-border2);border-radius:3px;background:var(--hl-bg);color:var(--hl-text);-webkit-appearance:none}
+.field input::placeholder{color:var(--hl-text3)}
+.field input:focus,.field select:focus{outline:none;border-color:var(--hl-red)}
+.field select option{background:var(--hl-surface)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+.btn{height:36px;padding:0 14px;font-size:12px;border:1px solid var(--hl-border2);border-radius:4px;background:var(--hl-surface2);color:var(--hl-text);cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;letter-spacing:.03em;user-select:none;width:100%;justify-content:center}
+.btn:hover{background:var(--hl-border)}
+.btn-red{background:var(--hl-red);color:#fff;border-color:var(--hl-red)}
+.btn-red:hover{background:var(--hl-red-hover)}
+.btn-outline{background:transparent;border-color:var(--hl-border2);color:var(--hl-text2)}
+.btn-outline:hover{color:var(--hl-text);border-color:var(--hl-border)}
+
+.app-url-field{margin-bottom:1rem}
+.app-url-field label{display:block;font-size:9px;color:var(--hl-text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.1em}
+.app-url-field input{width:100%;font-size:11px;padding:7px 10px;border:1px solid var(--hl-border2);border-radius:3px;background:var(--hl-bg);color:var(--hl-text2);font-family:monospace}
+.app-url-field input:focus{outline:none;border-color:var(--hl-red)}
+
+.queue-box{border:1px solid var(--hl-border);border-radius:4px;overflow:hidden;flex:1;min-height:0}
+.queue-header{padding:8px 12px;background:var(--hl-surface2);border-bottom:1px solid var(--hl-border);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--hl-text3);display:flex;align-items:center;justify-content:space-between}
+.queue-list{overflow-y:auto;max-height:220px}
+.queue-item{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--hl-border);cursor:pointer;transition:background .1s}
+.queue-item:last-child{border-bottom:none}
+.queue-item:hover{background:var(--hl-surface2)}
+.queue-item.active{background:rgba(204,34,34,.1);border-left:2px solid var(--hl-red)}
+.queue-apn{font-size:12px;font-weight:500;font-family:monospace;flex:1}
+.queue-press{font-size:10px;color:var(--hl-text3)}
+.queue-remove{width:22px;height:22px;border:none;background:none;color:var(--hl-text3);cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:3px;flex-shrink:0}
+.queue-remove:hover{background:rgba(204,34,34,.2);color:#cc4444}
+.queue-empty{padding:1.5rem;text-align:center;font-size:12px;color:var(--hl-text3)}
+
+/* LABEL PREVIEW */
+.preview-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1.5rem}
+.preview-empty{text-align:center;padding:4rem 1rem;color:var(--hl-text3)}
+.preview-empty i{font-size:36px;display:block;margin-bottom:8px;opacity:.4}
+
+/* THE ACTUAL LABEL — white for print */
+.label-wrap{display:flex;flex-direction:column;gap:6px}
+.label-card{background:#ffffff;border:1px solid var(--hl-border2);border-radius:4px;padding:12px;width:100%;color:#111;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.label-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;gap:8px}
+.label-logo{font-size:10px;font-weight:700;color:#cc2222;letter-spacing:.05em;line-height:1}
+.label-apn{font-size:18px;font-weight:700;font-family:monospace;color:#111;line-height:1}
+.label-press{font-size:10px;color:#555;margin-top:2px}
+.label-qr{flex-shrink:0}
+.label-qr canvas,.label-qr img{display:block}
+.label-divider{border:none;border-top:1px solid #ddd;margin:6px 0}
+.label-row{display:flex;gap:6px;flex-wrap:wrap}
+.label-chip{font-size:9px;background:#f0f0f0;border:1px solid #ddd;border-radius:2px;padding:2px 5px;color:#333;font-family:monospace;white-space:nowrap}
+.label-footer{font-size:8px;color:#888;margin-top:6px;text-align:center}
+
+.label-actions{display:flex;gap:6px}
+.lbtn{height:28px;padding:0 10px;font-size:11px;border:1px solid var(--hl-border2);border-radius:3px;background:var(--hl-surface2);color:var(--hl-text2);cursor:pointer;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.lbtn:hover{color:var(--hl-text);border-color:var(--hl-border)}
+
+.print-all-bar{padding:.75rem 1.5rem;border-top:1px solid var(--hl-border);background:var(--hl-surface);display:flex;align-items:center;gap:10px;justify-content:flex-end}
+
+@media(max-width:700px){
+  .layout{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+  .sidebar{border-right:none;border-bottom:1px solid var(--hl-border)}
+  .preview-area{padding:1rem}
+}
+
+/* PRINT */
+@media print{
+  body{background:#fff}
+  .header,.sidebar,.print-all-bar{display:none!important}
+  .layout{display:block}
+  .preview-area{padding:0}
+  .preview-grid{display:flex;flex-wrap:wrap;gap:8px;padding:8px}
+  .label-wrap{break-inside:avoid;page-break-inside:avoid}
+  .label-actions{display:none!important}
+  .label-card{border:1px solid #ccc;box-shadow:none;width:220px}
+  .preview-empty{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="hl-logo">H&L</div>
+    <div>
+      <h1>Applicator QR Labels</h1>
+      <p>Generate scannable labels that pre-fill the issue log form</p>
+    </div>
+  </div>
+  <a href="index.html" class="btn btn-outline" style="width:auto"><i class="ti ti-arrow-left"></i> Back to Log</a>
+</div>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+
+    <div class="app-url-field">
+      <label>Your App URL</label>
+      <input type="text" id="appUrl" placeholder="https://tharig.github.io/hl-applicator-log/" value="https://tharig327.github.io/hl-applicator-log/">
+      <div style="font-size:10px;color:var(--hl-text3);margin-top:4px">QR codes will link to this URL with pre-filled fields.</div>
+    </div>
+
+    <div>
+      <div class="section-title">Applicator Details</div>
+      <div class="field"><label>Applicator # *</label><input type="text" id="iApn" placeholder="e.g. APL-007" autocomplete="off"></div>
+      <div class="row2">
+        <div class="field"><label>Press</label><input type="text" id="iPress" placeholder="e.g. KM-4T #2"></div>
+        <div class="field"><label>Terminal P/N</label><input type="text" id="iTerminal" placeholder="e.g. 794956-1"></div>
+      </div>
+      <div class="field"><label>Wire Gauge / Type</label><input type="text" id="iWire" placeholder="e.g. 0.5mm² TXL"></div>
+      <button class="btn btn-red" onclick="addToQueue()"><i class="ti ti-plus"></i> Add to Queue</button>
+    </div>
+
+    <div class="queue-box">
+      <div class="queue-header">
+        <span>Label queue</span>
+        <span id="queueCount" style="color:var(--hl-text2)">0 labels</span>
+      </div>
+      <div class="queue-list" id="queueList">
+        <div class="queue-empty">No labels yet — add applicators above</div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <button class="btn btn-outline" onclick="clearQueue()"><i class="ti ti-trash"></i> Clear all</button>
+    </div>
+
+  </div>
+
+  <!-- PREVIEW -->
+  <div style="display:flex;flex-direction:column;flex:1">
+    <div class="preview-area" style="flex:1" id="previewArea">
+      <div class="preview-empty" id="previewEmpty">
+        <i class="ti ti-qrcode"></i>
+        <div style="font-size:14px;margin-bottom:4px">No labels yet</div>
+        <div style="font-size:12px">Fill in applicator details and click Add to Queue</div>
+      </div>
+      <div class="preview-grid" id="previewGrid" style="display:none"></div>
+    </div>
+    <div class="print-all-bar" id="printBar" style="display:none">
+      <span style="font-size:12px;color:var(--hl-text3)" id="printCount"></span>
+      <button class="btn btn-red" style="width:auto" onclick="window.print()"><i class="ti ti-printer"></i> Print All Labels</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let queue = []; // [{id, apn, press, terminal, wire}]
+
+function buildURL(item){
+  const base = document.getElementById('appUrl').value.trim().replace(/\/?$/,'/');
+  const params = new URLSearchParams();
+  if(item.apn)      params.set('apn', item.apn);
+  if(item.press)    params.set('press', item.press);
+  if(item.terminal) params.set('terminal', item.terminal);
+  if(item.wire)     params.set('wire', item.wire);
+  params.set('action','log'); // tells the app to open the log form
+  return base + '?' + params.toString();
+}
+
+function addToQueue(){
+  const apn = document.getElementById('iApn').value.trim();
+  if(!apn){ alert('Applicator # is required.'); return; }
+  const item = {
+    id: Date.now(),
+    apn,
+    press:    document.getElementById('iPress').value.trim(),
+    terminal: document.getElementById('iTerminal').value.trim(),
+    wire:     document.getElementById('iWire').value.trim(),
+  };
+  queue.push(item);
+  // clear fields for next entry, keep press/terminal/wire for batch entry of same press
+  document.getElementById('iApn').value = '';
+  document.getElementById('iApn').focus();
+  renderQueue();
+  renderPreviews();
+}
+
+function removeFromQueue(id){
+  queue = queue.filter(i=>i.id!==id);
+  renderQueue(); renderPreviews();
+}
+
+function clearQueue(){
+  if(queue.length && !confirm('Clear all labels?')) return;
+  queue=[]; renderQueue(); renderPreviews();
+}
+
+function renderQueue(){
+  const list = document.getElementById('queueList');
+  const count = document.getElementById('queueCount');
+  count.textContent = queue.length + ' label' + (queue.length!==1?'s':'');
+  if(!queue.length){
+    list.innerHTML='<div class="queue-empty">No labels yet — add applicators above</div>';
+    return;
+  }
+  list.innerHTML = queue.map(i=>`
+    <div class="queue-item">
+      <div style="flex:1;min-width:0">
+        <div class="queue-apn">${i.apn}</div>
+        <div class="queue-press">${[i.press,i.terminal,i.wire].filter(Boolean).join(' · ')||'No details'}</div>
+      </div>
+      <button class="queue-remove" onclick="removeFromQueue(${i.id})" title="Remove"><i class="ti ti-x" style="font-size:13px"></i></button>
+    </div>`).join('');
+}
+
+function renderPreviews(){
+  const grid   = document.getElementById('previewGrid');
+  const empty  = document.getElementById('previewEmpty');
+  const bar    = document.getElementById('printBar');
+  const count  = document.getElementById('printCount');
+
+  if(!queue.length){
+    grid.style.display='none'; empty.style.display='block'; bar.style.display='none';
+    return;
+  }
+  empty.style.display='none'; grid.style.display='grid'; bar.style.display='flex';
+  count.textContent = queue.length + ' label' + (queue.length!==1?'s':'') + ' ready to print';
+
+  grid.innerHTML='';
+  queue.forEach(item=>{
+    const wrap = document.createElement('div');
+    wrap.className='label-wrap';
+
+    const url = buildURL(item);
+    const chips = [item.terminal,item.wire].filter(Boolean).map(t=>`<span class="label-chip">${t}</span>`).join('');
+
+    wrap.innerHTML=`
+      <div class="label-card" id="label-${item.id}">
+        <div class="label-top">
+          <div>
+            <div class="label-logo">H&L MFG</div>
+            <div class="label-apn">${item.apn}</div>
+            ${item.press?`<div class="label-press">${item.press}</div>`:''}
+          </div>
+          <div class="label-qr" id="qr-${item.id}"></div>
+        </div>
+        ${chips?`<hr class="label-divider"><div class="label-row">${chips}</div>`:''}
+        <div class="label-footer">Scan to log issue → H&L Applicator Log</div>
+      </div>
+      <div class="label-actions">
+        <button class="lbtn" onclick="copyURL(${item.id})"><i class="ti ti-copy" style="font-size:12px"></i> Copy URL</button>
+        <button class="lbtn" onclick="printOne(${item.id})"><i class="ti ti-printer" style="font-size:12px"></i> Print</button>
+      </div>`;
+
+    grid.appendChild(wrap);
+
+    // Generate QR
+    new QRCode(document.getElementById('qr-'+item.id),{
+      text: url,
+      width: 72,
+      height: 72,
+      colorDark: '#111111',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  });
+}
+
+// Store URLs by id for copy
+function copyURL(id){
+  const item = queue.find(i=>i.id===id);
+  if(!item) return;
+  navigator.clipboard.writeText(buildURL(item)).then(()=>{
+    showToast('URL copied to clipboard');
+  }).catch(()=>{ prompt('Copy this URL:', buildURL(item)); });
+}
+
+function printOne(id){
+  // temporarily hide all labels except this one for printing
+  const allWraps = document.querySelectorAll('.label-wrap');
+  allWraps.forEach(w=>{ if(!w.querySelector('#label-'+id)) w.style.display='none'; });
+  window.print();
+  allWraps.forEach(w=>w.style.display='');
+}
+
+function showToast(msg){
+  let t = document.getElementById('toast');
+  if(!t){ t=document.createElement('div'); t.id='toast'; t.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1c1c1c;border:1px solid #444;border-left:3px solid #50a870;color:#f0f0f0;font-size:12px;padding:10px 16px;border-radius:4px;z-index:999;opacity:0;transition:opacity .2s;white-space:nowrap'; document.body.appendChild(t); }
+  t.textContent=msg; t.style.opacity='1';
+  setTimeout(()=>t.style.opacity='0',2500);
+}
+
+// Allow Enter key to add to queue
+document.getElementById('iApn').addEventListener('keydown',e=>{ if(e.key==='Enter') addToQueue(); });
+
+// Re-render previews when URL changes (in case user updates it)
+document.getElementById('appUrl').addEventListener('change', renderPreviews);
+
+renderQueue();
+</script>
+</body>
+</html>

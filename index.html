@@ -193,7 +193,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="pin-key" onclick="pinDel()"><i class="ti ti-backspace"></i></div>
     </div>
     <div class="pin-loading" id="pinLoading"></div>
-    <div style="margin-top:1rem">
+    <div style="margin-top:1rem;display:flex;flex-direction:column;gap:6px">
+      <button class="btn" style="width:100%;justify-content:center;font-size:11px;color:var(--hl-text2)" onclick="resetPinCache()"><i class="ti ti-refresh" style="font-size:12px"></i> Sync PIN from Gist</button>
       <button class="btn" style="width:100%;justify-content:center;font-size:11px;color:var(--hl-text3)" onclick="showSetup()"><i class="ti ti-settings" style="font-size:12px"></i> Change token / reset</button>
     </div>
   </div>
@@ -527,6 +528,20 @@ async function handlePin(){
   }
 }
 
+
+async function resetPinCache(){
+  setPinLoading('Syncing PIN from Gist…');
+  $('pinError').textContent='';
+  pinBuffer=''; updateDots();
+  try{
+    lsDel('hl_pin_hash');
+    const{meta}=await readGist();
+    if(meta.pinHash){ lsSet('hl_pin_hash',meta.pinHash); setPinLoading('PIN synced — enter your PIN'); }
+    else{ setPinLoading('No PIN set in Gist yet'); }
+  }catch(e){ setPinLoading('Could not reach Gist — check connection'); }
+  setTimeout(()=>setPinLoading(''),3000);
+}
+
 async function loadFromGist(){
   try{
     const{data}=await readGist();
@@ -556,6 +571,7 @@ function doUnlock(){
   showScreen('app'); resetInactivity();
   ['mousemove','keydown','click','touchstart'].forEach(e=>document.addEventListener(e,resetInactivity,{passive:true}));
   render(); renderContacts(); setSyncStatus('ok');
+  checkQRParams();
 }
 
 function lockApp(silent=false){
@@ -825,12 +841,6 @@ function checkQRParams(){
 }
 
 // Patch doUnlock to also check QR params after unlocking
-const _origDoUnlock = doUnlock;
-function doUnlock(){
-  _origDoUnlock();
-  checkQRParams();
-}
-
 initApp();
 
 
