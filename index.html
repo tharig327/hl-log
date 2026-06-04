@@ -792,7 +792,7 @@ function sendNotify(){
   const body=[`${getGreeting()}, ${salutation}!`,'',`Applicator ${e.apn}${e.press?' ('+e.press+')':''} has been repaired and is ready to return to production.`,'',
     `Issue: ${e.issue}`,e.terminal?`Terminal P/N: ${e.terminal}`:null,e.wire?`Wire: ${e.wire}`:null,
     e.notes?`Resolution: ${e.notes}`:null,note?'':null,note?`Note: ${note}`:null,'',
-    `Logged by: ${e.by||'—'}`,`Days in shop: ${days(e.date)}`].filter(l=>l!==null).join('\n');
+    `Logged by: ${e.by||'—'}`,`Days in Lab: ${days(e.date)}`].filter(l=>l!==null).join('\n');
   window.location.href=`mailto:${to}?subject=${encodeURIComponent(`Applicator ${e.apn} — Repair Complete`)}&body=${encodeURIComponent(body)}`;
   closeNotifyModal();
 }
