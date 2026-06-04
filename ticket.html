@@ -367,73 +367,63 @@ async function lookupTicket(){
       done:    'Your applicator has been repaired and is ready to return to production.',
     }[entry.status]||'';
 
-    // ── ESTIMATED COMPLETION ──
-    // Priority order: urgent=0, high=1, normal=2
+    // ETA CALCULATION
     const priorityRank = {urgent:0, high:1, normal:2};
-    const myRank = priorityRank[entry.priority||'normal'] ?? 2;
+    const myRank = priorityRank[entry.priority||'normal'] != null ? priorityRank[entry.priority||'normal'] : 2;
     const myDate = entry.date;
 
-    // Queue: open/inprog only, not waiting/done, not this ticket
-    const queue = data.issues.filter(e=>
-      e.id !== entry.id &&
-      (e.status==='open'||e.status==='inprog') &&
-      e.status!=='waiting'
-    );
+    const queue = data.issues.filter(function(e){
+      return e.id !== entry.id && (e.status==='open' || e.status==='inprog');
+    });
 
-    // Count items ahead: higher priority OR same priority submitted earlier
-    const ahead = queue.filter(e=>{
-      const eRank = priorityRank[e.priority||'normal'] ?? 2;
-      if(eRank < myRank) return true;             // strictly higher priority
-      if(eRank === myRank && e.date < myDate) return true; // same priority, older
+    const ahead = queue.filter(function(e){
+      const eRank = priorityRank[e.priority||'normal'] != null ? priorityRank[e.priority||'normal'] : 2;
+      if(eRank < myRank) return true;
+      if(eRank === myRank && e.date < myDate) return true;
       return false;
     }).length;
 
-    // If in progress, this ticket is being worked on now
-    let etaHtml = '';
-    if(entry.status==='done'){
-      etaHtml = '';
-    } else if(entry.status==='inprog'){
-      etaHtml = \`<div style="margin-top:10px;padding:12px 14px;background:rgba(160,120,20,.1);border:1px solid rgba(160,120,20,.3);border-radius:4px">
-        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#d4a030;margin-bottom:4px"><i class="ti ti-clock" style="font-size:12px;vertical-align:-1px;margin-right:4px"></i>Estimated Completion</div>
-        <div style="font-size:15px;font-weight:600;color:#f0f0f0">Currently being worked on</div>
-        <div style="font-size:11px;color:#aaa;margin-top:3px">A technician is actively working on your applicator now.</div>
-      </div>\`;
-    } else if(entry.status==='waiting'){
-      etaHtml = \`<div style="margin-top:10px;padding:12px 14px;background:rgba(20,80,160,.1);border:1px solid rgba(20,80,160,.3);border-radius:4px">
-        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#5090d0;margin-bottom:4px"><i class="ti ti-clock-pause" style="font-size:12px;vertical-align:-1px;margin-right:4px"></i>Estimated Completion</div>
-        <div style="font-size:15px;font-weight:600;color:#f0f0f0">On hold — awaiting parts</div>
-        <div style="font-size:11px;color:#aaa;margin-top:3px">Repair will begin once parts arrive. We'll update your ticket when work resumes.</div>
-      </div>\`;
+    const pos = ahead + 1;
+    const queueDaysMin = Math.ceil(ahead / 2) + 1;
+    const queueDaysMax = Math.ceil(ahead / 2) + 2;
+
+    let rangeText;
+    if(queueDaysMin <= 1 && queueDaysMax <= 1){
+      rangeText = 'Today or tomorrow';
+    } else if(queueDaysMin === queueDaysMax){
+      rangeText = '~' + queueDaysMin + ' day' + (queueDaysMin!==1?'s':'');
     } else {
-      // open — calculate estimate
-      const REPAIRS_PER_DAY = 2;        // repairs completed per day
-      const DAYS_MIN_PER_JOB = 1;       // fastest a repair takes
-      const DAYS_MAX_PER_JOB = 2;       // typical upper bound
-      const queueDaysMin = Math.ceil((ahead) / REPAIRS_PER_DAY) + DAYS_MIN_PER_JOB;
-      const queueDaysMax = Math.ceil((ahead) / REPAIRS_PER_DAY) + DAYS_MAX_PER_JOB;
-      const pos = ahead + 1; // their position in queue
+      rangeText = queueDaysMin + '-' + queueDaysMax + ' days';
+    }
 
-      let rangeText;
-      if(queueDaysMin <= 1 && queueDaysMax <= 1){
-        rangeText = 'Today or tomorrow';
-      } else if(queueDaysMin === queueDaysMax){
-        rangeText = \`~\${queueDaysMin} day\${queueDaysMin!==1?'s':''}\`;
-      } else {
-        rangeText = \`\${queueDaysMin}–\${queueDaysMax} days\`;
-      }
+    const priorityLabel = entry.priority==='urgent'?'Urgent':entry.priority==='high'?'High':'Normal';
+    const priorityColor = entry.priority==='urgent'?'#e07050':entry.priority==='high'?'#d4a030':'#aaa';
 
-      const priorityLabel = {urgent:'Urgent',high:'High',normal:'Normal'}[entry.priority||'normal'];
-      const priorityColor = {urgent:'#e07050',high:'#d4a030',normal:'#aaa'}[entry.priority||'normal'];
-
-      etaHtml = \`<div style="margin-top:10px;padding:12px 14px;background:rgba(30,120,60,.1);border:1px solid rgba(30,120,60,.3);border-radius:4px">
-        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#50a870;margin-bottom:4px"><i class="ti ti-clock" style="font-size:12px;vertical-align:-1px;margin-right:4px"></i>Estimated Completion</div>
-        <div style="font-size:22px;font-weight:700;color:#f0f0f0;line-height:1">\${rangeText}</div>
-        <div style="font-size:11px;color:#aaa;margin-top:6px;display:flex;gap:12px;flex-wrap:wrap">
-          <span><i class="ti ti-list-numbers" style="font-size:11px;vertical-align:-1px"></i> Queue position: <strong style="color:#f0f0f0">#\${pos}</strong></span>
-          <span><i class="ti ti-flag" style="font-size:11px;vertical-align:-1px"></i> Priority: <strong style="color:\${priorityColor}">\${priorityLabel}</strong></span>
-          <span><i class="ti ti-tool" style="font-size:11px;vertical-align:-1px"></i> \${ahead} ahead in queue</span>
-        </div>
-      </div>\`;
+    let etaHtml = '';
+    if(entry.status === 'done'){
+      etaHtml = '';
+    } else if(entry.status === 'inprog'){
+      etaHtml = '<div style="margin-top:10px;padding:12px 14px;background:rgba(160,120,20,.1);border:1px solid rgba(160,120,20,.3);border-radius:4px">'
+              + '<div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#d4a030;margin-bottom:4px">Estimated Completion</div>'
+              + '<div style="font-size:15px;font-weight:600;color:#f0f0f0">Currently being worked on</div>'
+              + '<div style="font-size:11px;color:#aaa;margin-top:3px">A technician is actively working on your applicator now.</div>'
+              + '</div>';
+    } else if(entry.status === 'waiting'){
+      etaHtml = '<div style="margin-top:10px;padding:12px 14px;background:rgba(20,80,160,.1);border:1px solid rgba(20,80,160,.3);border-radius:4px">'
+              + '<div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#5090d0;margin-bottom:4px">Estimated Completion</div>'
+              + '<div style="font-size:15px;font-weight:600;color:#f0f0f0">On hold - awaiting parts</div>'
+              + '<div style="font-size:11px;color:#aaa;margin-top:3px">Repair will begin once parts arrive.</div>'
+              + '</div>';
+    } else {
+      etaHtml = '<div style="margin-top:10px;padding:12px 14px;background:rgba(30,120,60,.1);border:1px solid rgba(30,120,60,.3);border-radius:4px">'
+              + '<div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#50a870;margin-bottom:4px">Estimated Completion</div>'
+              + '<div style="font-size:22px;font-weight:700;color:#f0f0f0;line-height:1">' + rangeText + '</div>'
+              + '<div style="font-size:11px;color:#aaa;margin-top:6px;display:flex;gap:12px;flex-wrap:wrap">'
+              + '<span>Queue position: <strong style="color:#f0f0f0">#' + pos + '</strong></span>'
+              + '<span>Priority: <strong style="color:' + priorityColor + '">' + priorityLabel + '</strong></span>'
+              + '<span>' + ahead + ' ahead in queue</span>'
+              + '</div>'
+              + '</div>';
     }
 
     const submitted = new Date(entry.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
