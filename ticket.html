@@ -174,7 +174,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 // Gist ID is not sensitive — it's just a public identifier for where data lives
 // Token is needed to write — scoped to gist only
 const GIST_ID  = '934943f5c9d8ea126f30a27526c95771';
-const DATA_FILE = 'hl_applicator_data.json';
+const DATA_FILE  = 'hl_applicator_data.json';
+const QUEUE_FILE = 'hl_queue_order.json';
 
 // Token split across two parts so GitHub scanner doesn't auto-revoke it
 const _ta = 'ghp_socP3KgxO9ReG88';
@@ -237,8 +238,10 @@ async function loadData(){
   if(!id) throw new Error('No gist ID configured.');
   const g = await gistAPI('GET','gists/'+id);
   const f = g.files[DATA_FILE];
-  if(!f) return {issues:[],contacts:[]};
-  return JSON.parse(f.content);
+  const data = f ? JSON.parse(f.content) : {issues:[],contacts:[]};
+  const qf = g.files[QUEUE_FILE];
+  data.queueOrder = qf ? JSON.parse(qf.content) : [];
+  return data;
 }
 
 async function saveData(data){
@@ -367,21 +370,19 @@ async function lookupTicket(){
       done:    'Your applicator has been repaired and is ready to return to production.',
     }[entry.status]||'';
 
-    // ETA CALCULATION
-    const priorityRank = {urgent:0, high:1, normal:2};
-    const myRank = priorityRank[entry.priority||'normal'] != null ? priorityRank[entry.priority||'normal'] : 2;
-    const myDate = entry.date;
+    // ETA CALCULATION — uses your saved queue order from the log
+    const queueOrder = data.queueOrder || [];
+    const activeIds = data.issues
+      .filter(function(e){ return e.status==='open'||e.status==='inprog'; })
+      .map(function(e){ return e.id; });
 
-    const queue = data.issues.filter(function(e){
-      return e.id !== entry.id && (e.status==='open' || e.status==='inprog');
-    });
+    // Build ordered list: queueOrder first, then any remaining by date
+    const orderedIds = [];
+    queueOrder.forEach(function(id){ if(activeIds.indexOf(id)!==-1) orderedIds.push(id); });
+    activeIds.forEach(function(id){ if(orderedIds.indexOf(id)===-1) orderedIds.push(id); });
 
-    const ahead = queue.filter(function(e){
-      const eRank = priorityRank[e.priority||'normal'] != null ? priorityRank[e.priority||'normal'] : 2;
-      if(eRank < myRank) return true;
-      if(eRank === myRank && e.date < myDate) return true;
-      return false;
-    }).length;
+    const myPos = orderedIds.indexOf(entry.id);
+    const ahead = myPos === -1 ? orderedIds.length : myPos;
 
     const pos = ahead + 1;
     const queueDaysMin = Math.ceil(ahead / 2) + 1;
