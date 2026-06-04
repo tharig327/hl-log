@@ -1,4 +1,4 @@
-const CACHE = 'hl-applicator-v1';
+const CACHE = 'hl-applicator-v2';
 const ASSETS = [
   './',
   './index.html',

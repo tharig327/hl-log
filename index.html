@@ -551,9 +551,22 @@ async function resetPinCache(){
 
 async function loadFromGist(){
   try{
-    const{data}=await readGist();
-    if(Array.isArray(data.issues))   entries=data.issues;
-    if(Array.isArray(data.contacts)) contacts=data.contacts;
+    const id=await ensureGist();
+    const token=getToken();
+    const r=await fetch('https://api.github.com/gists/'+id,{headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}});
+    const g=await r.json();
+    lastGistUpdatedAt = g.updated_at;
+    const dataFile=g.files[DATA_FILE];
+    if(dataFile){
+      const data=JSON.parse(dataFile.content);
+      if(Array.isArray(data.issues))   entries=data.issues;
+      if(Array.isArray(data.contacts)) contacts=data.contacts;
+    }
+    const metaFile=g.files[META_FILE];
+    if(metaFile){
+      const meta=JSON.parse(metaFile.content);
+      if(meta.pinHash){ lsSet('hl_pin_hash',meta.pinHash); }
+    }
     saveLocal();
   }catch(e){ loadLocal(); }
 }
@@ -579,10 +592,12 @@ function doUnlock(){
   ['mousemove','keydown','click','touchstart'].forEach(e=>document.addEventListener(e,resetInactivity,{passive:true}));
   render(); renderContacts(); setSyncStatus('ok');
   checkQRParams();
+  startPolling();
 }
 
 function lockApp(silent=false){
   clearTimeout(inactivityTimer);
+  stopPolling();
   sessionStorage.removeItem('hl_s');
   showScreen('pinScreen');
   pinBuffer=''; updateDots();
@@ -873,6 +888,81 @@ function checkQRParams(){
 }
 
 // Patch doUnlock to also check QR params after unlocking
+
+// ── REAL-TIME SYNC POLLING ──
+const POLL_INTERVAL = 30000; // 30 seconds
+let pollTimer = null;
+let lastGistUpdatedAt = null;
+let isEditing = false;
+
+// Track when user is actively editing so we don't interrupt
+function setEditing(state){ isEditing = state; }
+
+async function pollForChanges(){
+  if(!document.getElementById('app').style.display || document.getElementById('app').style.display==='none') return;
+  if(isEditing) return; // don't interrupt active edits
+  try{
+    const id = await ensureGist();
+    const token = getToken();
+    // Lightweight check — just fetch gist metadata (no full content)
+    const r = await fetch('https://api.github.com/gists/'+id, {
+      headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}
+    });
+    if(!r.ok) return;
+    const g = await r.json();
+    const updatedAt = g.updated_at;
+
+    if(lastGistUpdatedAt && updatedAt !== lastGistUpdatedAt){
+      // Something changed — pull full data
+      const dataFile = g.files[DATA_FILE];
+      if(dataFile){
+        const data = JSON.parse(dataFile.content);
+        if(Array.isArray(data.issues))   entries = data.issues;
+        if(Array.isArray(data.contacts)) contacts = data.contacts;
+        saveLocal();
+        render(); renderContacts();
+        setSyncStatus('ok');
+        showPollToast();
+      }
+    }
+    lastGistUpdatedAt = updatedAt;
+  } catch(e){ /* silent fail — don't bother user */ }
+}
+
+function showPollToast(){
+  let t = document.getElementById('_polltost');
+  if(!t){
+    t = document.createElement('div');
+    t.id = '_polltost';
+    t.style.cssText = 'position:fixed;bottom:56px;left:50%;transform:translateX(-50%);background:var(--hl-surface);border:1px solid var(--hl-border2);border-left:3px solid #5090d0;color:var(--hl-text);font-size:11px;padding:7px 14px;border-radius:4px;z-index:998;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap';
+    document.body.appendChild(t);
+  }
+  t.innerHTML = '<i class="ti ti-refresh" style="font-size:11px;vertical-align:-1px;margin-right:4px"></i>Updated from another device';
+  t.style.opacity = '1';
+  setTimeout(()=>t.style.opacity='0', 3000);
+}
+
+function startPolling(){
+  stopPolling();
+  pollTimer = setInterval(pollForChanges, POLL_INTERVAL);
+}
+
+function stopPolling(){
+  if(pollTimer){ clearInterval(pollTimer); pollTimer = null; }
+}
+
+// Pause polling while modals are open (user is editing)
+document.addEventListener('DOMContentLoaded', ()=>{
+  ['modal','notifyModal','contactModal','pinModal'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    const observer = new MutationObserver(()=>{
+      isEditing = el.classList.contains('open');
+    });
+    observer.observe(el, {attributes:true, attributeFilter:['class']});
+  });
+});
+
 initApp();
 
 
