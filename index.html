@@ -21,8 +21,6 @@
   --hl-text:#f0f0f0;--hl-text2:#aaaaaa;--hl-text3:#666666;
 }
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--hl-bg);color:var(--hl-text);min-height:100vh}
-
-/* ── SETUP / PIN SCREENS ── */
 .screen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem}
 .screen.active{display:flex}
 .card{background:var(--hl-surface);border:1px solid var(--hl-border2);border-top:2px solid var(--hl-red);border-radius:6px;padding:2rem;width:100%;max-width:360px}
@@ -39,8 +37,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .btn-full{width:100%;height:40px;font-size:13px;border:none;border-radius:4px;background:var(--hl-red);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:500;letter-spacing:.03em;margin-top:4px}
 .btn-full:hover{background:var(--hl-red-hover)}
 .btn-full:disabled{opacity:.5;cursor:not-allowed}
-
-/* PIN pad */
 .pin-dots{display:flex;justify-content:center;gap:10px;margin-bottom:1rem}
 .pin-dot{width:13px;height:13px;border-radius:50%;border:2px solid var(--hl-border2);transition:all .15s}
 .pin-dot.filled{background:var(--hl-red);border-color:var(--hl-red)}
@@ -52,8 +48,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .pin-key.pin-blank{visibility:hidden}
 .pin-error{font-size:12px;color:#cc4444;min-height:18px;margin-bottom:.5rem;text-align:center}
 .pin-loading{font-size:11px;color:var(--hl-text3);text-align:center;min-height:18px;margin-top:.5rem}
-
-/* ── APP ── */
 #app{display:none}
 .header{padding:1rem 1.25rem .9rem;border-bottom:1px solid var(--hl-border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .header-left{display:flex;align-items:center;gap:12px}
@@ -62,8 +56,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .header p{font-size:11px;color:var(--hl-text3);margin-top:1px}
 .header-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .sync-status{font-size:10px;color:var(--hl-text3);display:flex;align-items:center;gap:4px;padding:0 2px}
-.tab-bar{display:flex;border-bottom:1px solid var(--hl-border);padding:0 1.25rem}
-.tab{padding:9px 14px;font-size:12px;cursor:pointer;color:var(--hl-text3);border-bottom:2px solid transparent;margin-bottom:-1px;letter-spacing:.04em;text-transform:uppercase;user-select:none}
+.tab-bar{display:flex;border-bottom:1px solid var(--hl-border);padding:0 1.25rem;overflow-x:auto}
+.tab{padding:9px 14px;font-size:12px;cursor:pointer;color:var(--hl-text3);border-bottom:2px solid transparent;margin-bottom:-1px;letter-spacing:.04em;text-transform:uppercase;user-select:none;white-space:nowrap}
 .tab.active{color:var(--hl-text);border-bottom-color:var(--hl-red)}
 .tab:hover:not(.active){color:var(--hl-text2)}
 .section{display:none}.section.active{display:block}
@@ -154,6 +148,29 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .toast.show{opacity:1}
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 .spin{animation:spin 1s linear infinite;display:inline-block}
+
+/* ── QUEUE ORDER TAB ── */
+.queue-pad{padding:1rem 1.25rem 1.5rem}
+.queue-info{font-size:12px;color:var(--hl-text2);margin-bottom:1rem;padding:10px 14px;background:var(--hl-surface);border:1px solid var(--hl-border);border-radius:4px;line-height:1.6}
+.queue-list-drag{display:flex;flex-direction:column;gap:6px}
+.queue-drag-item{display:flex;align-items:center;gap:10px;background:var(--hl-surface);border:1px solid var(--hl-border);border-radius:4px;padding:10px 12px;cursor:grab;user-select:none;transition:background .1s,border-color .1s,opacity .1s}
+.queue-drag-item:active{cursor:grabbing}
+.queue-drag-item.dragging{opacity:.4;border-color:var(--hl-red)}
+.queue-drag-item.drag-over{border-color:var(--hl-red);background:rgba(204,34,34,.07)}
+.queue-drag-item.status-waiting{opacity:.55;cursor:default}
+.queue-position{width:26px;height:26px;border-radius:50%;background:var(--hl-red);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.queue-position.waiting-pos{background:var(--hl-border2);color:var(--hl-text3)}
+.queue-drag-handle{color:var(--hl-text3);font-size:16px;flex-shrink:0;display:flex;align-items:center}
+.queue-item-apn{font-size:13px;font-weight:600;font-family:monospace;color:var(--hl-text)}
+.queue-item-detail{font-size:11px;color:var(--hl-text3);margin-top:1px}
+.queue-item-right{margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.queue-arrows{display:flex;flex-direction:column;gap:2px}
+.queue-arrow{width:24px;height:20px;border:1px solid var(--hl-border2);border-radius:3px;background:var(--hl-surface2);color:var(--hl-text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px}
+.queue-arrow:hover{background:var(--hl-border);color:var(--hl-text)}
+.queue-arrow:disabled{opacity:.3;cursor:not-allowed}
+.queue-save-bar{display:flex;align-items:center;justify-content:space-between;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--hl-border);gap:8px;flex-wrap:wrap}
+.queue-empty{text-align:center;padding:2rem 1rem;color:var(--hl-text3);font-size:13px}
+
 @media(min-width:600px){
   .card-list{display:none}
   .desktop-table{display:block}
@@ -165,7 +182,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </head>
 <body>
 
-<!-- SETUP SCREEN (first visit on new device) -->
 <div class="screen" id="setupScreen">
   <div class="card">
     <div class="card-logo">H&L</div>
@@ -181,7 +197,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
-<!-- PIN SCREEN -->
 <div class="screen" id="pinScreen">
   <div class="card" style="max-width:320px;text-align:center">
     <div class="card-logo">H&L</div>
@@ -207,7 +222,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
-<!-- MAIN APP -->
 <div id="app">
   <div class="header">
     <div class="header-left">
@@ -227,9 +241,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
   <div class="tab-bar">
     <div class="tab active" onclick="switchTab('log')">Issue log</div>
+    <div class="tab" onclick="switchTab('queue')"><i class="ti ti-list-numbers" style="font-size:12px;margin-right:4px;vertical-align:-1px"></i>Queue Order</div>
     <div class="tab" onclick="switchTab('contacts')"><i class="ti ti-address-book" style="font-size:12px;margin-right:4px;vertical-align:-1px"></i>Contacts</div>
   </div>
 
+  <!-- ISSUE LOG TAB -->
   <div id="tab-log" class="section active">
     <div class="toolbar">
       <input type="search" id="searchInput" placeholder="Search applicator, terminal, issue…" oninput="render()">
@@ -260,6 +276,24 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     </div>
   </div>
 
+  <!-- QUEUE ORDER TAB -->
+  <div id="tab-queue" class="section">
+    <div class="queue-pad">
+      <div class="queue-info">
+        <strong style="color:var(--hl-text)"><i class="ti ti-drag-drop" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>Drag to reorder</strong> — or use the arrows on mobile.<br>
+        This order is shown to technicians as their estimated wait time on the ticket page.<br>
+        <span style="color:var(--hl-text3)">Waiting on Parts items are shown grayed out and excluded from ETA calculations.</span>
+      </div>
+      <div class="queue-list-drag" id="queueDragList"></div>
+      <div class="queue-empty" id="queueEmpty" style="display:none"><i class="ti ti-check" style="font-size:26px;display:block;margin-bottom:6px;color:#50a870"></i>No open items in the queue</div>
+      <div class="queue-save-bar" id="queueSaveBar" style="display:none">
+        <span style="font-size:12px;color:var(--hl-text3)" id="queueSaveHint">Drag items to set your work order</span>
+        <button class="btn btn-red" onclick="saveQueueOrder()"><i class="ti ti-device-floppy"></i> Save Order</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTACTS TAB -->
   <div id="tab-contacts" class="section">
     <div class="contacts-pad" style="padding:0 1.25rem 1.5rem">
       <div style="display:flex;align-items:center;justify-content:space-between;padding:.75rem 0;border-bottom:1px solid var(--hl-border);margin-bottom:.75rem;gap:8px">
@@ -272,7 +306,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
-<!-- Issue modal -->
+<!-- Modals (unchanged) -->
 <div class="modal-overlay" id="modal">
   <div class="modal">
     <h2 id="modalTitle">Log Applicator Issue</h2>
@@ -296,7 +330,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
-<!-- Notify modal -->
 <div class="modal-overlay" id="notifyModal">
   <div class="modal">
     <h2>Repair Complete — Notify</h2>
@@ -314,7 +347,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
-<!-- Contact modal -->
 <div class="modal-overlay" id="contactModal">
   <div class="modal">
     <h2 id="contactModalTitle">Add Contact</h2>
@@ -329,7 +361,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
-<!-- Change PIN modal -->
 <div class="modal-overlay" id="pinModal">
   <div class="modal" style="max-width:340px">
     <h2>Change PIN</h2>
@@ -344,19 +375,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="toast" id="toast"></div>
 
 <script>
-// ── CONSTANTS ──
 const DATA_FILE = 'hl_applicator_data.json';
 const META_FILE = 'hl_applicator_meta.json';
+const QUEUE_FILE = 'hl_queue_order.json';
 const INACTIVITY = 30 * 60 * 1000;
 
-// ── STATE ──
 let entries = [], contacts = [], gistId = null;
+let queueOrder = []; // array of entry IDs in work order
 let editId = null, editCId = null, notifyId = null;
 let selectedRecipients = new Set();
 let pinBuffer = '', pinMode = 'unlock', pinSetupFirst = '';
 let inactivityTimer = null;
+let dragSrcIndex = null;
 
-// ── HELPERS ──
 const $ = id => document.getElementById(id);
 function toast(msg, color='#50a870'){
   const t=$('toast'); t.textContent=msg; t.style.borderLeftColor=color;
@@ -371,21 +402,14 @@ function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){}}
 function lsDel(k){ try{ localStorage.removeItem(k); }catch(e){}}
 function getToken(){ return lsGet('hl_token'); }
 
-// ── SCREEN MANAGEMENT ──
 function showScreen(id){
   ['setupScreen','pinScreen'].forEach(s=>$(s).classList.remove('active'));
   $('app').style.display='none';
   if(id==='app'){ $('app').style.display='block'; }
   else{ $(id).classList.add('active'); }
 }
-function showSetup(){
-  lockApp(true);
-  $('setupToken').value='';
-  $('setupErr').textContent='';
-  showScreen('setupScreen');
-}
+function showSetup(){ lockApp(true); $('setupToken').value=''; $('setupErr').textContent=''; showScreen('setupScreen'); }
 
-// ── SETUP (token entry) ──
 async function doSetup(){
   const token=$('setupToken').value.trim();
   $('setupErr').textContent='';
@@ -393,14 +417,11 @@ async function doSetup(){
   const btn=document.querySelector('#setupScreen .btn-full');
   btn.disabled=true; btn.innerHTML='<i class="ti ti-loader spin"></i> Connecting…';
   try{
-    // verify token works by listing gists
     const r=await fetch('https://api.github.com/gists?per_page=1',{headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}});
     if(!r.ok) throw new Error('Token invalid or no gist access ('+r.status+')');
     lsSet('hl_token',token);
-    // now go to PIN screen
     btn.disabled=false; btn.innerHTML='<i class="ti ti-plug-connected"></i> Connect';
     showScreen('pinScreen');
-    // check if PIN already set in gist
     await initPinScreen();
   }catch(e){
     btn.disabled=false; btn.innerHTML='<i class="ti ti-plug-connected"></i> Connect';
@@ -408,13 +429,11 @@ async function doSetup(){
   }
 }
 
-// ── GIST API ──
 async function gistAPI(method, path, body){
   const token=getToken();
   if(!token) throw new Error('No token');
   const r=await fetch('https://api.github.com/'+path,{
-    method,
-    headers:{'Authorization':'token '+token,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},
+    method, headers:{'Authorization':'token '+token,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},
     body:body?JSON.stringify(body):undefined
   });
   if(!r.ok) throw new Error('GitHub '+r.status);
@@ -430,7 +449,11 @@ async function ensureGist(){
   if(found){ gistId=found.id; lsSet('hl_gist_id',gistId); return gistId; }
   const created=await gistAPI('POST','gists',{
     description:'H&L Applicator Issue Log',public:false,
-    files:{[DATA_FILE]:{content:JSON.stringify({issues:[],contacts:[]},null,2)},[META_FILE]:{content:JSON.stringify({pinHash:null},null,2)}}
+    files:{
+      [DATA_FILE]:{content:JSON.stringify({issues:[],contacts:[]},null,2)},
+      [META_FILE]:{content:JSON.stringify({pinHash:null},null,2)},
+      [QUEUE_FILE]:{content:JSON.stringify([],null,2)}
+    }
   });
   gistId=created.id; lsSet('hl_gist_id',gistId); return gistId;
 }
@@ -440,7 +463,8 @@ async function readGist(){
   const g=await gistAPI('GET','gists/'+id);
   const data=g.files[DATA_FILE]?JSON.parse(g.files[DATA_FILE].content):{issues:[],contacts:[]};
   const meta=g.files[META_FILE]?JSON.parse(g.files[META_FILE].content):{pinHash:null};
-  return{data,meta};
+  const queue=g.files[QUEUE_FILE]?JSON.parse(g.files[QUEUE_FILE].content):[];
+  return{data,meta,queue};
 }
 
 async function writeGist(files){
@@ -454,12 +478,16 @@ async function pushData(silent=true){
     await writeGist({[DATA_FILE]:{content:JSON.stringify({issues:entries,contacts:contacts},null,2)}});
     saveLocal(); setSyncStatus('ok');
     if(!silent) toast('Synced to GitHub');
-  }catch(e){ setSyncStatus('error'); if(!silent) toast('Sync failed — check connection','#cc4444'); console.error(e); }
+  }catch(e){ setSyncStatus('error'); if(!silent) toast('Sync failed — check connection','#cc4444'); }
 }
 
 async function pushMeta(pinHash){
-  try{ await writeGist({[META_FILE]:{content:JSON.stringify({pinHash},null,2)}}); }
-  catch(e){ console.error('meta push failed',e); }
+  try{ await writeGist({[META_FILE]:{content:JSON.stringify({pinHash},null,2)}}); }catch(e){}
+}
+
+async function pushQueueOrder(){
+  try{ await writeGist({[QUEUE_FILE]:{content:JSON.stringify(queueOrder,null,2)}}); }
+  catch(e){ toast('Could not save queue order','#cc4444'); }
 }
 
 function setSyncStatus(s){
@@ -470,7 +498,6 @@ function setSyncStatus(s){
   else el.innerHTML='';
 }
 
-// ── LOCAL STORAGE ──
 function saveLocal(){ lsSet('hl_data',JSON.stringify({issues:entries,contacts:contacts})); }
 function loadLocal(){
   try{ const r=lsGet('hl_data'); if(r){ const d=JSON.parse(r); entries=d.issues||[]; contacts=d.contacts||[]; }}catch(e){}
@@ -482,71 +509,31 @@ function updateDots(){
   for(let i=0;i<4;i++){ const d=$('d'+i); d.classList.remove('filled','error'); if(i<pinBuffer.length) d.classList.add('filled'); }
 }
 function dotError(){ for(let i=0;i<4;i++) $('d'+i).classList.add('error'); setTimeout(updateDots,700); }
-
 async function pinKey(k){
   if(pinBuffer.length>=4) return;
   pinBuffer+=k; updateDots(); $('pinError').textContent='';
   if(pinBuffer.length===4) await handlePin();
 }
 function pinDel(){ pinBuffer=pinBuffer.slice(0,-1); updateDots(); }
-
 async function handlePin(){
-  if(pinMode==='setup1'){
-    pinSetupFirst=pinBuffer; pinBuffer=''; updateDots();
-    $('pinTitle').textContent='Confirm PIN'; $('pinSub').textContent='Re-enter your new PIN';
-    pinMode='setup2'; return;
-  }
+  if(pinMode==='setup1'){ pinSetupFirst=pinBuffer; pinBuffer=''; updateDots(); $('pinTitle').textContent='Confirm PIN'; $('pinSub').textContent='Re-enter your new PIN'; pinMode='setup2'; return; }
   if(pinMode==='setup2'){
-    if(pinBuffer!==pinSetupFirst){
-      $('pinError').textContent='PINs do not match — try again';
-      dotError(); pinBuffer=''; pinSetupFirst=''; pinMode='setup1';
-      setTimeout(()=>{ $('pinTitle').textContent='Set a PIN'; $('pinSub').textContent='Choose a 4-digit PIN'; },800);
-      return;
-    }
-    const h=await sha256(pinBuffer);
-    setPinLoading('Saving PIN…');
-    lsSet('hl_pin_hash',h);
-    await pushMeta(h);
-    setPinLoading('');
-    toast('PIN set');
-    await loadFromGist();
-    doUnlock(); return;
+    if(pinBuffer!==pinSetupFirst){ $('pinError').textContent='PINs do not match — try again'; dotError(); pinBuffer=''; pinSetupFirst=''; pinMode='setup1'; setTimeout(()=>{ $('pinTitle').textContent='Set a PIN'; $('pinSub').textContent='Choose a 4-digit PIN'; },800); return; }
+    const h=await sha256(pinBuffer); setPinLoading('Saving PIN…'); lsSet('hl_pin_hash',h); await pushMeta(h); setPinLoading(''); toast('PIN set'); await loadFromGist(); doUnlock(); return;
   }
-  // unlock
   setPinLoading('Checking…');
   const h=await sha256(pinBuffer);
   let storedHash=lsGet('hl_pin_hash');
-  try{
-    const {meta}=await readGist();
-    if(meta.pinHash){ storedHash=meta.pinHash; lsSet('hl_pin_hash',meta.pinHash); }
-  }catch(e){ /* offline */ }
-
-  if(!storedHash){
-    pinSetupFirst=pinBuffer; pinBuffer=''; updateDots();
-    $('pinTitle').textContent='Confirm PIN'; $('pinSub').textContent='Re-enter your new PIN';
-    setPinLoading(''); pinMode='setup2'; return;
-  }
-  if(h===storedHash){
-    setPinLoading('Loading…');
-    await loadFromGist();
-    setPinLoading(''); doUnlock();
-  } else {
-    setPinLoading(''); $('pinError').textContent='Incorrect PIN';
-    dotError(); pinBuffer='';
-  }
+  try{ const {meta}=await readGist(); if(meta.pinHash){ storedHash=meta.pinHash; lsSet('hl_pin_hash',meta.pinHash); } }catch(e){}
+  if(!storedHash){ pinSetupFirst=pinBuffer; pinBuffer=''; updateDots(); $('pinTitle').textContent='Confirm PIN'; $('pinSub').textContent='Re-enter your new PIN'; setPinLoading(''); pinMode='setup2'; return; }
+  if(h===storedHash){ setPinLoading('Loading…'); await loadFromGist(); setPinLoading(''); doUnlock(); }
+  else { setPinLoading(''); $('pinError').textContent='Incorrect PIN'; dotError(); pinBuffer=''; }
 }
 
-
 async function resetPinCache(){
-  setPinLoading('Syncing PIN from Gist…');
-  $('pinError').textContent='';
-  pinBuffer=''; updateDots();
-  try{
-    lsDel('hl_pin_hash');
-    const{meta}=await readGist();
-    if(meta.pinHash){ lsSet('hl_pin_hash',meta.pinHash); setPinLoading('PIN synced — enter your PIN'); }
-    else{ setPinLoading('No PIN set in Gist yet'); }
-  }catch(e){ setPinLoading('Could not reach Gist — check connection'); }
+  setPinLoading('Syncing PIN from Gist…'); $('pinError').textContent=''; pinBuffer=''; updateDots();
+  try{ lsDel('hl_pin_hash'); const{meta}=await readGist(); if(meta.pinHash){ lsSet('hl_pin_hash',meta.pinHash); setPinLoading('PIN synced — enter your PIN'); } else{ setPinLoading('No PIN set in Gist yet'); } }
+  catch(e){ setPinLoading('Could not reach Gist — check connection'); }
   setTimeout(()=>setPinLoading(''),3000);
 }
 
@@ -558,16 +545,11 @@ async function loadFromGist(){
     const g=await r.json();
     lastGistUpdatedAt = g.updated_at;
     const dataFile=g.files[DATA_FILE];
-    if(dataFile){
-      const data=JSON.parse(dataFile.content);
-      if(Array.isArray(data.issues))   entries=data.issues;
-      if(Array.isArray(data.contacts)) contacts=data.contacts;
-    }
+    if(dataFile){ const data=JSON.parse(dataFile.content); if(Array.isArray(data.issues)) entries=data.issues; if(Array.isArray(data.contacts)) contacts=data.contacts; }
     const metaFile=g.files[META_FILE];
-    if(metaFile){
-      const meta=JSON.parse(metaFile.content);
-      if(meta.pinHash){ lsSet('hl_pin_hash',meta.pinHash); }
-    }
+    if(metaFile){ const meta=JSON.parse(metaFile.content); if(meta.pinHash) lsSet('hl_pin_hash',meta.pinHash); }
+    const queueFile=g.files[QUEUE_FILE];
+    if(queueFile){ queueOrder=JSON.parse(queueFile.content)||[]; }
     saveLocal();
   }catch(e){ loadLocal(); }
 }
@@ -575,53 +557,38 @@ async function loadFromGist(){
 async function initPinScreen(){
   const storedHash=lsGet('hl_pin_hash');
   if(!storedHash){
-    // check gist for existing hash
-    try{
-      setPinLoading('Connecting…');
-      const{meta}=await readGist();
-      if(meta.pinHash){ lsSet('hl_pin_hash',meta.pinHash); setPinLoading(''); pinMode='unlock'; }
-      else{ setPinLoading(''); $('pinTitle').textContent='Set a PIN'; $('pinSub').textContent='Choose a 4-digit PIN to protect this log'; pinMode='setup1'; }
-    }catch(e){ setPinLoading('Offline — enter PIN'); pinMode='unlock'; }
+    try{ setPinLoading('Connecting…'); const{meta}=await readGist(); if(meta.pinHash){ lsSet('hl_pin_hash',meta.pinHash); setPinLoading(''); pinMode='unlock'; } else{ setPinLoading(''); $('pinTitle').textContent='Set a PIN'; $('pinSub').textContent='Choose a 4-digit PIN to protect this log'; pinMode='setup1'; } }
+    catch(e){ setPinLoading('Offline — enter PIN'); pinMode='unlock'; }
   } else { pinMode='unlock'; }
 }
 
 function resetInactivity(){ clearTimeout(inactivityTimer); inactivityTimer=setTimeout(lockApp,INACTIVITY); }
-
 function doUnlock(){
   sessionStorage.setItem('hl_s','1');
   showScreen('app'); resetInactivity();
   ['mousemove','keydown','click','touchstart'].forEach(e=>document.addEventListener(e,resetInactivity,{passive:true}));
-  render(); renderContacts(); setSyncStatus('ok');
-  checkQRParams();
-  startPolling();
+  render(); renderContacts(); renderQueueTab(); setSyncStatus('ok');
+  checkQRParams(); startPolling();
 }
-
 function lockApp(silent=false){
-  clearTimeout(inactivityTimer);
-  stopPolling();
-  sessionStorage.removeItem('hl_s');
-  showScreen('pinScreen');
-  pinBuffer=''; updateDots();
+  clearTimeout(inactivityTimer); stopPolling(); sessionStorage.removeItem('hl_s');
+  showScreen('pinScreen'); pinBuffer=''; updateDots();
   $('pinTitle').textContent='Enter PIN'; $('pinSub').textContent='H&L Applicator Issue Log';
   $('pinError').textContent=''; setPinLoading(''); pinMode='unlock';
 }
 
-// ── INIT ──
 async function initApp(){
   const token=getToken();
   if(!token){ showScreen('setupScreen'); return; }
-  // token exists — go to PIN
   showScreen('pinScreen');
   if(sessionStorage.getItem('hl_s')==='1'){
-    // already unlocked this session — load local and go straight in
     loadLocal(); doUnlock();
-    loadFromGist().then(()=>{ render(); renderContacts(); setSyncStatus('ok'); }).catch(()=>{});
+    loadFromGist().then(()=>{ render(); renderContacts(); renderQueueTab(); setSyncStatus('ok'); }).catch(()=>{});
     return;
   }
   await initPinScreen();
 }
 
-// ── EXPORT / IMPORT ──
 function exportJSON(){
   const blob=new Blob([JSON.stringify({exported:new Date().toISOString(),version:1,issues:entries,contacts:contacts},null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
@@ -638,13 +605,12 @@ function importJSON(evt){
       if(!d.issues&&!d.contacts) throw 0;
       const ni=Array.isArray(d.issues)?d.issues:[], nc=Array.isArray(d.contacts)?d.contacts:[];
       if(!confirm(`Import ${ni.length} issues and ${nc.length} contacts?\nThis replaces current data.`)) return;
-      entries=ni; contacts=nc; saveLocal(); render(); renderContacts(); pushData(false);
+      entries=ni; contacts=nc; saveLocal(); render(); renderContacts(); renderQueueTab(); pushData(false);
     }catch(e){ alert('Not a valid HL Applicator Log JSON file.'); }
   };
   r.readAsText(f);
 }
 
-// ── CHANGE PIN ──
 function openChangePIN(){ $('pmCurrent').value=''; $('pmNew').value=''; $('pmConfirm').value=''; $('pinModalErr').textContent=''; $('pinModal').classList.add('open'); }
 function closePINModal(){ $('pinModal').classList.remove('open'); }
 async function savePIN(){
@@ -657,12 +623,136 @@ async function savePIN(){
   closePINModal(); toast('PIN updated on all devices');
 }
 
+// ── QUEUE ORDER TAB ──
+function getActiveQueue(){
+  // Active = open or inprog (not waiting, not done)
+  const active = entries.filter(e => e.status==='open'||e.status==='inprog');
+  const waiting = entries.filter(e => e.status==='waiting');
+
+  // Sort active by queueOrder if set, otherwise by date
+  const ordered = [];
+  const remaining = [...active];
+
+  // First place items that are in queueOrder in order
+  queueOrder.forEach(id => {
+    const idx = remaining.findIndex(e => e.id === id);
+    if(idx !== -1){ ordered.push(remaining.splice(idx,1)[0]); }
+  });
+  // Append any remaining active items not in queueOrder yet
+  remaining.forEach(e => ordered.push(e));
+
+  return { ordered, waiting };
+}
+
+function renderQueueTab(){
+  const list = $('queueDragList');
+  const empty = $('queueEmpty');
+  const saveBar = $('queueSaveBar');
+  const { ordered, waiting } = getActiveQueue();
+  const all = [...ordered, ...waiting];
+
+  if(!all.length){ list.innerHTML=''; empty.style.display='block'; saveBar.style.display='none'; return; }
+  empty.style.display='none'; saveBar.style.display='flex';
+
+  list.innerHTML = '';
+  ordered.forEach((e,i) => list.appendChild(makeQueueItem(e,i,ordered.length,false)));
+  if(waiting.length){
+    const divider = document.createElement('div');
+    divider.style.cssText='font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--hl-text3);padding:8px 4px 4px;margin-top:4px';
+    divider.textContent='Waiting on Parts — excluded from ETA';
+    list.appendChild(divider);
+    waiting.forEach(e => list.appendChild(makeQueueItem(e,null,0,true)));
+  }
+}
+
+function makeQueueItem(e, pos, total, isWaiting){
+  const el = document.createElement('div');
+  el.className = 'queue-drag-item' + (isWaiting?' status-waiting':'');
+  el.dataset.id = e.id;
+
+  const posEl = isWaiting
+    ? `<div class="queue-position waiting-pos"><i class="ti ti-pause" style="font-size:10px"></i></div>`
+    : `<div class="queue-position">${pos+1}</div>`;
+
+  const detail = [e.press, e.terminal, e.wire].filter(Boolean).join(' · ') || e.issue.slice(0,40);
+  const tkt = e.ticketNum ? `<span style="font-size:9px;color:#5090d0;font-family:monospace;margin-left:6px">${e.ticketNum}</span>` : '';
+
+  el.innerHTML = `
+    <div class="queue-drag-handle"><i class="ti ti-grip-vertical"></i></div>
+    ${posEl}
+    <div style="flex:1;min-width:0">
+      <div style="display:flex;align-items:center;gap:4px">
+        <span class="queue-item-apn">${e.apn}</span>${tkt}
+      </div>
+      <div class="queue-item-detail">${detail}</div>
+    </div>
+    <div class="queue-item-right">
+      ${!isWaiting ? `<div class="queue-arrows">
+        <button class="queue-arrow" onclick="moveQueueItem(${e.id},-1)" ${pos===0?'disabled':''}><i class="ti ti-chevron-up" style="font-size:10px"></i></button>
+        <button class="queue-arrow" onclick="moveQueueItem(${e.id},1)" ${pos===total-1?'disabled':''}><i class="ti ti-chevron-down" style="font-size:10px"></i></button>
+      </div>` : ''}
+      <span class="badge badge-${e.status==='inprog'?'inprog':'open'}">${e.status==='inprog'?'In Progress':'Open'}</span>
+    </div>`;
+
+  if(!isWaiting){
+    // Drag events
+    el.draggable = true;
+    el.addEventListener('dragstart', ev => { dragSrcIndex=pos; el.classList.add('dragging'); ev.dataTransfer.effectAllowed='move'; });
+    el.addEventListener('dragend',   ev => { el.classList.remove('dragging'); document.querySelectorAll('.queue-drag-item').forEach(x=>x.classList.remove('drag-over')); });
+    el.addEventListener('dragover',  ev => { ev.preventDefault(); ev.dataTransfer.dropEffect='move'; el.classList.add('drag-over'); });
+    el.addEventListener('dragleave', ev => el.classList.remove('drag-over'));
+    el.addEventListener('drop',      ev => {
+      ev.preventDefault(); el.classList.remove('drag-over');
+      const { ordered } = getActiveQueue();
+      const toIndex = parseInt(el.dataset.pos || pos);
+      if(dragSrcIndex===null||dragSrcIndex===pos) return;
+      const ids = ordered.map(e=>e.id);
+      const [moved] = ids.splice(dragSrcIndex,1);
+      ids.splice(pos,0,moved);
+      queueOrder = ids;
+      $('queueSaveHint').textContent = 'Order changed — click Save Order to apply';
+      $('queueSaveHint').style.color = '#d4a030';
+      renderQueueTab();
+    });
+  }
+  return el;
+}
+
+function moveQueueItem(id, dir){
+  const { ordered } = getActiveQueue();
+  const ids = ordered.map(e=>e.id);
+  const idx = ids.indexOf(id);
+  if(idx===-1) return;
+  const newIdx = idx+dir;
+  if(newIdx<0||newIdx>=ids.length) return;
+  [ids[idx],ids[newIdx]]=[ids[newIdx],ids[idx]];
+  queueOrder = ids;
+  $('queueSaveHint').textContent = 'Order changed — click Save Order to apply';
+  $('queueSaveHint').style.color = '#d4a030';
+  renderQueueTab();
+}
+
+async function saveQueueOrder(){
+  const { ordered } = getActiveQueue();
+  queueOrder = ordered.map(e=>e.id);
+  setSyncStatus('syncing');
+  try{
+    await pushQueueOrder();
+    setSyncStatus('ok');
+    toast('Queue order saved');
+    $('queueSaveHint').textContent = 'Drag items to set your work order';
+    $('queueSaveHint').style.color = '';
+    renderQueueTab(); // re-render to confirm positions
+  }catch(e){ setSyncStatus('error'); }
+}
+
 // ── RENDER ──
 function switchTab(t){
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));
   document.querySelector(`.tab[onclick="switchTab('${t}')"]`).classList.add('active');
   $('tab-'+t).classList.add('active');
+  if(t==='queue') renderQueueTab();
 }
 function days(ts){ return Math.round((Date.now()-ts)/86400000); }
 function badge(s){
@@ -772,24 +862,26 @@ function closeModal(){ $('modal').classList.remove('open'); editId=null; }
 function saveEntry(){
   const apn=$('fApn').value.trim(), issue=$('fIssue').value.trim();
   if(!apn||!issue){ alert('Applicator # and issue description are required.'); return; }
-
-  // Preserve ticket fields that aren't in the edit form
   const existing = editId ? entries.find(e=>e.id===editId) : null;
   const entry={
     id:editId||Date.now(), apn, press:$('fPress').value.trim(),
     terminal:$('fTerminal').value.trim(), wire:$('fWire').value.trim(),
     issue, notes:$('fNotes').value.trim(), status:$('fStatus').value,
     by:$('fBy').value.trim(), date:existing?existing.date:Date.now(),
-    // carry over ticket fields if they exist
-    ...(existing?.ticketNum    && {ticketNum:    existing.ticketNum}),
-    ...(existing?.submittedBy  && {submittedBy:  existing.submittedBy}),
-    ...(existing?.priority     && {priority:     existing.priority}),
+    ...(existing?.ticketNum   && {ticketNum:   existing.ticketNum}),
+    ...(existing?.submittedBy && {submittedBy: existing.submittedBy}),
+    ...(existing?.priority    && {priority:    existing.priority}),
   };
   if(editId){const i=entries.findIndex(e=>e.id===editId);entries[i]=entry;} else entries.unshift(entry);
-  closeModal(); render(); pushData(true);
+  closeModal(); render(); renderQueueTab(); pushData(true);
 }
 function editEntry(id){ openModal(id); }
-function delEntry(id){ if(!confirm('Remove this entry?')) return; entries=entries.filter(e=>e.id!==id); render(); pushData(true); }
+function delEntry(id){
+  if(!confirm('Remove this entry?')) return;
+  entries=entries.filter(e=>e.id!==id);
+  queueOrder=queueOrder.filter(qid=>qid!==id);
+  render(); renderQueueTab(); pushData(true); pushQueueOrder();
+}
 
 function toggleRecipient(id){
   if(selectedRecipients.has(id)) selectedRecipients.delete(id); else selectedRecipients.add(id);
@@ -812,10 +904,7 @@ function openNotify(id){
   $('notifyModal').classList.add('open');
 }
 function closeNotifyModal(){ $('notifyModal').classList.remove('open'); notifyId=null; }
-function getGreeting(){
-  const h=new Date().getHours();
-  return h<12?'Good morning':h<17?'Good afternoon':'Good evening';
-}
+function getGreeting(){ const h=new Date().getHours(); return h<12?'Good morning':h<17?'Good afternoon':'Good evening'; }
 function sendNotify(){
   const e=entries.find(x=>x.id===notifyId);
   if(!selectedRecipients.size){ alert('Select at least one recipient.'); return; }
@@ -824,16 +913,13 @@ function sendNotify(){
   const note=$('notifyNote').value.trim();
   const firstNames=recipientContacts.map(c=>c.name.split(' ')[0]);
   const salutation=firstNames.length===1?firstNames[0]:firstNames.length===2?firstNames.join(' & '):'All';
-
-  // Status-based message and subject
-  const statusMessages = {
-    done:    { subject: `Applicator ${e.apn} — Repair Complete`,          line: `has been repaired and is ready to return to production.` },
-    inprog:  { subject: `Applicator ${e.apn} — Repair In Progress`,        line: `is currently being repaired and is not yet available for production.` },
-    waiting: { subject: `Applicator ${e.apn} — Waiting on Parts`,          line: `is on hold — we are waiting on parts before the repair can be completed.` },
-    open:    { subject: `Applicator ${e.apn} — Issue Logged`,              line: `has been pulled from production and logged for repair. We will provide updates as work progresses.` },
+  const statusMessages={
+    done:   {subject:`Applicator ${e.apn} — Repair Complete`,   line:`has been repaired and is ready to return to production.`},
+    inprog: {subject:`Applicator ${e.apn} — Repair In Progress`,line:`is currently being repaired and is not yet available for production.`},
+    waiting:{subject:`Applicator ${e.apn} — Waiting on Parts`,  line:`is on hold — we are waiting on parts before the repair can be completed.`},
+    open:   {subject:`Applicator ${e.apn} — Issue Logged`,      line:`has been pulled from production and logged for repair. We will provide updates as work progresses.`},
   };
-  const sm = statusMessages[e.status] || statusMessages.open;
-
+  const sm=statusMessages[e.status]||statusMessages.open;
   const body=[
     `${getGreeting()}, ${salutation}!`,'',
     `Applicator ${e.apn}${e.press?' ('+e.press+')':''} ${sm.line}`,'',
@@ -844,12 +930,8 @@ function sendNotify(){
     e.notes?`Resolution/Notes: ${e.notes}`:null,
     note?'':null, note?`Additional Note: ${note}`:null,'',
     `Logged by: ${e.by||'—'}`,`Days in shop: ${days(e.date)}`,
-    e.ticketNum?(()=>{
-      const base=window.location.origin+window.location.pathname.replace('index.html','').replace(/\/$/,'');
-      return '\nTrack this ticket: '+base+'/ticket.html?ticket='+e.ticketNum;
-    })():null
+    e.ticketNum?(()=>{ const base=window.location.origin+window.location.pathname.replace('index.html','').replace(/\/$/,''); return '\nTrack this ticket: '+base+'/ticket.html?ticket='+e.ticketNum; })():null
   ].filter(l=>l!==null).join('\n');
-
   window.location.href=`mailto:${to}?subject=${encodeURIComponent(sm.subject)}&body=${encodeURIComponent(body)}`;
   closeNotifyModal();
 }
@@ -883,143 +965,83 @@ function saveContact(){
 function editContact(id){ openContactModal(id); }
 function delContact(id){ if(!confirm('Remove this contact?')) return; contacts=contacts.filter(c=>c.id!==id); renderContacts(); pushData(true); }
 
-// Modals only close via Cancel / Save buttons — clicking outside does nothing
+function shareTicket(id){
+  const e=entries.find(x=>x.id===id);
+  if(!e||!e.ticketNum){ toast('No ticket number on this entry','#cc4444'); return; }
+  const base=window.location.origin+window.location.pathname.replace('index.html','').replace(/\/$/,'');
+  const url=base+'/ticket.html?ticket='+e.ticketNum;
+  navigator.clipboard.writeText(url)
+    .then(()=>toast('Ticket link copied — paste it and send to '+(e.submittedBy||e.by||'them')))
+    .catch(()=>prompt('Copy this link:',url));
+}
 
-// enter key on setup token field
-$('setupToken').addEventListener('keydown',e=>{ if(e.key==='Enter') doSetup(); });
-
-// Physical keyboard / numpad support for PIN screen
-document.addEventListener('keydown', function(e){
-  // Only fire when PIN screen is active and no modal/input is focused
-  const pinActive = document.getElementById('pinScreen').classList.contains('active');
-  if(!pinActive) return;
-  const tag = document.activeElement.tagName;
-  if(tag==='INPUT'||tag==='TEXTAREA') return;
-
-  // 0-9 on main keyboard or numpad
-  if((e.key>='0'&&e.key<='9')||
-     (e.code>='Numpad0'&&e.code<='Numpad9')){
-    const digit = e.key.length===1 ? e.key : e.code.replace('Numpad','');
-    pinKey(digit);
-  }
-  // Backspace or numpad delete
-  if(e.key==='Backspace'||e.key==='Delete') pinDel();
-});
-
-// Read URL params from QR scan and pre-fill the log form after unlock
 function checkQRParams(){
-  const p = new URLSearchParams(window.location.search);
+  const p=new URLSearchParams(window.location.search);
   if(p.get('action')==='log'||p.get('apn')){
     openModal();
-    if(p.get('apn'))      $('fApn').value      = p.get('apn');
-    if(p.get('press'))    $('fPress').value    = p.get('press');
-    if(p.get('terminal')) $('fTerminal').value = p.get('terminal');
-    if(p.get('wire'))     $('fWire').value     = p.get('wire');
-    // focus the issue field so user can start typing right away
-    setTimeout(()=>$('fIssue').focus(), 100);
-    // clean URL so refresh doesn't reopen the form
+    if(p.get('apn'))      $('fApn').value     =p.get('apn');
+    if(p.get('press'))    $('fPress').value   =p.get('press');
+    if(p.get('terminal')) $('fTerminal').value=p.get('terminal');
+    if(p.get('wire'))     $('fWire').value    =p.get('wire');
+    setTimeout(()=>$('fIssue').focus(),100);
     window.history.replaceState({},'',window.location.pathname);
   }
 }
 
-// Patch doUnlock to also check QR params after unlocking
-
-// ── REAL-TIME SYNC POLLING ──
-const POLL_INTERVAL = 30000; // 30 seconds
-let pollTimer = null;
-let lastGistUpdatedAt = null;
-let isEditing = false;
-
-// Track when user is actively editing so we don't interrupt
-function setEditing(state){ isEditing = state; }
+// ── POLLING ──
+const POLL_INTERVAL=30000;
+let pollTimer=null, lastGistUpdatedAt=null, isEditing=false;
 
 async function pollForChanges(){
-  if(!document.getElementById('app').style.display || document.getElementById('app').style.display==='none') return;
-  if(isEditing) return; // don't interrupt active edits
+  if($('app').style.display==='none') return;
+  if(isEditing) return;
   try{
-    const id = await ensureGist();
-    const token = getToken();
-    // Lightweight check — just fetch gist metadata (no full content)
-    const r = await fetch('https://api.github.com/gists/'+id, {
-      headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}
-    });
+    const id=await ensureGist();
+    const token=getToken();
+    const r=await fetch('https://api.github.com/gists/'+id,{headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}});
     if(!r.ok) return;
-    const g = await r.json();
-    const updatedAt = g.updated_at;
-
-    if(lastGistUpdatedAt && updatedAt !== lastGistUpdatedAt){
-      // Something changed — pull full data
-      const dataFile = g.files[DATA_FILE];
-      if(dataFile){
-        const data = JSON.parse(dataFile.content);
-        if(Array.isArray(data.issues))   entries = data.issues;
-        if(Array.isArray(data.contacts)) contacts = data.contacts;
-        saveLocal();
-        render(); renderContacts();
-        setSyncStatus('ok');
-        showPollToast();
-      }
+    const g=await r.json();
+    if(lastGistUpdatedAt&&g.updated_at!==lastGistUpdatedAt){
+      const dataFile=g.files[DATA_FILE];
+      if(dataFile){ const data=JSON.parse(dataFile.content); if(Array.isArray(data.issues)) entries=data.issues; if(Array.isArray(data.contacts)) contacts=data.contacts; saveLocal(); render(); renderContacts(); }
+      const queueFile=g.files[QUEUE_FILE];
+      if(queueFile){ queueOrder=JSON.parse(queueFile.content)||[]; renderQueueTab(); }
+      setSyncStatus('ok'); showPollToast();
     }
-    lastGistUpdatedAt = updatedAt;
-  } catch(e){ /* silent fail — don't bother user */ }
+    lastGistUpdatedAt=g.updated_at;
+  }catch(e){}
 }
-
 function showPollToast(){
-  let t = document.getElementById('_polltost');
-  if(!t){
-    t = document.createElement('div');
-    t.id = '_polltost';
-    t.style.cssText = 'position:fixed;bottom:56px;left:50%;transform:translateX(-50%);background:var(--hl-surface);border:1px solid var(--hl-border2);border-left:3px solid #5090d0;color:var(--hl-text);font-size:11px;padding:7px 14px;border-radius:4px;z-index:998;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap';
-    document.body.appendChild(t);
-  }
-  t.innerHTML = '<i class="ti ti-refresh" style="font-size:11px;vertical-align:-1px;margin-right:4px"></i>Updated from another device';
-  t.style.opacity = '1';
-  setTimeout(()=>t.style.opacity='0', 3000);
+  let t=document.getElementById('_polltost');
+  if(!t){ t=document.createElement('div'); t.id='_polltost'; t.style.cssText='position:fixed;bottom:56px;left:50%;transform:translateX(-50%);background:var(--hl-surface);border:1px solid var(--hl-border2);border-left:3px solid #5090d0;color:var(--hl-text);font-size:11px;padding:7px 14px;border-radius:4px;z-index:998;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap'; document.body.appendChild(t); }
+  t.innerHTML='<i class="ti ti-refresh" style="font-size:11px;vertical-align:-1px;margin-right:4px"></i>Updated from another device';
+  t.style.opacity='1'; setTimeout(()=>t.style.opacity='0',3000);
 }
-
-function startPolling(){
-  stopPolling();
-  pollTimer = setInterval(pollForChanges, POLL_INTERVAL);
-}
-
-function stopPolling(){
-  if(pollTimer){ clearInterval(pollTimer); pollTimer = null; }
-}
-
-// Pause polling while modals are open (user is editing)
-document.addEventListener('DOMContentLoaded', ()=>{
+function startPolling(){ stopPolling(); pollTimer=setInterval(pollForChanges,POLL_INTERVAL); }
+function stopPolling(){ if(pollTimer){ clearInterval(pollTimer); pollTimer=null; } }
+document.addEventListener('DOMContentLoaded',()=>{
   ['modal','notifyModal','contactModal','pinModal'].forEach(id=>{
-    const el = document.getElementById(id);
-    if(!el) return;
-    const observer = new MutationObserver(()=>{
-      isEditing = el.classList.contains('open');
-    });
-    observer.observe(el, {attributes:true, attributeFilter:['class']});
+    const el=document.getElementById(id); if(!el) return;
+    new MutationObserver(()=>{ isEditing=el.classList.contains('open'); }).observe(el,{attributes:true,attributeFilter:['class']});
   });
 });
 
-
-function shareTicket(id){
-  const e = entries.find(x=>x.id===id);
-  if(!e||!e.ticketNum){ toast('No ticket number on this entry','#cc4444'); return; }
-  const base = window.location.origin + window.location.pathname.replace('index.html','').replace(/\/$/,'');
-  const url = base + '/ticket.html?ticket=' + e.ticketNum;
-  navigator.clipboard.writeText(url)
-    .then(()=>toast('Ticket link copied — paste it and send to ' + (e.submittedBy||e.by||'them')))
-    .catch(()=>prompt('Copy this link:', url));
-}
+$('setupToken').addEventListener('keydown',e=>{ if(e.key==='Enter') doSetup(); });
+document.addEventListener('keydown',function(e){
+  const pinActive=document.getElementById('pinScreen').classList.contains('active');
+  if(!pinActive) return;
+  const tag=document.activeElement.tagName;
+  if(tag==='INPUT'||tag==='TEXTAREA') return;
+  if((e.key>='0'&&e.key<='9')||(e.code>='Numpad0'&&e.code<='Numpad9')){ const digit=e.key.length===1?e.key:e.code.replace('Numpad',''); pinKey(digit); }
+  if(e.key==='Backspace'||e.key==='Delete') pinDel();
+});
 
 initApp();
-
-
 </script>
-
 <script>
 if('serviceWorker' in navigator){
-  window.addEventListener('load', ()=>{
-    navigator.serviceWorker.register('sw.js')
-      .then(r=>console.log('SW registered:', r.scope))
-      .catch(e=>console.log('SW failed:', e));
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js').then(r=>console.log('SW registered:',r.scope)).catch(e=>console.log('SW failed:',e));
   });
 }
 </script>
