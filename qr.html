@@ -198,6 +198,11 @@ function buildURL(item){
   return base + '?' + p.toString();
 }
 
+// ZPL-safe version: & must be %26 or ZPL field parser breaks
+function buildURLforZPL(item){
+  return buildURL(item).replace(/&/g, '%26');
+}
+
 /* ── Queue management ── */
 function addToQueue(){
   const apn = document.getElementById('iApn').value.trim();
@@ -321,7 +326,7 @@ function renderPreviews(){
    ══════════════════════════════════════════════════ */
 
 function buildZPL(item){
-  const url = buildURL(item);
+  const url = buildURLforZPL(item);
 
   // Escape ZPL special chars in text fields
   const esc = s => s.replace(/\\/g,'\\\\').replace(/\^/g,'\\^').replace(/~/g,'\\~');
@@ -377,15 +382,14 @@ function buildZPL(item){
 
   /*
     GK420t @ 203dpi — label 1.957" x 1.177" = 397 x 239 dots
-    Printer feeds portrait (239 wide). ^LL = label length in feed direction.
-    Physical label height = 1.177" = 239 dots — so ^LL239, ^PW397... 
-    BUT printer is feeding the LONG side, so actually:
-      ^PW = 239 (short/width of label)
-      ^LL = 239 (short/height of label — label is nearly square-ish but wide)
-    
-    Confirmed from prints: label is about 239 dots in BOTH directions visible.
-    Use ^LL240 to just fit the label. QR module 3 = ~129 dots. Keep text left,
-    QR right. Text column 0-100, QR column 110-239.
+    Portrait feed: PW=239, LL=240
+
+    Layout matches reference design:
+      [5,  5]  APN large text
+      [5, 55]  Terminal / press / wire subline
+      [3, 78]  Horizontal divider
+      [5, 85]  "Scan to log applicator data"
+      [29,100] QR code module 4, centered
   */
 
   let zpl = `^XA
@@ -393,29 +397,18 @@ function buildZPL(item){
 ^LL240
 ^MD20
 ^LH0,0
+^FO10,18^A0N,44,34^FD${apn}^FS`;
 
-^FO5,5^A0N,14,14^FDH&L MFG^FS
-^FO5,22^A0N,44,34^FD${apn}^FS`;
-
-  if(press){
-    zpl += `\n^FO5,72^A0N,18,18^FD${press}^FS`;
+  // Subline: press  terminal  wire (space-separated to match "3  3  3" style)
+  const subParts = [press, terminal, wire].filter(Boolean);
+  const subLine  = subParts.join('  ');
+  if(subLine){
+    zpl += `\n^FO5,55^A0N,18,18^FD${subLine}^FS`;
   }
 
-  // Vertical divider at x=108
-  zpl += `\n^FO108,3^GB2,152,2^FS`;
-
-  // QR right column — x=112, y=3, module 3 = 129x129 dots fits in 127px wide col
-  zpl += `\n^FO112,3^BQN,2,3,M,7^FDMA,${url}^FS`;
-
-  // Horizontal divider below top section
-  zpl += `\n^FO3,158^GB233,2,2^FS`;
-
-  if(chipLine){
-    zpl += `\n^FO5,164^A0N,16,16^FD${chipLine}^FS`;
-  }
-
-  zpl += `\n^FO5,188^A0N,13,13^FDScan to log -> H&L^FS`;
-
+  zpl += `\n^FO3,78^GB233,2,2^FS`;
+  zpl += `\n^FO5,85^A0N,18,18^FDScan to log applicator data^FS`;
+  zpl += `\n^FO29,100^BQN,2,4,M,7^FDMA,${url}^FS`;
   zpl += `\n^XZ\n`;
   return zpl;
 }
