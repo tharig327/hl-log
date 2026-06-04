@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>H&L Applicator — Submit a Ticket</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --hl-bg:#111111;--hl-surface:#1c1c1c;--hl-surface2:#252525;
+  --hl-border:#333333;--hl-border2:#444444;--hl-red:#cc2222;
+  --hl-red-hover:#e02828;--hl-text:#f0f0f0;--hl-text2:#aaaaaa;--hl-text3:#666666;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--hl-bg);color:var(--hl-text);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:2rem 1rem}
+
+.top{width:100%;max-width:480px;display:flex;align-items:center;gap:10px;margin-bottom:1.75rem}
+.hl-logo{width:36px;height:36px;background:var(--hl-red);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+.top-title{font-size:16px;font-weight:500}
+.top-sub{font-size:11px;color:var(--hl-text3);margin-top:1px}
+
+.tabs{display:flex;width:100%;max-width:480px;border:1px solid var(--hl-border2);border-radius:6px;overflow:hidden;margin-bottom:1.5rem}
+.tab-btn{flex:1;height:40px;border:none;background:var(--hl-surface2);color:var(--hl-text2);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;border-right:1px solid var(--hl-border2);transition:background .1s;letter-spacing:.02em}
+.tab-btn:last-child{border-right:none}
+.tab-btn.active{background:var(--hl-red);color:#fff}
+.tab-btn:hover:not(.active){background:var(--hl-surface);color:var(--hl-text)}
+
+.card{width:100%;max-width:480px;background:var(--hl-surface);border:1px solid var(--hl-border2);border-top:2px solid var(--hl-red);border-radius:6px;padding:1.5rem}
+
+.section{display:none}.section.active{display:block}
+
+.field{margin-bottom:14px}
+.field label{display:block;font-size:10px;color:var(--hl-text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;font-size:14px;padding:10px 12px;border:1px solid var(--hl-border2);border-radius:4px;background:var(--hl-bg);color:var(--hl-text);-webkit-appearance:none;transition:border-color .15s}
+.field input::placeholder,.field textarea::placeholder{color:var(--hl-text3)}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--hl-red)}
+.field select option{background:var(--hl-surface)}
+.field textarea{height:90px;resize:vertical;line-height:1.5}
+.field-hint{font-size:10px;color:var(--hl-text3);margin-top:4px}
+.field-err{font-size:10px;color:#cc4444;margin-top:4px;display:none}
+.field.has-err input,.field.has-err textarea{border-color:#cc4444}
+.field.has-err .field-err{display:block}
+
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+.btn{width:100%;height:44px;border:none;border-radius:5px;font-size:14px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:.02em;touch-action:manipulation}
+.btn-red{background:var(--hl-red);color:#fff}
+.btn-red:hover{background:var(--hl-red-hover)}
+.btn-red:disabled{opacity:.5;cursor:not-allowed}
+.btn-outline{background:transparent;border:1px solid var(--hl-border2);color:var(--hl-text2)}
+.btn-outline:hover{border-color:var(--hl-border);color:var(--hl-text)}
+
+/* Success card */
+.success-icon{width:56px;height:56px;background:rgba(30,120,60,.2);border:1px solid rgba(30,120,60,.4);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;font-size:24px;color:#50a870}
+.ticket-number{background:var(--hl-surface2);border:1px solid var(--hl-border2);border-radius:4px;padding:14px;text-align:center;margin:1rem 0}
+.ticket-number .label{font-size:10px;color:var(--hl-text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px}
+.ticket-number .num{font-size:28px;font-weight:700;font-family:monospace;color:var(--hl-text);letter-spacing:.08em}
+
+/* Status display */
+.status-card{border:1px solid var(--hl-border);border-radius:4px;overflow:hidden;margin-top:1rem}
+.status-header{padding:12px 14px;background:var(--hl-surface2);border-bottom:1px solid var(--hl-border)}
+.status-apn{font-size:16px;font-weight:600;font-family:monospace}
+.status-press{font-size:11px;color:var(--hl-text3);margin-top:2px}
+.status-body{padding:14px}
+.status-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--hl-border)}
+.status-row:last-child{border-bottom:none}
+.status-key{font-size:11px;color:var(--hl-text3);text-transform:uppercase;letter-spacing:.07em}
+.status-val{font-size:13px;color:var(--hl-text);text-align:right;max-width:60%}
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:3px;font-size:11px;font-weight:500;white-space:nowrap;letter-spacing:.04em;text-transform:uppercase}
+.badge-open{background:rgba(180,60,20,.25);color:#e07050;border:1px solid rgba(180,60,20,.4)}
+.badge-inprog{background:rgba(160,120,20,.25);color:#d4a030;border:1px solid rgba(160,120,20,.4)}
+.badge-waiting{background:rgba(20,80,160,.25);color:#5090d0;border:1px solid rgba(20,80,160,.4)}
+.badge-done{background:rgba(30,120,60,.25);color:#50a870;border:1px solid rgba(30,120,60,.4)}
+
+.spinner{width:20px;height:20px;border:2px solid var(--hl-border2);border-top-color:var(--hl-red);border-radius:50%;animation:spin .7s linear infinite;margin:2rem auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.err-box{background:rgba(58,16,16,.3);border:1px solid #552020;border-radius:4px;padding:12px 14px;font-size:13px;color:#e07070;text-align:center;margin-top:1rem}
+
+.footer{margin-top:2rem;font-size:11px;color:var(--hl-text3);text-align:center}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="hl-logo">H&L</div>
+  <div>
+    <div class="top-title">Applicator Issue Tickets</div>
+    <div class="top-sub">Submit a problem or check your ticket status</div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('submit')"><i class="ti ti-clipboard-plus" style="font-size:15px"></i> Submit Ticket</button>
+  <button class="tab-btn" onclick="switchTab('status')"><i class="ti ti-search" style="font-size:15px"></i> Check Status</button>
+</div>
+
+<!-- SUBMIT SECTION -->
+<div class="card">
+  <div class="section active" id="sec-submit">
+    <div class="field" id="f-name">
+      <label>Your Name *</label>
+      <input type="text" id="iName" placeholder="e.g. John Smith" autocomplete="name">
+      <div class="field-err">Please enter your name</div>
+    </div>
+    <div class="row2">
+      <div class="field" id="f-apn">
+        <label>Applicator # *</label>
+        <input type="text" id="iApn" placeholder="T-0000" autocomplete="off" oninput="formatApn(this)">
+        <div class="field-hint">Format: T- followed by 4 digits</div>
+        <div class="field-err" id="apn-err">Must be T- followed by 4 digits (e.g. T-1234)</div>
+      </div>
+      <div class="field">
+        <label>Press / Machine</label>
+        <input type="text" id="iPress" placeholder="e.g. KM-4T #2" autocomplete="off">
+      </div>
+    </div>
+    <div class="field" id="f-issue">
+      <label>Describe the Issue *</label>
+      <textarea id="iIssue" placeholder="Describe what's wrong — crimp height off, blade worn, carrier jammed, feeds skipping…"></textarea>
+      <div class="field-err">Please describe the issue</div>
+    </div>
+    <div class="field">
+      <label>Priority</label>
+      <select id="iPriority">
+        <option value="normal">Normal — can wait for scheduled repair</option>
+        <option value="high">High — affecting production now</option>
+        <option value="urgent">Urgent — line is down</option>
+      </select>
+    </div>
+    <button class="btn btn-red" id="submitBtn" onclick="submitTicket()"><i class="ti ti-send"></i> Submit Ticket</button>
+  </div>
+
+  <!-- SUCCESS -->
+  <div class="section" id="sec-success">
+    <div style="text-align:center;padding:.5rem 0">
+      <div class="success-icon"><i class="ti ti-check"></i></div>
+      <div style="font-size:16px;font-weight:500;margin-bottom:6px">Ticket Submitted!</div>
+      <div style="font-size:13px;color:var(--hl-text2)">Your issue has been logged. Save your ticket number to check the status later.</div>
+    </div>
+    <div class="ticket-number">
+      <div class="label">Your Ticket Number</div>
+      <div class="num" id="successTktNum"></div>
+    </div>
+    <div style="font-size:12px;color:var(--hl-text3);text-align:center;margin-bottom:1.25rem">
+      Use this number under <strong style="color:var(--hl-text2)">Check Status</strong> to track your repair progress.
+    </div>
+    <button class="btn btn-outline" onclick="resetSubmit()"><i class="ti ti-plus"></i> Submit Another Ticket</button>
+  </div>
+
+  <!-- STATUS SECTION -->
+  <div class="section" id="sec-status">
+    <div class="field">
+      <label>Ticket Number</label>
+      <input type="text" id="iTicket" placeholder="e.g. TKT-4821" autocomplete="off"
+        oninput="this.value=this.value.toUpperCase()"
+        onkeydown="if(event.key==='Enter') lookupTicket()">
+      <div class="field-hint">Enter the ticket number you received when you submitted</div>
+    </div>
+    <button class="btn btn-red" onclick="lookupTicket()"><i class="ti ti-search"></i> Check Status</button>
+
+    <div id="statusResult"></div>
+  </div>
+</div>
+
+<div class="footer">H&L Manufacturing · Applicator Repair System</div>
+
+<script>
+// ── CONFIG — same token as main app, stored locally ──
+const TOKEN = localStorage.getItem('hl_token') || '';
+const DATA_FILE = 'hl_applicator_data.json';
+const GIST_ID_KEY = 'hl_gist_id';
+
+function getToken(){ return localStorage.getItem('hl_token')||''; }
+function getGistId(){ return localStorage.getItem(GIST_ID_KEY)||''; }
+
+// ── TAB SWITCHING ──
+function switchTab(tab){
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>{
+    b.classList.toggle('active', (i===0&&tab==='submit')||(i===1&&tab==='status'));
+  });
+  ['submit','success','status'].forEach(s=>{
+    const el=document.getElementById('sec-'+s);
+    if(el) el.classList.remove('active');
+  });
+  document.getElementById('sec-'+tab).classList.add('active');
+  if(tab==='status') setTimeout(()=>document.getElementById('iTicket').focus(),100);
+}
+
+// ── APPLICATOR # FORMATTER ──
+function formatApn(input){
+  let v = input.value.toUpperCase().replace(/[^T0-9\-]/g,'');
+  // Auto-insert T- prefix
+  if(v && !v.startsWith('T')){ v = 'T-' + v.replace(/[^0-9]/g,''); }
+  else if(v === 'T'){ v = 'T-'; }
+  else if(v.startsWith('T') && !v.startsWith('T-')){ v = 'T-' + v.slice(1).replace(/[^0-9]/g,''); }
+  // Limit digits to 4
+  const parts = v.split('-');
+  if(parts.length>=2) v = 'T-' + parts.slice(1).join('').replace(/[^0-9]/g,'').slice(0,4);
+  input.value = v;
+}
+
+function validateApn(val){
+  return /^T-\d{4}$/.test(val.trim());
+}
+
+// ── TICKET NUMBER GENERATOR ──
+function makeTktNum(){
+  const n = Math.floor(1000 + Math.random()*9000);
+  return 'TKT-' + n;
+}
+
+// ── GIST API ──
+async function gistAPI(method, path, body){
+  const token = getToken();
+  const r = await fetch('https://api.github.com/'+path,{
+    method,
+    headers:{'Authorization':'token '+token,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},
+    body: body?JSON.stringify(body):undefined
+  });
+  if(!r.ok) throw new Error('GitHub API error '+r.status);
+  return r.json();
+}
+
+async function loadData(){
+  const id = getGistId();
+  if(!id) throw new Error('No gist ID — open the main app first to set up.');
+  const g = await gistAPI('GET','gists/'+id);
+  const f = g.files[DATA_FILE];
+  if(!f) return {issues:[],contacts:[]};
+  return JSON.parse(f.content);
+}
+
+async function saveData(data){
+  const id = getGistId();
+  if(!id) throw new Error('No gist ID');
+  await gistAPI('PATCH','gists/'+id,{
+    files:{[DATA_FILE]:{content:JSON.stringify(data,null,2)}}
+  });
+}
+
+// ── SUBMIT TICKET ──
+async function submitTicket(){
+  // Validate
+  let valid = true;
+
+  const name = document.getElementById('iName').value.trim();
+  const fName = document.getElementById('f-name');
+  fName.classList.toggle('has-err', !name);
+  if(!name) valid=false;
+
+  const apn = document.getElementById('iApn').value.trim();
+  const fApn = document.getElementById('f-apn');
+  const apnOk = validateApn(apn);
+  fApn.classList.toggle('has-err', !apnOk);
+  if(!apnOk) valid=false;
+
+  const issue = document.getElementById('iIssue').value.trim();
+  const fIssue = document.getElementById('f-issue');
+  fIssue.classList.toggle('has-err', !issue);
+  if(!issue) valid=false;
+
+  if(!valid) return;
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled=true;
+  btn.innerHTML='<span style="width:18px;height:18px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block"></span> Submitting…';
+
+  const priority = document.getElementById('iPriority').value;
+  const press = document.getElementById('iPress').value.trim();
+  const tktNum = makeTktNum();
+
+  // Priority label in notes
+  const priorityLabel = {normal:'Normal priority',high:'HIGH priority — affecting production',urgent:'URGENT — line is down'}[priority];
+
+  const entry = {
+    id: Date.now(),
+    apn,
+    press,
+    terminal: '',
+    wire: '',
+    issue,
+    notes: `${priorityLabel} | Submitted by: ${name} | Ref: ${tktNum}`,
+    status: 'open',
+    by: name,
+    date: Date.now(),
+    ticketNum: tktNum,
+    submittedBy: name,
+    priority,
+  };
+
+  try{
+    const data = await loadData();
+    data.issues.unshift(entry);
+    await saveData(data);
+
+    // Store ticket locally for easy lookup
+    const myTickets = JSON.parse(localStorage.getItem('hl_my_tickets')||'[]');
+    myTickets.unshift({tktNum, apn, date: Date.now()});
+    localStorage.setItem('hl_my_tickets', JSON.stringify(myTickets.slice(0,20)));
+
+    document.getElementById('successTktNum').textContent = tktNum;
+    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+    document.getElementById('sec-success').classList.add('active');
+  }catch(e){
+    btn.disabled=false;
+    btn.innerHTML='<i class="ti ti-send"></i> Submit Ticket';
+    showErr('Could not submit — make sure you are connected and try again. (' + e.message + ')');
+  }
+}
+
+function resetSubmit(){
+  document.getElementById('iName').value='';
+  document.getElementById('iApn').value='';
+  document.getElementById('iPress').value='';
+  document.getElementById('iIssue').value='';
+  document.getElementById('iPriority').value='normal';
+  document.getElementById('submitBtn').disabled=false;
+  document.getElementById('submitBtn').innerHTML='<i class="ti ti-send"></i> Submit Ticket';
+  ['f-name','f-apn','f-issue'].forEach(id=>document.getElementById(id).classList.remove('has-err'));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sec-submit').classList.add('active');
+  document.getElementById('iName').focus();
+}
+
+// ── STATUS LOOKUP ──
+async function lookupTicket(){
+  const tkt = document.getElementById('iTicket').value.trim().toUpperCase();
+  const result = document.getElementById('statusResult');
+
+  if(!tkt){ result.innerHTML='<div class="err-box">Please enter a ticket number.</div>'; return; }
+  if(!/^TKT-\d{4}$/.test(tkt)){ result.innerHTML='<div class="err-box">Invalid format — ticket numbers look like TKT-4821.</div>'; return; }
+
+  result.innerHTML='<div class="spinner"></div>';
+
+  try{
+    const data = await loadData();
+    const entry = data.issues.find(e=>e.ticketNum===tkt);
+
+    if(!entry){
+      result.innerHTML=`<div class="err-box"><i class="ti ti-ticket-off" style="font-size:16px;display:block;margin-bottom:6px"></i>Ticket <strong>${tkt}</strong> not found.<br><span style="font-size:11px;opacity:.8">Double-check the number and try again.</span></div>`;
+      return;
+    }
+
+    const statusBadge = {
+      open:    '<span class="badge badge-open">Open</span>',
+      inprog:  '<span class="badge badge-inprog">In Progress</span>',
+      waiting: '<span class="badge badge-waiting">Waiting on Parts</span>',
+      done:    '<span class="badge badge-done">Resolved</span>',
+    }[entry.status]||'<span class="badge badge-open">Open</span>';
+
+    const statusMsg = {
+      open:    'Your ticket has been received and is queued for repair.',
+      inprog:  'A technician is currently working on your applicator.',
+      waiting: 'Repair is on hold — we are waiting on parts.',
+      done:    'Your applicator has been repaired and is ready to return to production.',
+    }[entry.status]||'';
+
+    const submitted = new Date(entry.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    const daysIn = Math.round((Date.now()-entry.date)/86400000);
+
+    result.innerHTML=`
+      <div class="status-card">
+        <div class="status-header">
+          <div class="status-apn">${entry.apn}</div>
+          ${entry.press?`<div class="status-press">${entry.press}</div>`:''}
+        </div>
+        <div class="status-body">
+          <div class="status-row">
+            <span class="status-key">Ticket</span>
+            <span class="status-val" style="font-family:monospace;font-weight:600">${tkt}</span>
+          </div>
+          <div class="status-row">
+            <span class="status-key">Status</span>
+            <span class="status-val">${statusBadge}</span>
+          </div>
+          <div class="status-row">
+            <span class="status-key">Issue</span>
+            <span class="status-val">${entry.issue}</span>
+          </div>
+          ${entry.notes&&entry.status==='done'?`<div class="status-row"><span class="status-key">Resolution</span><span class="status-val">${entry.notes}</span></div>`:''}
+          <div class="status-row">
+            <span class="status-key">Submitted</span>
+            <span class="status-val">${submitted} (${daysIn}d ago)</span>
+          </div>
+          <div class="status-row">
+            <span class="status-key">Submitted by</span>
+            <span class="status-val">${entry.submittedBy||entry.by||'—'}</span>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--hl-text2);margin-top:12px;padding:10px 12px;background:var(--hl-surface2);border-radius:4px;border:1px solid var(--hl-border);line-height:1.5">
+        <i class="ti ti-info-circle" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>${statusMsg}
+      </div>`;
+  }catch(e){
+    result.innerHTML=`<div class="err-box">Could not load ticket data — check your connection.<br><span style="font-size:11px;opacity:.8">${e.message}</span></div>`;
+  }
+}
+
+function showErr(msg){
+  let el=document.getElementById('_submitErr');
+  if(!el){
+    el=document.createElement('div');
+    el.id='_submitErr';
+    el.className='err-box';
+    el.style.marginTop='12px';
+    document.querySelector('#sec-submit').appendChild(el);
+  }
+  el.textContent=msg;
+}
+
+// Pre-fill ticket number if coming from success screen
+const urlParams = new URLSearchParams(window.location.search);
+if(urlParams.get('ticket')){
+  document.getElementById('iTicket').value = urlParams.get('ticket').toUpperCase();
+  switchTab('status');
+  lookupTicket();
+}
+</script>
+</body>
+</html>

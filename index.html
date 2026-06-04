@@ -250,8 +250,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <thead><tr>
           <th style="width:95px">Applicator #</th><th style="width:90px">Press</th>
           <th style="width:155px">Terminal / Wire</th><th>Issue / Notes</th>
+          <th style="width:130px">Ticket / By</th>
           <th style="width:108px">Status</th><th style="width:52px">Days</th>
-          <th style="width:75px">By</th><th style="width:175px;text-align:right;padding-right:14px">Actions</th>
+          <th style="width:200px;text-align:right;padding-right:14px">Actions</th>
         </tr></thead>
         <tbody id="tbody"></tbody>
       </table>
@@ -706,6 +707,7 @@ function renderCards(f){
           <button class="btn-sm btn-notify" onclick="openNotify(${e.id})"><i class="ti ti-mail"></i> Notify</button>
           <button class="btn-sm btn-edit" onclick="editEntry(${e.id})"><i class="ti ti-edit"></i> Edit</button>
           <button class="btn-sm btn-del" onclick="delEntry(${e.id})"><i class="ti ti-trash"></i> Del</button>
+          ${e.ticketNum?`<button class="btn-sm" style="border-color:#1a5a1a;color:#50a870;background:rgba(26,90,26,.2)" onclick="shareTicket(${e.id})"><i class="ti ti-link"></i> Link</button>`:''}
         </div>
       </div>
     </div>`;
@@ -722,14 +724,18 @@ function renderTable(f){
       <td style="color:var(--hl-text2);font-size:12px">${e.press||'—'}</td>
       <td>${tw}</td>
       <td><div style="font-size:12px">${e.issue}</div>${e.notes?`<div class="sub-text">${e.notes}</div>`:''}</td>
+      <td style="font-size:12px">
+        ${e.ticketNum?`<span style="font-size:10px;background:rgba(20,80,160,.2);border:1px solid rgba(20,80,160,.4);color:#5090d0;border-radius:3px;padding:2px 6px;font-family:monospace;white-space:nowrap;display:inline-block;margin-bottom:3px">${e.ticketNum}</span><br>`:''}
+        <span style="color:var(--hl-text2)">${e.by||'—'}</span>
+      </td>
       <td>${badge(e.status)}</td>
       <td class="${ac}" style="font-size:12px">${d}d</td>
-      <td style="color:var(--hl-text2);font-size:12px;white-space:nowrap">${e.by||'—'}</td>
       <td style="text-align:right;padding-right:4px">
-        <div style="display:flex;align-items:center;justify-content:flex-end;gap:4px">
+        <div style="display:flex;align-items:center;justify-content:flex-end;gap:4px;flex-wrap:wrap">
           <button class="btn-sm btn-notify" onclick="openNotify(${e.id})"><i class="ti ti-mail"></i> Notify</button>
           <button class="btn-sm btn-edit" onclick="editEntry(${e.id})"><i class="ti ti-edit"></i> Edit</button>
           <button class="btn-sm btn-del" onclick="delEntry(${e.id})"><i class="ti ti-trash"></i> Delete</button>
+          ${e.ticketNum?`<button class="btn-sm" style="border-color:#1a5a1a;color:#50a870;background:rgba(26,90,26,.2)" onclick="shareTicket(${e.id})"><i class="ti ti-link"></i> Link</button>`:''}
         </div>
       </td>
     </tr>`;
@@ -830,7 +836,11 @@ function sendNotify(){
     e.wire?`Wire: ${e.wire}`:null,
     e.notes?`Resolution/Notes: ${e.notes}`:null,
     note?'':null, note?`Additional Note: ${note}`:null,'',
-    `Logged by: ${e.by||'—'}`,`Days in shop: ${days(e.date)}`
+    `Logged by: ${e.by||'—'}`,`Days in shop: ${days(e.date)}`,
+    e.ticketNum?(()=>{
+      const base=window.location.origin+window.location.pathname.replace('index.html','').replace(/\/$/,'');
+      return '\nTrack this ticket: '+base+'/ticket.html?ticket='+e.ticketNum;
+    })():null
   ].filter(l=>l!==null).join('\n');
 
   window.location.href=`mailto:${to}?subject=${encodeURIComponent(sm.subject)}&body=${encodeURIComponent(body)}`;
@@ -980,6 +990,17 @@ document.addEventListener('DOMContentLoaded', ()=>{
     observer.observe(el, {attributes:true, attributeFilter:['class']});
   });
 });
+
+
+function shareTicket(id){
+  const e = entries.find(x=>x.id===id);
+  if(!e||!e.ticketNum){ toast('No ticket number on this entry','#cc4444'); return; }
+  const base = window.location.origin + window.location.pathname.replace('index.html','').replace(/\/$/,'');
+  const url = base + '/ticket.html?ticket=' + e.ticketNum;
+  navigator.clipboard.writeText(url)
+    .then(()=>toast('Ticket link copied — paste it and send to ' + (e.submittedBy||e.by||'them')))
+    .catch(()=>prompt('Copy this link:', url));
+}
 
 initApp();
 
