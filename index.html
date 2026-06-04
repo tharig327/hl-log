@@ -777,12 +777,19 @@ function openNotify(id){
   $('notifyModal').classList.add('open');
 }
 function closeNotifyModal(){ $('notifyModal').classList.remove('open'); notifyId=null; }
+function getGreeting(){
+  const h=new Date().getHours();
+  return h<12?'Good morning':h<17?'Good afternoon':'Good evening';
+}
 function sendNotify(){
   const e=entries.find(x=>x.id===notifyId);
   if(!selectedRecipients.size){ alert('Select at least one recipient.'); return; }
-  const to=[...selectedRecipients].map(id=>contacts.find(c=>c.id===id)?.email).filter(Boolean).join(',');
+  const recipientContacts=[...selectedRecipients].map(id=>contacts.find(c=>c.id===id)).filter(Boolean);
+  const to=recipientContacts.map(c=>c.email).join(',');
   const note=$('notifyNote').value.trim();
-  const body=['Hi,','',`Applicator ${e.apn}${e.press?' ('+e.press+')':''} has been repaired and is ready to return to production.`,'',
+  const firstNames=recipientContacts.map(c=>c.name.split(' ')[0]);
+  const salutation=firstNames.length===1?firstNames[0]:firstNames.length===2?firstNames.join(' & '):'All';
+  const body=[`${getGreeting()}, ${salutation}!`,'',`Applicator ${e.apn}${e.press?' ('+e.press+')':''} has been repaired and is ready to return to production.`,'',
     `Issue: ${e.issue}`,e.terminal?`Terminal P/N: ${e.terminal}`:null,e.wire?`Wire: ${e.wire}`:null,
     e.notes?`Resolution: ${e.notes}`:null,note?'':null,note?`Note: ${note}`:null,'',
     `Logged by: ${e.by||'—'}`,`Days in shop: ${days(e.date)}`].filter(l=>l!==null).join('\n');
