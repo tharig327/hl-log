@@ -772,11 +772,18 @@ function closeModal(){ $('modal').classList.remove('open'); editId=null; }
 function saveEntry(){
   const apn=$('fApn').value.trim(), issue=$('fIssue').value.trim();
   if(!apn||!issue){ alert('Applicator # and issue description are required.'); return; }
+
+  // Preserve ticket fields that aren't in the edit form
+  const existing = editId ? entries.find(e=>e.id===editId) : null;
   const entry={
     id:editId||Date.now(), apn, press:$('fPress').value.trim(),
     terminal:$('fTerminal').value.trim(), wire:$('fWire').value.trim(),
     issue, notes:$('fNotes').value.trim(), status:$('fStatus').value,
-    by:$('fBy').value.trim(), date:editId?entries.find(e=>e.id===editId).date:Date.now()
+    by:$('fBy').value.trim(), date:existing?existing.date:Date.now(),
+    // carry over ticket fields if they exist
+    ...(existing?.ticketNum    && {ticketNum:    existing.ticketNum}),
+    ...(existing?.submittedBy  && {submittedBy:  existing.submittedBy}),
+    ...(existing?.priority     && {priority:     existing.priority}),
   };
   if(editId){const i=entries.findIndex(e=>e.id===editId);entries[i]=entry;} else entries.unshift(entry);
   closeModal(); render(); pushData(true);
