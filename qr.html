@@ -12,6 +12,7 @@
   --hl-bg:#111111;--hl-surface:#1c1c1c;--hl-surface2:#252525;
   --hl-border:#333333;--hl-border2:#444444;--hl-red:#cc2222;
   --hl-red-hover:#e02828;--hl-text:#f0f0f0;--hl-text2:#aaaaaa;--hl-text3:#666666;
+  --hl-green:#50a870;
 }
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--hl-bg);color:var(--hl-text);min-height:100vh}
 
@@ -22,7 +23,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .header p{font-size:11px;color:var(--hl-text3);margin-top:1px}
 
 .layout{display:grid;grid-template-columns:340px 1fr;gap:0;min-height:calc(100vh - 65px)}
-.sidebar{border-right:1px solid var(--hl-border);padding:1.25rem;display:flex;flex-direction:column;gap:1rem;background:var(--hl-surface)}
+.sidebar{border-right:1px solid var(--hl-border);padding:1.25rem;display:flex;flex-direction:column;gap:1rem;background:var(--hl-surface);overflow-y:auto}
 .preview-area{padding:1.5rem;overflow-y:auto}
 
 .section-title{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--hl-text3);margin-bottom:.6rem}
@@ -31,76 +32,77 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .field input,.field select{width:100%;font-size:13px;padding:8px 10px;border:1px solid var(--hl-border2);border-radius:3px;background:var(--hl-bg);color:var(--hl-text);-webkit-appearance:none}
 .field input::placeholder{color:var(--hl-text3)}
 .field input:focus,.field select:focus{outline:none;border-color:var(--hl-red)}
-.field select option{background:var(--hl-surface)}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 
 .btn{height:36px;padding:0 14px;font-size:12px;border:1px solid var(--hl-border2);border-radius:4px;background:var(--hl-surface2);color:var(--hl-text);cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;letter-spacing:.03em;user-select:none;width:100%;justify-content:center}
 .btn:hover{background:var(--hl-border)}
 .btn-red{background:var(--hl-red);color:#fff;border-color:var(--hl-red)}
 .btn-red:hover{background:var(--hl-red-hover)}
+.btn-green{background:var(--hl-green);color:#fff;border-color:var(--hl-green)}
+.btn-green:hover{filter:brightness(1.1)}
 .btn-outline{background:transparent;border-color:var(--hl-border2);color:var(--hl-text2)}
 .btn-outline:hover{color:var(--hl-text);border-color:var(--hl-border)}
 
-.app-url-field{margin-bottom:1rem}
+.app-url-field{margin-bottom:.5rem}
 .app-url-field label{display:block;font-size:9px;color:var(--hl-text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.1em}
 .app-url-field input{width:100%;font-size:11px;padding:7px 10px;border:1px solid var(--hl-border2);border-radius:3px;background:var(--hl-bg);color:var(--hl-text2);font-family:monospace}
 .app-url-field input:focus{outline:none;border-color:var(--hl-red)}
 
-.queue-box{border:1px solid var(--hl-border);border-radius:4px;overflow:hidden;flex:1;min-height:0}
+.queue-box{border:1px solid var(--hl-border);border-radius:4px;overflow:hidden}
 .queue-header{padding:8px 12px;background:var(--hl-surface2);border-bottom:1px solid var(--hl-border);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--hl-text3);display:flex;align-items:center;justify-content:space-between}
-.queue-list{overflow-y:auto;max-height:220px}
-.queue-item{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--hl-border);cursor:pointer;transition:background .1s}
+.queue-list{overflow-y:auto;max-height:180px}
+.queue-item{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--hl-border)}
 .queue-item:last-child{border-bottom:none}
-.queue-item:hover{background:var(--hl-surface2)}
-.queue-item.active{background:rgba(204,34,34,.1);border-left:2px solid var(--hl-red)}
 .queue-apn{font-size:12px;font-weight:500;font-family:monospace;flex:1}
 .queue-press{font-size:10px;color:var(--hl-text3)}
 .queue-remove{width:22px;height:22px;border:none;background:none;color:var(--hl-text3);cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:3px;flex-shrink:0}
 .queue-remove:hover{background:rgba(204,34,34,.2);color:#cc4444}
 .queue-empty{padding:1.5rem;text-align:center;font-size:12px;color:var(--hl-text3)}
 
-/* LABEL PREVIEW */
-.preview-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1.5rem}
+/* ZPL info box */
+.zpl-info{background:var(--hl-surface2);border:1px solid var(--hl-border);border-left:3px solid var(--hl-green);border-radius:4px;padding:10px 12px;font-size:11px;color:var(--hl-text2);line-height:1.5}
+.zpl-info b{color:var(--hl-text)}
+.zpl-info code{font-family:monospace;font-size:10px;background:var(--hl-bg);padding:1px 4px;border-radius:2px;color:var(--hl-green)}
+
+/* PREVIEW */
+.preview-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1.5rem}
 .preview-empty{text-align:center;padding:4rem 1rem;color:var(--hl-text3)}
 .preview-empty i{font-size:36px;display:block;margin-bottom:8px;opacity:.4}
 
-/* THE ACTUAL LABEL — white for print */
-.label-wrap{display:flex;flex-direction:column;gap:6px}
-.label-card{background:#ffffff;border:1px solid var(--hl-border2);border-radius:4px;padding:12px;width:100%;color:#111;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
-.label-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;gap:8px}
-.label-logo{font-size:10px;font-weight:700;color:#cc2222;letter-spacing:.05em;line-height:1}
-.label-apn{font-size:18px;font-weight:700;font-family:monospace;color:#111;line-height:1}
-.label-press{font-size:10px;color:#555;margin-top:2px}
-.label-qr{flex-shrink:0}
-.label-qr canvas,.label-qr img{display:block}
-.label-divider{border:none;border-top:1px solid #ddd;margin:6px 0}
-.label-row{display:flex;gap:6px;flex-wrap:wrap}
-.label-chip{font-size:9px;background:#f0f0f0;border:1px solid #ddd;border-radius:2px;padding:2px 5px;color:#333;font-family:monospace;white-space:nowrap}
-.label-footer{font-size:8px;color:#888;margin-top:6px;text-align:center}
+.label-wrap{display:flex;flex-direction:column;gap:8px}
+
+/* Label preview card — aspect ratio matches 1.957 × 1.177 */
+.label-card{
+  background:#fff;border:1px solid #bbb;border-radius:3px;
+  width:260px;height:156px;
+  color:#111;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  display:flex;flex-direction:column;
+  padding:8px 9px 6px 9px;overflow:hidden;
+}
+.label-top{display:flex;align-items:flex-start;justify-content:space-between;gap:6px;flex:1;min-height:0}
+.label-left{display:flex;flex-direction:column;justify-content:flex-start;flex:1;min-width:0;overflow:hidden}
+.label-logo{font-size:8px;font-weight:700;color:#cc2222;letter-spacing:.08em;line-height:1;margin-bottom:4px}
+.label-apn{font-size:22px;font-weight:700;font-family:monospace;color:#111;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.label-press{font-size:9px;color:#444;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.label-qr{flex-shrink:0;display:flex;align-items:flex-start}
+.label-qr canvas,.label-qr img{display:block;width:88px!important;height:88px!important;image-rendering:pixelated}
+.label-divider{border:none;border-top:1px solid #ddd;margin:4px 0 3px}
+.label-bottom{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.label-chip{font-size:7.5px;background:#f0f0f0;border:1px solid #ddd;border-radius:2px;padding:1px 4px;color:#333;font-family:monospace;white-space:nowrap}
+.label-footer{font-size:6px;color:#aaa;margin-top:auto;padding-top:2px;text-align:right}
 
 .label-actions{display:flex;gap:6px}
 .lbtn{height:28px;padding:0 10px;font-size:11px;border:1px solid var(--hl-border2);border-radius:3px;background:var(--hl-surface2);color:var(--hl-text2);cursor:pointer;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
 .lbtn:hover{color:var(--hl-text);border-color:var(--hl-border)}
+.lbtn-green{border-color:var(--hl-green);color:var(--hl-green)}
+.lbtn-green:hover{background:rgba(80,168,112,.1)}
 
-.print-all-bar{padding:.75rem 1.5rem;border-top:1px solid var(--hl-border);background:var(--hl-surface);display:flex;align-items:center;gap:10px;justify-content:flex-end}
+.print-all-bar{padding:.75rem 1.5rem;border-top:1px solid var(--hl-border);background:var(--hl-surface);display:flex;align-items:center;gap:10px;justify-content:flex-end;flex-wrap:wrap}
 
 @media(max-width:700px){
-  .layout{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+  .layout{grid-template-columns:1fr}
   .sidebar{border-right:none;border-bottom:1px solid var(--hl-border)}
   .preview-area{padding:1rem}
-}
-
-/* PRINT */
-@media print{
-  body{background:#fff}
-  .header,.sidebar,.print-all-bar{display:none!important}
-  .layout{display:block}
-  .preview-area{padding:0}
-  .preview-grid{display:flex;flex-wrap:wrap;gap:8px;padding:8px}
-  .label-wrap{break-inside:avoid;page-break-inside:avoid}
-  .label-actions{display:none!important}
-  .label-card{border:1px solid #ccc;box-shadow:none;width:220px}
-  .preview-empty{display:none}
 }
 </style>
 </head>
@@ -111,7 +113,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="hl-logo">H&L</div>
     <div>
       <h1>Applicator QR Labels</h1>
-      <p>Generate scannable labels that pre-fill the issue log form</p>
+      <p>Generate ZPL files — send directly to Zebra GK420t</p>
     </div>
   </div>
   <a href="index.html" class="btn btn-outline" style="width:auto"><i class="ti ti-arrow-left"></i> Back to Log</a>
@@ -123,15 +125,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
     <div class="app-url-field">
       <label>Your App URL</label>
-      <input type="text" id="appUrl" placeholder="https://tharig.github.io/hl-applicator-log/" value="https://tharig327.github.io/hl-applicator-log/">
-      <div style="font-size:10px;color:var(--hl-text3);margin-top:4px">QR codes will link to this URL with pre-filled fields.</div>
+      <input type="text" id="appUrl" placeholder="https://yourapp.github.io/..." value="https://tharig327.github.io/hl-applicator-log/">
+      <div style="font-size:10px;color:var(--hl-text3);margin-top:4px">QR codes will link here with pre-filled fields.</div>
     </div>
 
     <div>
       <div class="section-title">Applicator Details</div>
-      <div class="field"><label>Applicator # *</label><input type="text" id="iApn" placeholder="e.g. APL-007" autocomplete="off"></div>
+      <div class="field"><label>Applicator # *</label><input type="text" id="iApn" placeholder="e.g. T-2252" autocomplete="off"></div>
       <div class="row2">
-        <div class="field"><label>Press</label><input type="text" id="iPress" placeholder="e.g. KM-4T #2"></div>
+        <div class="field"><label>Press</label><input type="text" id="iPress" placeholder="e.g. Term 1"></div>
         <div class="field"><label>Terminal P/N</label><input type="text" id="iTerminal" placeholder="e.g. 794956-1"></div>
       </div>
       <div class="field"><label>Wire Gauge / Type</label><input type="text" id="iWire" placeholder="e.g. 0.5mm² TXL"></div>
@@ -144,8 +146,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <span id="queueCount" style="color:var(--hl-text2)">0 labels</span>
       </div>
       <div class="queue-list" id="queueList">
-        <div class="queue-empty">No labels yet — add applicators above</div>
+        <div class="queue-empty">No labels yet</div>
       </div>
+    </div>
+
+    <div class="zpl-info">
+      <b>How to print ZPL:</b><br>
+      1. Click <b>Download ZPL</b><br>
+      2. Open Command Prompt and run:<br>
+      <code>copy /b labels.zpl \\%COMPUTERNAME%\ZDesigner_GK420t</code><br>
+      <br>
+      Or use <b>Zebra Setup Utilities → Send File</b> to send the .zpl directly.
     </div>
 
     <div style="display:flex;flex-direction:column;gap:6px">
@@ -155,7 +166,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 
   <!-- PREVIEW -->
-  <div style="display:flex;flex-direction:column;flex:1">
+  <div style="display:flex;flex-direction:column;flex:1;min-height:0">
     <div class="preview-area" style="flex:1" id="previewArea">
       <div class="preview-empty" id="previewEmpty">
         <i class="ti ti-qrcode"></i>
@@ -166,25 +177,28 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     </div>
     <div class="print-all-bar" id="printBar" style="display:none">
       <span style="font-size:12px;color:var(--hl-text3)" id="printCount"></span>
-      <button class="btn btn-red" style="width:auto" onclick="window.print()"><i class="ti ti-printer"></i> Print All Labels</button>
+      <button class="btn btn-outline" style="width:auto" onclick="downloadZPL(null)"><i class="ti ti-file-download"></i> Download All ZPL</button>
+      <button class="btn btn-green" style="width:auto" onclick="sendToPrinter()"><i class="ti ti-printer"></i> Send to Printer</button>
     </div>
   </div>
 </div>
 
 <script>
-let queue = []; // [{id, apn, press, terminal, wire}]
+let queue = [];
 
+/* ── URL builder ── */
 function buildURL(item){
   const base = document.getElementById('appUrl').value.trim().replace(/\/?$/,'/');
-  const params = new URLSearchParams();
-  if(item.apn)      params.set('apn', item.apn);
-  if(item.press)    params.set('press', item.press);
-  if(item.terminal) params.set('terminal', item.terminal);
-  if(item.wire)     params.set('wire', item.wire);
-  params.set('action','log'); // tells the app to open the log form
-  return base + '?' + params.toString();
+  const p = new URLSearchParams();
+  if(item.apn)      p.set('apn', item.apn);
+  if(item.press)    p.set('press', item.press);
+  if(item.terminal) p.set('terminal', item.terminal);
+  if(item.wire)     p.set('wire', item.wire);
+  p.set('action','log');
+  return base + '?' + p.toString();
 }
 
+/* ── Queue management ── */
 function addToQueue(){
   const apn = document.getElementById('iApn').value.trim();
   if(!apn){ alert('Applicator # is required.'); return; }
@@ -196,7 +210,6 @@ function addToQueue(){
     wire:     document.getElementById('iWire').value.trim(),
   };
   queue.push(item);
-  // clear fields for next entry, keep press/terminal/wire for batch entry of same press
   document.getElementById('iApn').value = '';
   document.getElementById('iApn').focus();
   renderQueue();
@@ -227,93 +240,264 @@ function renderQueue(){
         <div class="queue-apn">${i.apn}</div>
         <div class="queue-press">${[i.press,i.terminal,i.wire].filter(Boolean).join(' · ')||'No details'}</div>
       </div>
-      <button class="queue-remove" onclick="removeFromQueue(${i.id})" title="Remove"><i class="ti ti-x" style="font-size:13px"></i></button>
+      <button class="queue-remove" onclick="removeFromQueue(${i.id})" title="Remove">
+        <i class="ti ti-x" style="font-size:13px"></i>
+      </button>
     </div>`).join('');
 }
 
+/* ── Screen preview ── */
 function renderPreviews(){
-  const grid   = document.getElementById('previewGrid');
-  const empty  = document.getElementById('previewEmpty');
-  const bar    = document.getElementById('printBar');
-  const count  = document.getElementById('printCount');
+  const grid  = document.getElementById('previewGrid');
+  const empty = document.getElementById('previewEmpty');
+  const bar   = document.getElementById('printBar');
+  const count = document.getElementById('printCount');
 
   if(!queue.length){
     grid.style.display='none'; empty.style.display='block'; bar.style.display='none';
     return;
   }
   empty.style.display='none'; grid.style.display='grid'; bar.style.display='flex';
-  count.textContent = queue.length + ' label' + (queue.length!==1?'s':'') + ' ready to print';
+  count.textContent = queue.length + ' label' + (queue.length!==1?'s':'') + ' ready';
 
   grid.innerHTML='';
   queue.forEach(item=>{
     const wrap = document.createElement('div');
     wrap.className='label-wrap';
-
     const url = buildURL(item);
-    const chips = [item.terminal,item.wire].filter(Boolean).map(t=>`<span class="label-chip">${t}</span>`).join('');
+    const chips = [item.terminal,item.wire].filter(Boolean)
+                    .map(t=>`<span class="label-chip">${t}</span>`).join('');
 
     wrap.innerHTML=`
       <div class="label-card" id="label-${item.id}">
         <div class="label-top">
-          <div>
-            <div class="label-logo">H&L MFG</div>
+          <div class="label-left">
+            <div class="label-logo">H&amp;L MFG</div>
             <div class="label-apn">${item.apn}</div>
             ${item.press?`<div class="label-press">${item.press}</div>`:''}
           </div>
           <div class="label-qr" id="qr-${item.id}"></div>
         </div>
-        ${chips?`<hr class="label-divider"><div class="label-row">${chips}</div>`:''}
-        <div class="label-footer">Scan to log issue → H&L Applicator Log</div>
+        ${chips?`<hr class="label-divider"><div class="label-bottom">${chips}</div>`:''}
+        <div class="label-footer">Scan to log → H&amp;L</div>
       </div>
       <div class="label-actions">
         <button class="lbtn" onclick="copyURL(${item.id})"><i class="ti ti-copy" style="font-size:12px"></i> Copy URL</button>
-        <button class="lbtn" onclick="printOne(${item.id})"><i class="ti ti-printer" style="font-size:12px"></i> Print</button>
+        <button class="lbtn lbtn-green" onclick="downloadZPL(${item.id})"><i class="ti ti-file-download" style="font-size:12px"></i> ZPL</button>
       </div>`;
 
     grid.appendChild(wrap);
 
-    // Generate QR
-    new QRCode(document.getElementById('qr-'+item.id),{
+    // Screen QR preview only (not used for ZPL)
+    new QRCode(document.getElementById('qr-'+item.id), {
       text: url,
-      width: 72,
-      height: 72,
-      colorDark: '#111111',
+      width: 176,
+      height: 176,
+      colorDark: '#000000',
       colorLight: '#ffffff',
-      correctLevel: QRCode.CorrectLevel.M
+      correctLevel: QRCode.CorrectLevel.L
     });
   });
 }
 
-// Store URLs by id for copy
+/* ══════════════════════════════════════════════════
+   ZPL GENERATION
+   GK420t: 203 dpi
+   Label: 1.957" × 1.177"  →  397 × 239 dots
+   
+   Layout (all in dots, origin top-left):
+   - Label width set: ^PW397
+   - Label length:    ^LL239
+   - Darkness:        ^MD20  (adjust 0-30 on printer)
+   
+   Elements:
+   [10,10]   "H&L MFG"  font 0 size 20
+   [10,35]   APN text   font 0 size 55 (bold via width)
+   [10,105]  Press text font 0 size 22
+   [10,170]  Terminal chip / wire chip
+   [10,210]  "Scan to log -> H&L" footer
+   [220,5]   QR code    module size 3 → ~170×170 dots (0.84")
+   [10,155]  divider line
+   ══════════════════════════════════════════════════ */
+
+function buildZPL(item){
+  const url = buildURL(item);
+
+  // Escape ZPL special chars in text fields
+  const esc = s => s.replace(/\\/g,'\\\\').replace(/\^/g,'\\^').replace(/~/g,'\\~');
+
+  const apn      = esc(item.apn);
+  const press    = item.press    ? esc(item.press)    : '';
+  const terminal = item.terminal ? esc(item.terminal) : '';
+  const wire     = item.wire     ? esc(item.wire)     : '';
+
+  // Build chip line (terminal · wire)
+  const chipParts = [terminal, wire].filter(Boolean);
+  const chipLine  = chipParts.join('  ');
+
+  /*
+    GK420t @ 203dpi — label 1.957" x 1.177" = 397 x 239 dots
+    The GK420t feeds labels in PORTRAIT (narrow side first).
+    Our label is landscape, so we use ^FWR (field orientation rotate)
+    by setting each field to rotation "R" (90° clockwise), and we
+    set ^PW (print width) to the SHORT dimension = 239 dots,
+    and ^LL (label length) to the LONG dimension = 397 dots.
+
+    With ^FWR all ^FO x,y coords work in the rotated space:
+      x = distance from TOP of physical label (0..239)
+      y = distance from LEFT of physical label (0..397)
+      — effectively x is vertical, y is horizontal in final output
+
+    Layout in rotated space (label reads landscape left→right):
+      Left column (text):
+        [10, 10]  H&L MFG  18pt
+        [10, 35]  APN      50pt
+        [10, 92]  Press    20pt
+        divider line y=155 (horizontal across label)
+        [10,160]  chips    18pt
+        [10,215]  footer   14pt
+      Right column:
+        [130, 220] QR code  module 3 (~170x170 dots)
+  */
+
+  /*
+    GK420t @ 203dpi — label 1.957" x 1.177" = 397 x 239 dots
+    Feeding portrait (narrow=239 side feeds through).
+    ^FWR rotates fields 90° so text reads landscape left→right.
+
+    In ^FWR rotated space:
+      First coordinate  (x in ^FO) = position along the SHORT axis (0-239)
+      Second coordinate (y in ^FO) = position along the LONG axis  (0-397)
+
+    Target layout (landscape reading):
+      LEFT SIDE  (y=10..200):  H&L MFG, APN, Press, divider, chips
+      RIGHT SIDE (y=220..390): QR code (module 3 = ~170 dots tall)
+      QR sits top to bottom on the right, text on the left
+  */
+
+  /*
+    GK420t @ 203dpi — label 1.957" x 1.177" = 397 x 239 dots
+    Printer feeds portrait (239 wide). ^LL = label length in feed direction.
+    Physical label height = 1.177" = 239 dots — so ^LL239, ^PW397... 
+    BUT printer is feeding the LONG side, so actually:
+      ^PW = 239 (short/width of label)
+      ^LL = 239 (short/height of label — label is nearly square-ish but wide)
+    
+    Confirmed from prints: label is about 239 dots in BOTH directions visible.
+    Use ^LL240 to just fit the label. QR module 3 = ~129 dots. Keep text left,
+    QR right. Text column 0-100, QR column 110-239.
+  */
+
+  let zpl = `^XA
+^PW239
+^LL240
+^MD20
+^LH0,0
+
+^FO5,5^A0N,14,14^FDH&L MFG^FS
+^FO5,22^A0N,44,34^FD${apn}^FS`;
+
+  if(press){
+    zpl += `\n^FO5,72^A0N,18,18^FD${press}^FS`;
+  }
+
+  // Vertical divider at x=108
+  zpl += `\n^FO108,3^GB2,152,2^FS`;
+
+  // QR right column — x=112, y=3, module 3 = 129x129 dots fits in 127px wide col
+  zpl += `\n^FO112,3^BQN,2,3,M,7^FDMA,${url}^FS`;
+
+  // Horizontal divider below top section
+  zpl += `\n^FO3,158^GB233,2,2^FS`;
+
+  if(chipLine){
+    zpl += `\n^FO5,164^A0N,16,16^FD${chipLine}^FS`;
+  }
+
+  zpl += `\n^FO5,188^A0N,13,13^FDScan to log -> H&L^FS`;
+
+  zpl += `\n^XZ\n`;
+  return zpl;
+}
+
+function buildAllZPL(ids){
+  const items = ids ? queue.filter(i=>ids.includes(i.id)) : queue;
+  return items.map(buildZPL).join('');
+}
+
+/* ── Download ZPL file ── */
+function downloadZPL(id){
+  const zpl = id ? buildZPL(queue.find(i=>i.id===id)) : buildAllZPL(null);
+  if(!zpl){ alert('No labels in queue.'); return; }
+  const blob = new Blob([zpl], {type:'application/octet-stream'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = id ? `label_${queue.find(i=>i.id===id).apn}.zpl` : 'labels.zpl';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('ZPL downloaded — send to printer using instructions in sidebar');
+}
+
+/* ── Send to printer via WebUSB (if Zebra connected via USB) ── */
+async function sendToPrinter(){
+  // Try WebUSB first (Chrome/Edge with USB-connected Zebra)
+  if(navigator.usb){
+    try{
+      const device = await navigator.usb.requestDevice({ filters:[{vendorId:0x0A5F}] }); // 0x0A5F = Zebra
+      await device.open();
+      if(device.configuration===null) await device.selectConfiguration(1);
+      await device.claimInterface(0);
+      const zpl = buildAllZPL(null);
+      const encoder = new TextEncoder();
+      const data = encoder.encode(zpl);
+      // Find bulk OUT endpoint
+      let epNum = 1;
+      for(const iface of device.configuration.interfaces){
+        for(const alt of iface.alternates){
+          for(const ep of alt.endpoints){
+            if(ep.direction==='out') epNum = ep.endpointNumber;
+          }
+        }
+      }
+      await device.transferOut(epNum, data);
+      await device.close();
+      showToast('✓ Labels sent to printer!');
+      return;
+    }catch(e){
+      if(e.name!=='NotFoundError'){
+        console.warn('WebUSB error:',e);
+      }
+      // Fall through to download
+    }
+  }
+  // Fallback: download the file
+  downloadZPL(null);
+  showToast('WebUSB not available — ZPL downloaded instead');
+}
+
+/* ── Utilities ── */
 function copyURL(id){
   const item = queue.find(i=>i.id===id);
   if(!item) return;
-  navigator.clipboard.writeText(buildURL(item)).then(()=>{
-    showToast('URL copied to clipboard');
-  }).catch(()=>{ prompt('Copy this URL:', buildURL(item)); });
-}
-
-function printOne(id){
-  // temporarily hide all labels except this one for printing
-  const allWraps = document.querySelectorAll('.label-wrap');
-  allWraps.forEach(w=>{ if(!w.querySelector('#label-'+id)) w.style.display='none'; });
-  window.print();
-  allWraps.forEach(w=>w.style.display='');
+  navigator.clipboard.writeText(buildURL(item))
+    .then(()=>showToast('URL copied'))
+    .catch(()=>{ prompt('Copy this URL:', buildURL(item)); });
 }
 
 function showToast(msg){
   let t = document.getElementById('toast');
-  if(!t){ t=document.createElement('div'); t.id='toast'; t.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1c1c1c;border:1px solid #444;border-left:3px solid #50a870;color:#f0f0f0;font-size:12px;padding:10px 16px;border-radius:4px;z-index:999;opacity:0;transition:opacity .2s;white-space:nowrap'; document.body.appendChild(t); }
+  if(!t){
+    t=document.createElement('div');
+    t.id='toast';
+    t.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1c1c1c;border:1px solid #444;border-left:3px solid var(--hl-green);color:#f0f0f0;font-size:12px;padding:10px 16px;border-radius:4px;z-index:999;opacity:0;transition:opacity .2s;white-space:nowrap;max-width:90vw';
+    document.body.appendChild(t);
+  }
   t.textContent=msg; t.style.opacity='1';
-  setTimeout(()=>t.style.opacity='0',2500);
+  setTimeout(()=>t.style.opacity='0', 3000);
 }
 
-// Allow Enter key to add to queue
-document.getElementById('iApn').addEventListener('keydown',e=>{ if(e.key==='Enter') addToQueue(); });
-
-// Re-render previews when URL changes (in case user updates it)
+document.getElementById('iApn').addEventListener('keydown', e=>{ if(e.key==='Enter') addToQueue(); });
 document.getElementById('appUrl').addEventListener('change', renderPreviews);
-
 renderQueue();
 </script>
 </body>
