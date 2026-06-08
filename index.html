@@ -321,11 +321,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="field"><label>Issue Description *</label><textarea id="fIssue" placeholder="Crimp height off, blade worn, carrier jammed…"></textarea></div>
     <div class="field"><label>Notes / Resolution Steps</label><textarea id="fNotes" style="height:52px" placeholder="What's been done or what's pending…"></textarea></div>
     <div class="row2">
+      <div class="field"><label>Ticket # <span style="font-weight:400;color:var(--hl-text3)">(optional)</span></label>
+        <div style="display:flex;align-items:center;gap:0">
+          <span style="height:38px;padding:0 10px;background:var(--hl-surface2);border:1px solid var(--hl-border2);border-right:none;border-radius:3px 0 0 3px;display:flex;align-items:center;font-size:12px;color:var(--hl-text3);font-family:monospace;white-space:nowrap">TKT-</span>
+          <input id="fTicket" placeholder="4821" inputmode="numeric" maxlength="4" style="border-radius:0 3px 3px 0" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,4)">
+        </div>
+        <div style="font-size:10px;color:var(--hl-text3);margin-top:3px">Assign a ticket number so the technician can track status</div>
+      </div>
       <div class="field"><label>Status</label>
         <select id="fStatus"><option value="open">Open</option><option value="inprog">In progress</option><option value="waiting">Waiting on parts</option><option value="done">Resolved</option></select>
       </div>
-      <div class="field"><label>Logged By</label><input id="fBy" placeholder="Your name"></div>
     </div>
+    <div class="field"><label>Logged By</label><input id="fBy" placeholder="Your name"></div>
     <div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-red" onclick="saveEntry()">Save Entry</button></div>
   </div>
 </div>
@@ -856,6 +863,7 @@ function openModal(id=null){
   $('fApn').value=e?.apn||''; $('fPress').value=e?.press||''; $('fTerminal').value=e?.terminal||'';
   $('fWire').value=e?.wire||''; $('fIssue').value=e?.issue||''; $('fNotes').value=e?.notes||'';
   $('fStatus').value=e?.status||'open'; $('fBy').value=e?.by||'';
+  $('fTicket').value=e?.ticketNum?e.ticketNum.replace('TKT-',''):'';
   $('modal').classList.add('open');
 }
 function closeModal(){ $('modal').classList.remove('open'); editId=null; }
@@ -868,7 +876,13 @@ function saveEntry(){
     terminal:$('fTerminal').value.trim(), wire:$('fWire').value.trim(),
     issue, notes:$('fNotes').value.trim(), status:$('fStatus').value,
     by:$('fBy').value.trim(), date:existing?existing.date:Date.now(),
-    ...(existing?.ticketNum   && {ticketNum:   existing.ticketNum}),
+    // Ticket number — use form value if entered, otherwise keep existing
+    ...( (() => {
+      const typed = $('fTicket').value.trim();
+      if(typed) return {ticketNum: 'TKT-' + typed};
+      if(existing?.ticketNum) return {ticketNum: existing.ticketNum};
+      return {};
+    })() ),
     ...(existing?.submittedBy && {submittedBy: existing.submittedBy}),
     ...(existing?.priority    && {priority:    existing.priority}),
   };
