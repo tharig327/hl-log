@@ -935,7 +935,6 @@ function sendNotify(){
   const note=$('notifyNote').value.trim();
   const firstNames=recipientContacts.map(c=>c.name.split(' ')[0]);
   const salutation=firstNames.length===1?firstNames[0]:firstNames.length===2?firstNames.join(' & '):'All';
-<<<<<<< HEAD
 
   // Status-based message and subject
   const statusMessages = {
@@ -959,28 +958,6 @@ function sendNotify(){
   ].filter(l=>l!==null).join('\n');
 
   window.location.href=`mailto:${to}?subject=${encodeURIComponent(sm.subject)}&body=${encodeURIComponent(body)}`;
-=======
-  const statusMessages={
-    done:   {subject:`Applicator ${e.apn} — Repair Complete`,   line:`has been repaired and is ready to return to production.`},
-    inprog: {subject:`Applicator ${e.apn} — Repair In Progress`,line:`is currently being repaired and is not yet available for production.`},
-    waiting:{subject:`Applicator ${e.apn} — Waiting on Parts`,  line:`is on hold — we are waiting on parts before the repair can be completed.`},
-    open:   {subject:`Applicator ${e.apn} — Issue Logged`,      line:`has been pulled from production and logged for repair. We will provide updates as work progresses.`},
-  };
-  const sm=statusMessages[e.status]||statusMessages.open;
-  const body=[
-    `${getGreeting()}, ${salutation}!`,'',
-    `Applicator ${e.apn}${e.press?' ('+e.press+')':''} ${sm.line}`,'',
-    `Status: ${e.status==='done'?'Resolved':e.status==='inprog'?'In Progress':e.status==='waiting'?'Waiting on Parts':'Open'}`,
-    `Issue: ${e.issue}`,
-    e.terminal?`Terminal P/N: ${e.terminal}`:null,
-    e.wire?`Wire: ${e.wire}`:null,
-    e.notes?`Resolution/Notes: ${e.notes}`:null,
-    note?'':null, note?`Additional Note: ${note}`:null,'',
-    `Logged by: ${e.by||'—'}`,`Days in shop: ${days(e.date)}`,
-    e.ticketNum?(()=>{ const base=window.location.origin; return '\nTrack this ticket: '+base+'/t.html?id='+e.ticketNum.replace('TKT-',''); })():null
-  ].filter(l=>l!==null).join('\n');
-  window.location.href=`mailto:${to}?subject=${encodeURIComponent(sm.subject)}&body=${encodeURIComponent(body)}`;
->>>>>>> 5550f778944f9b0a25e8c07234a24ef2a77149f1
   closeNotifyModal();
 }
 function parseOutlookEmail(raw){
