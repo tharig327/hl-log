@@ -990,7 +990,12 @@ function shareTicket(id){
 }
 
 function checkQRParams(){
-  const p=new URLSearchParams(window.location.search);
+  // The QR code encodes & as %26 for ZPL compatibility.
+  // When the phone opens the URL, %26 may stay encoded as-is in the query string,
+  // causing URLSearchParams to see one giant param instead of many.
+  // Fix: decode %26 back to & before parsing.
+  const rawSearch = window.location.search.replace(/%26/gi, '&');
+  const p = new URLSearchParams(rawSearch);
   if(p.get('action')==='log'||p.get('apn')){
     openModal();
     if(p.get('apn'))      $('fApn').value     =p.get('apn');
