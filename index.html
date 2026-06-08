@@ -593,6 +593,14 @@ async function initApp(){
     loadFromGist().then(()=>{ render(); renderContacts(); renderQueueTab(); setSyncStatus('ok'); }).catch(()=>{});
     return;
   }
+  // If opened via QR code scan, skip PIN and go straight to the log form
+  const rawSearch=window.location.search.replace(/%26/gi,'&');
+  const qrParams=new URLSearchParams(rawSearch);
+  if(qrParams.get('action')==='log'||qrParams.get('apn')){
+    loadLocal(); doUnlock();
+    loadFromGist().catch(()=>{});
+    return;
+  }
   await initPinScreen();
 }
 
