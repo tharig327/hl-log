@@ -952,7 +952,7 @@ function sendNotify(){
     e.notes?`Resolution/Notes: ${e.notes}`:null,
     note?'':null, note?`Additional Note: ${note}`:null,'',
     `Logged by: ${e.by||'—'}`,`Days in shop: ${days(e.date)}`,
-    e.ticketNum?(()=>{ const base=window.location.origin+window.location.pathname.replace('index.html','').replace(/\/$/,''); return '\nTrack this ticket: '+base+'/ticket.html?ticket='+e.ticketNum; })():null
+    e.ticketNum?(()=>{ const base=window.location.origin+window.location.pathname.replace('index.html','').replace(/\/$/,''); return '\nTrack this ticket: '+base+'/t.html?id='+e.ticketNum.replace('TKT-',''); })():null
   ].filter(l=>l!==null).join('\n');
   window.location.href=`mailto:${to}?subject=${encodeURIComponent(sm.subject)}&body=${encodeURIComponent(body)}`;
   closeNotifyModal();
@@ -991,7 +991,7 @@ function shareTicket(id){
   const e=entries.find(x=>x.id===id);
   if(!e||!e.ticketNum){ toast('No ticket number on this entry','#cc4444'); return; }
   const base=window.location.origin+window.location.pathname.replace('index.html','').replace(/\/$/,'');
-  const url=base+'/ticket.html?ticket='+e.ticketNum;
+  const url=base+'/t.html?id='+e.ticketNum.replace('TKT-','');
   navigator.clipboard.writeText(url)
     .then(()=>toast('Ticket link copied — paste it and send to '+(e.submittedBy||e.by||'them')))
     .catch(()=>prompt('Copy this link:',url));
