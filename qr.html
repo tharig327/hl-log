@@ -152,11 +152,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
     <div class="zpl-info">
       <b>How to print ZPL:</b><br>
-      1. Click <b>Download ZPL</b><br>
-      2. Open Command Prompt and run:<br>
-      <code>copy /b labels.zpl \\%COMPUTERNAME%\ZDesigner_GK420t</code><br>
+      1. Click <b>Download &amp; Copy Print Cmd</b><br>
+      2. Open CMD and paste — prints instantly via PowerShell raw spooler<br>
       <br>
-      Or use <b>Zebra Setup Utilities → Send File</b> to send the .zpl directly.
+      Requires <code>PrintZPL.bat</code> and <code>PrintZPL.ps1</code> on your Desktop.
     </div>
 
     <div style="display:flex;flex-direction:column;gap:6px">
@@ -178,7 +177,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="print-all-bar" id="printBar" style="display:none">
       <span style="font-size:12px;color:var(--hl-text3)" id="printCount"></span>
       <button class="btn btn-outline" style="width:auto" onclick="downloadZPL(null)"><i class="ti ti-file-download"></i> Download All ZPL</button>
-      <button class="btn btn-green" style="width:auto" onclick="sendToPrinter()"><i class="ti ti-printer"></i> Send to Printer</button>
+      <button class="btn btn-green" style="width:auto" onclick="sendToPrinter()"><i class="ti ti-printer"></i> Download &amp; Copy Print Cmd</button>
     </div>
   </div>
 </div>
@@ -418,6 +417,8 @@ function buildAllZPL(ids){
   return items.map(buildZPL).join('');
 }
 
+const ZPL_FOLDER = 'C:\\Users\\tharig\\Documents\\Qr codes';
+
 /* ── Download ZPL file ── */
 function downloadZPL(id){
   const zpl = id ? buildZPL(queue.find(i=>i.id===id)) : buildAllZPL(null);
@@ -425,47 +426,25 @@ function downloadZPL(id){
   const blob = new Blob([zpl], {type:'application/octet-stream'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = id ? `label_${queue.find(i=>i.id===id).apn}.zpl` : 'labels.zpl';
+  // Filename: label_T-2252.zpl (single) or labels.zpl (all)
+  const fname = id ? `label_${queue.find(i=>i.id===id).apn}.zpl` : 'labels.zpl';
+  a.download = fname;
   a.click();
   URL.revokeObjectURL(a.href);
-  showToast('ZPL downloaded — send to printer using instructions in sidebar');
+  showToast(`Saved as ${fname} — move to QR codes folder if needed`);
 }
 
-/* ── Send to printer via WebUSB (if Zebra connected via USB) ── */
-async function sendToPrinter(){
-  // Try WebUSB first (Chrome/Edge with USB-connected Zebra)
-  if(navigator.usb){
-    try{
-      const device = await navigator.usb.requestDevice({ filters:[{vendorId:0x0A5F}] }); // 0x0A5F = Zebra
-      await device.open();
-      if(device.configuration===null) await device.selectConfiguration(1);
-      await device.claimInterface(0);
-      const zpl = buildAllZPL(null);
-      const encoder = new TextEncoder();
-      const data = encoder.encode(zpl);
-      // Find bulk OUT endpoint
-      let epNum = 1;
-      for(const iface of device.configuration.interfaces){
-        for(const alt of iface.alternates){
-          for(const ep of alt.endpoints){
-            if(ep.direction==='out') epNum = ep.endpointNumber;
-          }
-        }
-      }
-      await device.transferOut(epNum, data);
-      await device.close();
-      showToast('✓ Labels sent to printer!');
-      return;
-    }catch(e){
-      if(e.name!=='NotFoundError'){
-        console.warn('WebUSB error:',e);
-      }
-      // Fall through to download
-    }
-  }
-  // Fallback: download the file
-  downloadZPL(null);
-  showToast('WebUSB not available — ZPL downloaded instead');
+/* ── Send to printer — download ZPL + copy print command to clipboard ── */
+function sendToPrinter(){
+  if(!queue.length){ alert('No labels in queue.'); return; }
+  const fname = queue.length === 1 ? `label_${queue[0].apn}.zpl` : 'labels.zpl';
+  downloadZPL(queue.length === 1 ? queue[0].id : null);
+  const cmd = `"C:\\Users\\tharig\\Desktop\\PrintZPL.bat" "C:\\Users\\tharig\\Downloads\\${fname}"`;
+  navigator.clipboard.writeText(cmd).then(()=>{
+    showToast(`✓ Downloaded — paste command in CMD, then click Send To Printer`);
+  }).catch(()=>{
+    showToast(`✓ ${fname} downloaded — send via Zebra Setup Utilities or CMD`);
+  });
 }
 
 /* ── Utilities ── */
