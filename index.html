@@ -955,7 +955,7 @@ function sendNotify(){
     e.notes?`Resolution/Notes: ${e.notes}`:null,
     note?'':null, note?`Additional Note: ${note}`:null,'',
     `Logged by: ${e.by||'—'}`,`Days in shop: ${days(e.date)}`,
-    e.ticketNum?'\nTrack this ticket: <'+window.location.origin+'/t.html?id='+e.ticketNum.replace('TKT-','')+'>\n':null,
+    e.ticketNum?'\nTrack this ticket: '+window.location.origin+'/t.html?id='+e.ticketNum.replace('TKT-',''):null,
   ].filter(l=>l!==null).join('\n');
 
   window.location.href=`mailto:${to}?subject=${encodeURIComponent(sm.subject)}&body=${encodeURIComponent(body)}`;
