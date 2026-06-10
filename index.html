@@ -1113,7 +1113,8 @@ function saveEntry(sec){
   let entry;
   const existing=editId?state[sec].entries.find(e=>e.id===editId):null;
   const tktRaw={applicator:$('fTicket'),machine:$('mTicket'),setup:$('sTicket')}[sec]?.value.trim();
-  const tkt=tktRaw?'TKT-'+tktRaw:(existing?.ticketNum||null);
+  const makeTkt=()=>'TKT-'+Math.floor(1000+Math.random()*9000);
+  const tkt=tktRaw?'TKT-'+tktRaw:(existing?.ticketNum||makeTkt());
 
   if(sec==='applicator'){
     const apn=$('fApn').value.trim(), issue=$('fIssue').value.trim();
