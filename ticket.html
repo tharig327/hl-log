@@ -79,6 +79,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 @keyframes spin{to{transform:rotate(360deg)}}
 .err-box{background:rgba(58,16,16,.3);border:1px solid #552020;border-radius:4px;padding:12px 14px;font-size:13px;color:#e07070;text-align:center;margin-top:1rem}
 .footer{margin-top:2rem;font-size:11px;color:var(--hl-text3);text-align:center}
+.filter-btn{height:30px;padding:0 12px;font-size:11px;border:1px solid var(--hl-border2);border-radius:20px;background:var(--hl-surface2);color:var(--hl-text2);cursor:pointer;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;touch-action:manipulation}
+.filter-btn:hover{border-color:var(--hl-border);color:var(--hl-text)}
+.filter-btn.active{background:var(--hl-red);border-color:var(--hl-red);color:#fff}
+.open-ticket-card{background:var(--hl-surface);border:1px solid var(--hl-border);border-radius:4px;padding:12px 14px;margin-bottom:8px;border-left:3px solid var(--hl-border)}
+.open-ticket-card.type-applicator{border-left-color:#cc4444}
+.open-ticket-card.type-machine{border-left-color:#cc8800}
+.open-ticket-card.type-setup{border-left-color:#1a5fa0}
+.otc-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;gap:8px}
+.otc-num{font-family:monospace;font-size:11px;color:#5090d0;margin-bottom:2px}
+.otc-title{font-size:14px;font-weight:600;font-family:monospace}
+.otc-type{font-size:10px;color:var(--hl-text3);text-transform:uppercase;letter-spacing:.06em;margin-top:1px}
+.otc-desc{font-size:12px;color:var(--hl-text2);margin-top:5px}
+.otc-footer{display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid var(--hl-border);font-size:11px;color:var(--hl-text3);gap:8px;flex-wrap:wrap}
+.open-empty{text-align:center;padding:2rem 1rem;color:var(--hl-text3);font-size:13px}
 </style>
 </head>
 <body>
@@ -94,6 +108,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="tabs">
   <button class="tab-btn active" onclick="switchTab('submit')"><i class="ti ti-clipboard-plus" style="font-size:15px"></i> Submit Ticket</button>
   <button class="tab-btn" onclick="switchTab('status')"><i class="ti ti-search" style="font-size:15px"></i> Check Status</button>
+  <button class="tab-btn" onclick="switchTab('open')"><i class="ti ti-list" style="font-size:15px"></i> Open Tickets</button>
 </div>
 
 <div class="card">
@@ -251,6 +266,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div id="statusResult"></div>
   </div>
 
+  <!-- OPEN TICKETS -->
+  <div class="section" id="sec-open">
+    <div style="margin-bottom:12px">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+        <button class="filter-btn active" onclick="filterOpen('all')" id="filt-all">All Types</button>
+        <button class="filter-btn" onclick="filterOpen('applicator')" id="filt-applicator"><i class="ti ti-tool" style="font-size:12px"></i> Applicator</button>
+        <button class="filter-btn" onclick="filterOpen('machine')" id="filt-machine"><i class="ti ti-settings-2" style="font-size:12px"></i> Machine</button>
+        <button class="filter-btn" onclick="filterOpen('setup')" id="filt-setup"><i class="ti ti-file-description" style="font-size:12px"></i> Setup Sheet</button>
+      </div>
+    </div>
+    <div id="openTicketsList"><div class="spinner"></div></div>
+  </div>
+
 </div>
 
 <div class="footer">H&L Manufacturing · Issue Tracking System</div>
@@ -276,10 +304,122 @@ function selectType(type){
 }
 
 function switchTab(tab){
-  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',(i===0&&tab==='submit')||(i===1&&tab==='status')));
-  ['submit','success','status'].forEach(s=>{ const el=document.getElementById('sec-'+s); if(el) el.classList.remove('active'); });
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',
+    (i===0&&tab==='submit')||(i===1&&tab==='status')||(i===2&&tab==='open')));
+  ['submit','success','status','open'].forEach(s=>{ const el=document.getElementById('sec-'+s); if(el) el.classList.remove('active'); });
   document.getElementById('sec-'+tab).classList.add('active');
   if(tab==='status') setTimeout(()=>document.getElementById('iTicket').focus(),100);
+  if(tab==='open') loadOpenTickets();
+}
+
+let openFilter = 'all';
+function filterOpen(type){
+  openFilter = type;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('filt-'+type).classList.add('active');
+  renderOpenTickets(window._openTicketsData);
+}
+
+async function loadOpenTickets(){
+  const el = document.getElementById('openTicketsList');
+  el.innerHTML = '<div class="spinner"></div>';
+  try{
+    const g = await gistAPI('GET','gists/'+GIST_ID);
+    const applicator = g.files[DATA_FILE] ? JSON.parse(g.files[DATA_FILE].content).issues||[] : [];
+    const machine    = g.files[MACH_FILE] ? JSON.parse(g.files[MACH_FILE].content).issues||[] : [];
+    const setup      = g.files[SETUP_FILE]? JSON.parse(g.files[SETUP_FILE].content).issues||[] : [];
+    const queues = {};
+    ['applicator','machine','setup'].forEach(sec=>{ const f=g.files[QUEUE_FILES[sec]]; queues[sec]=f?JSON.parse(f.content):[]; });
+
+    // Build ordered active list per section then merge
+    function orderedActive(items, order){
+      const active = items.filter(e=>e.status==='open'||e.status==='inprog'||e.status==='waiting');
+      const ordered = [];
+      order.forEach(id=>{ const i=active.findIndex(e=>e.id===id); if(i!==-1) ordered.push(active.splice(i,1)[0]); });
+      active.forEach(e=>ordered.push(e));
+      return ordered;
+    }
+
+    const aItems = orderedActive([...applicator], queues.applicator).map((e,i)=>({...e,_sec:'applicator',_pos:i+1}));
+    const mItems = orderedActive([...machine],    queues.machine).map((e,i)=>({...e,_sec:'machine',   _pos:i+1}));
+    const sItems = orderedActive([...setup],      queues.setup).map((e,i)=>({...e,_sec:'setup',      _pos:i+1}));
+
+    window._openTicketsData = {aItems, mItems, sItems};
+    renderOpenTickets(window._openTicketsData);
+  }catch(e){
+    el.innerHTML = '<div class="err-box">Could not load tickets — check your connection.<br><span style="font-size:11px;opacity:.8">'+e.message+'</span></div>';
+  }
+}
+
+function renderOpenTickets(data){
+  if(!data){ return; }
+  const el = document.getElementById('openTicketsList');
+  const{aItems,mItems,sItems} = data;
+
+  let items = [];
+  if(openFilter==='all'||openFilter==='applicator') items = items.concat(aItems);
+  if(openFilter==='all'||openFilter==='machine')    items = items.concat(mItems);
+  if(openFilter==='all'||openFilter==='setup')      items = items.concat(sItems);
+
+  // Sort: open/inprog by queue position, waiting at bottom
+  const active  = items.filter(e=>e.status!=='waiting');
+  const waiting = items.filter(e=>e.status==='waiting');
+
+  if(!items.length){
+    el.innerHTML = '<div class="open-empty"><i class="ti ti-check" style="font-size:28px;display:block;margin-bottom:6px;color:#50a870"></i>No open tickets right now</div>';
+    return;
+  }
+
+  const typeLabel = {applicator:'Applicator Issue',machine:'Machine Issue',setup:'Setup Sheet Issue'};
+  const typeIcon  = {applicator:'ti-tool',machine:'ti-settings-2',setup:'ti-file-description'};
+  const statusBadge = {
+    open:    '<span class="badge badge-open">Open</span>',
+    inprog:  '<span class="badge badge-inprog">In Progress</span>',
+    waiting: '<span class="badge badge-waiting">Waiting Parts</span>',
+  };
+
+  function cardHTML(e){
+    const primaryLabel = {applicator:e.apn,machine:e.machine,setup:e.terminal}[e._sec] || '—';
+    const desc         = {applicator:e.issue,machine:e.desc,setup:e.issue}[e._sec] || '';
+    const sub          = {applicator:e.press||'',machine:'',setup:e.awg||''}[e._sec];
+    const daysMs = Date.now()-e.date;
+    const hrs = Math.floor(daysMs/3600000);
+    const d   = Math.floor(daysMs/86400000);
+    const age = hrs<1?'<1hr':hrs<24?hrs+'hr'+(hrs!==1?'s':''):d+'d';
+    const priorityColor={urgent:'#e07050',high:'#d4a030',normal:'#aaa'}[e.priority||'normal'];
+    const priorityLabel={urgent:'Urgent',high:'High',normal:'Normal'}[e.priority||'normal'];
+    return `<div class="open-ticket-card type-${e._sec}">
+      <div class="otc-top">
+        <div style="min-width:0">
+          <div class="otc-num">${e.ticketNum||'—'}</div>
+          <div class="otc-title">${primaryLabel}</div>
+          <div class="otc-type"><i class="ti ${typeIcon[e._sec]}" style="font-size:10px;vertical-align:-1px;margin-right:3px"></i>${typeLabel[e._sec]}${sub?' · '+sub:''}</div>
+        </div>
+        <div style="flex-shrink:0;text-align:right">
+          ${statusBadge[e.status]||''}
+          <div style="font-size:10px;color:var(--hl-text3);margin-top:4px">#${e._pos} in queue</div>
+        </div>
+      </div>
+      <div class="otc-desc">${desc}</div>
+      <div class="otc-footer">
+        <span style="display:flex;align-items:center;gap:8px">
+          <span><i class="ti ti-clock" style="font-size:11px;vertical-align:-1px"></i> ${age}</span>
+          <span style="color:${priorityColor}">${priorityLabel}</span>
+          ${e.by?`<span>By: ${e.by}</span>`:''}
+        </span>
+        ${e.ticketNum?`<button onclick="quickLookup('${e.ticketNum}')" style="height:26px;padding:0 10px;font-size:11px;border:1px solid var(--hl-border2);border-radius:3px;background:var(--hl-surface2);color:#5090d0;cursor:pointer;white-space:nowrap">View Details</button>`:''}
+      </div>
+    </div>`;
+  }
+
+  el.innerHTML = active.map(cardHTML).join('') +
+    (waiting.length ? '<div style="font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--hl-text3);padding:10px 4px 6px;margin-top:4px">Waiting on Parts</div>' + waiting.map(cardHTML).join('') : '');
+}
+
+function quickLookup(tktNum){
+  document.getElementById('iTicket').value = tktNum.replace('TKT-','');
+  switchTab('status');
+  lookupTicket();
 }
 
 function formatApn(input){
