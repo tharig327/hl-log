@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>H&L Applicator Issue Log</title>
+<title>H&L Issue Log</title>
 <meta name="theme-color" content="#cc2222">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Applicator Log">
-<meta name="application-name" content="Applicator Log">
+<meta name="apple-mobile-web-app-title" content="H&L Log">
+<meta name="application-name" content="H&L Log">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
@@ -56,11 +56,21 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .header p{font-size:11px;color:var(--hl-text3);margin-top:1px}
 .header-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .sync-status{font-size:10px;color:var(--hl-text3);display:flex;align-items:center;gap:4px;padding:0 2px}
-.tab-bar{display:flex;border-bottom:1px solid var(--hl-border);padding:0 1.25rem;overflow-x:auto}
-.tab{padding:9px 14px;font-size:12px;cursor:pointer;color:var(--hl-text3);border-bottom:2px solid transparent;margin-bottom:-1px;letter-spacing:.04em;text-transform:uppercase;user-select:none;white-space:nowrap}
+
+/* ── TOP SECTION TABS (Applicator / Machine / Setup) ── */
+.section-tabs{display:flex;border-bottom:2px solid var(--hl-border);background:var(--hl-surface);overflow-x:auto}
+.section-tab{flex:1;min-width:0;padding:11px 8px;font-size:12px;cursor:pointer;color:var(--hl-text3);border-bottom:3px solid transparent;margin-bottom:-2px;letter-spacing:.03em;text-align:center;user-select:none;white-space:nowrap;display:flex;align-items:center;justify-content:center;gap:5px;transition:color .1s}
+.section-tab.active{color:var(--hl-text);border-bottom-color:var(--hl-red);font-weight:500}
+.section-tab:hover:not(.active){color:var(--hl-text2)}
+.section-tab i{font-size:14px}
+
+/* ── SUB TABS (Log / Queue / History) ── */
+.tab-bar{display:flex;border-bottom:1px solid var(--hl-border);padding:0 1.25rem;background:var(--hl-bg);overflow-x:auto}
+.tab{padding:8px 14px;font-size:11px;cursor:pointer;color:var(--hl-text3);border-bottom:2px solid transparent;margin-bottom:-1px;letter-spacing:.04em;text-transform:uppercase;user-select:none;white-space:nowrap}
 .tab.active{color:var(--hl-text);border-bottom-color:var(--hl-red)}
 .tab:hover:not(.active){color:var(--hl-text2)}
-.section{display:none}.section.active{display:block}
+.sub-section{display:none}.sub-section.active{display:block}
+
 .toolbar{display:flex;gap:8px;padding:.75rem 1.25rem;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--hl-border);background:var(--hl-surface)}
 .toolbar input,.toolbar select{font-size:12px;height:34px;padding:0 10px;border:1px solid var(--hl-border2);border-radius:4px;background:var(--hl-surface2);color:var(--hl-text);min-width:0;-webkit-appearance:none}
 .toolbar input::placeholder{color:var(--hl-text3)}
@@ -74,8 +84,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .btn-sm:hover{color:var(--hl-text);border-color:var(--hl-border2)}
 .btn-notify{border-color:#1a4a7a;color:#5b9bd5;background:rgba(26,74,122,.2)}
 .btn-notify:hover{background:rgba(26,74,122,.4)}
-.btn-edit{border-color:var(--hl-border);color:var(--hl-text2)}
-.btn-edit:hover{color:var(--hl-text)}
 .btn-del{border-color:#3a1010;color:#cc4444;background:rgba(58,16,16,.3)}
 .btn-del:hover{background:rgba(80,20,20,.5);color:#e05555;border-color:#552020}
 .btn-export{border-color:#1a5a1a;color:#50a870;background:rgba(26,90,26,.2)}
@@ -90,7 +98,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .stat-val{font-size:22px;font-weight:500;line-height:1}
 .stat-over .stat-label{color:#cc4444}.stat-over .stat-val{color:#cc4444}
 .desktop-table{display:none;overflow-x:auto}
-.desktop-table table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed;min-width:780px}
+.desktop-table table{width:100%;border-collapse:collapse;font-size:12px}
 .desktop-table th{text-align:left;padding:8px 12px;font-size:9px;font-weight:500;color:var(--hl-text3);text-transform:uppercase;letter-spacing:.1em;border-bottom:1px solid var(--hl-border);background:var(--hl-surface);white-space:nowrap}
 .desktop-table td{padding:10px 12px;border-bottom:1px solid var(--hl-border);vertical-align:middle}
 .desktop-table tbody tr:hover td{background:var(--hl-surface)}
@@ -112,7 +120,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .entry-apn{font-size:14px;font-weight:500;font-family:monospace}
 .entry-press{font-size:11px;color:var(--hl-text3);margin-top:1px}
 .entry-issue{font-size:13px;margin-bottom:2px}
-.entry-card-footer{display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:8px;border-top:1px solid var(--hl-border);gap:8px}
+.entry-card-footer{display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:8px;border-top:1px solid var(--hl-border);gap:8px;flex-wrap:wrap}
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);align-items:flex-start;justify-content:center;padding:24px 16px;z-index:50;overflow-y:auto}
 .modal-overlay.open{display:flex}
 .modal{background:var(--hl-surface);border:1px solid var(--hl-border2);border-radius:4px;padding:1.25rem 1.5rem;width:100%;max-width:480px;border-top:2px solid var(--hl-red);margin:auto}
@@ -126,6 +134,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .field select option{background:var(--hl-surface)}
 .parse-hint{font-size:10px;margin-top:4px;min-height:14px;display:flex;align-items:center;gap:4px}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
 .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:1.25rem;padding-top:.75rem;border-top:1px solid var(--hl-border)}
 .recipient-list{border:1px solid var(--hl-border2);border-radius:3px;background:var(--hl-bg);overflow:hidden}
 .recipient-row{display:flex;align-items:center;cursor:pointer;border-bottom:1px solid var(--hl-border);transition:background .1s}
@@ -149,7 +158,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 .spin{animation:spin 1s linear infinite;display:inline-block}
 
-/* ── QUEUE ORDER TAB ── */
+/* Queue tab */
 .queue-pad{padding:1rem 1.25rem 1.5rem}
 .queue-info{font-size:12px;color:var(--hl-text2);margin-bottom:1rem;padding:10px 14px;background:var(--hl-surface);border:1px solid var(--hl-border);border-radius:4px;line-height:1.6}
 .queue-list-drag{display:flex;flex-direction:column;gap:6px}
@@ -171,10 +180,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .queue-save-bar{display:flex;align-items:center;justify-content:space-between;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--hl-border);gap:8px;flex-wrap:wrap}
 .queue-empty{text-align:center;padding:2rem 1rem;color:var(--hl-text3);font-size:13px}
 
+/* Contacts pad */
+.contacts-pad{padding:0 1.25rem 1.5rem}
+
 @media(min-width:600px){
   .card-list{display:none}
   .desktop-table{display:block}
-  .contacts-pad{padding:0 1.25rem 1.5rem}
   .toolbar input[type=search]{width:200px}
   .toolbar select{width:148px}
 }
@@ -182,6 +193,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </head>
 <body>
 
+<!-- SETUP -->
 <div class="screen" id="setupScreen">
   <div class="card">
     <div class="card-logo">H&L</div>
@@ -197,11 +209,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
+<!-- PIN -->
 <div class="screen" id="pinScreen">
   <div class="card" style="max-width:320px;text-align:center">
     <div class="card-logo">H&L</div>
     <div class="card-title" id="pinTitle">Enter PIN</div>
-    <div class="card-sub" id="pinSub" style="margin-bottom:1.25rem">H&L Applicator Issue Log</div>
+    <div class="card-sub" id="pinSub" style="margin-bottom:1.25rem">H&L Issue Log</div>
     <div class="pin-dots" id="pinDots">
       <div class="pin-dot" id="d0"></div><div class="pin-dot" id="d1"></div>
       <div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div>
@@ -222,15 +235,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
+<!-- APP -->
 <div id="app">
   <div class="header">
     <div class="header-left">
       <div class="hl-logo">H&L</div>
-      <div><h1>Applicator Issue Log</h1><p>Track incoming applicators and why you still have them</p></div>
+      <div><h1>H&L Issue Log</h1><p>Applicator · Machine · Setup Sheet</p></div>
     </div>
     <div class="header-actions">
       <span class="sync-status" id="syncStatus"></span>
-      <button class="btn btn-sync" onclick="pushData(false)"><i class="ti ti-cloud-upload"></i> Sync</button>
+      <button class="btn btn-sync" onclick="pushAll(false)"><i class="ti ti-cloud-upload"></i> Sync</button>
       <button class="btn btn-import" onclick="triggerImport()"><i class="ti ti-upload"></i> Import</button>
       <button class="btn btn-export" onclick="exportJSON()"><i class="ti ti-download"></i> Export</button>
       <button class="btn" onclick="openChangePIN()"><i class="ti ti-lock"></i> PIN</button>
@@ -239,65 +253,165 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
   <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(event)">
 
-  <div class="tab-bar">
-    <div class="tab active" onclick="switchTab('log')">Issue log</div>
-    <div class="tab" onclick="switchTab('queue')"><i class="ti ti-list-numbers" style="font-size:12px;margin-right:4px;vertical-align:-1px"></i>Queue Order</div>
-    <div class="tab" onclick="switchTab('contacts')"><i class="ti ti-address-book" style="font-size:12px;margin-right:4px;vertical-align:-1px"></i>Contacts</div>
+  <!-- SECTION TABS -->
+  <div class="section-tabs">
+    <div class="section-tab active" onclick="switchSection('applicator')" id="stab-applicator">
+      <i class="ti ti-tool"></i> Applicator Issues
+    </div>
+    <div class="section-tab" onclick="switchSection('machine')" id="stab-machine">
+      <i class="ti ti-settings-2"></i> Machine Issues
+    </div>
+    <div class="section-tab" onclick="switchSection('setup')" id="stab-setup">
+      <i class="ti ti-file-description"></i> Setup Sheet Issues
+    </div>
+    <div class="section-tab" onclick="switchSection('contacts')" id="stab-contacts" style="flex:0 0 auto;padding-left:16px;padding-right:16px">
+      <i class="ti ti-address-book"></i> Contacts
+    </div>
   </div>
 
-  <!-- ISSUE LOG TAB -->
-  <div id="tab-log" class="section active">
-    <div class="toolbar">
-      <input type="search" id="searchInput" placeholder="Search applicator, terminal, issue…" oninput="render()">
-      <select id="filterStatus" onchange="render()">
-        <option value="">All statuses</option><option value="open">Open</option>
-        <option value="inprog">In progress</option><option value="waiting">Waiting on parts</option><option value="done">Resolved</option>
-      </select>
-      <select id="filterAge" onchange="render()">
-        <option value="">Any age</option><option value="old">Overdue (&gt;3 days)</option>
-      </select>
-      <button class="btn btn-red" onclick="openModal()" style="margin-left:auto"><i class="ti ti-plus"></i> Log Issue</button>
+  <!-- APPLICATOR SECTION -->
+  <div id="section-applicator">
+    <div class="tab-bar">
+      <div class="tab active" onclick="switchSubTab('applicator','log')">Issue Log</div>
+      <div class="tab" onclick="switchSubTab('applicator','queue')"><i class="ti ti-list-numbers" style="font-size:11px;margin-right:3px;vertical-align:-1px"></i>Queue</div>
+      <div class="tab" onclick="switchSubTab('applicator','history')"><i class="ti ti-history" style="font-size:11px;margin-right:3px;vertical-align:-1px"></i>History</div>
     </div>
-    <div class="stats" id="statsBar"></div>
-    <div class="card-list" id="cardList"></div>
-    <div id="emptyMobile" class="empty" style="display:none"><i class="ti ti-inbox" style="font-size:26px;display:block;margin-bottom:6px"></i>No entries match</div>
-    <div class="desktop-table">
-      <table>
+    <div class="sub-section active" id="applicator-log">
+      <div class="toolbar">
+        <input type="search" id="aSearch" placeholder="Search applicator, terminal, issue…" oninput="renderSection('applicator')">
+        <select id="aFilter" onchange="renderSection('applicator')">
+          <option value="">All statuses</option><option value="open">Open</option>
+          <option value="inprog">In progress</option><option value="waiting">Waiting on parts</option>
+        </select>
+        <button class="btn btn-red" onclick="openModal('applicator')" style="margin-left:auto"><i class="ti ti-plus"></i> Log Issue</button>
+      </div>
+      <div class="stats" id="aStats"></div>
+      <div class="card-list" id="aCards"></div>
+      <div id="aEmptyM" class="empty" style="display:none"><i class="ti ti-inbox" style="font-size:26px;display:block;margin-bottom:6px"></i>No entries match</div>
+      <div class="desktop-table"><table>
         <thead><tr>
           <th style="width:95px">Applicator #</th><th style="width:90px">Press</th>
-          <th style="width:155px">Terminal / Wire</th><th>Issue / Notes</th>
-          <th style="width:130px">Ticket / By</th>
-          <th style="width:108px">Status</th><th style="width:52px">Days</th>
-          <th style="width:200px;text-align:right;padding-right:14px">Actions</th>
-        </tr></thead>
-        <tbody id="tbody"></tbody>
-      </table>
-      <div id="emptyDesktop" class="empty" style="display:none"><i class="ti ti-inbox" style="font-size:26px;display:block;margin-bottom:6px"></i>No entries match</div>
+          <th style="width:150px">Terminal / Wire</th><th>Issue / Notes</th>
+          <th style="width:120px">Ticket / By</th><th style="width:108px">Status</th>
+          <th style="width:52px">Days</th><th style="width:200px;text-align:right;padding-right:14px">Actions</th>
+        </tr></thead><tbody id="aBody"></tbody>
+      </table><div id="aEmptyD" class="empty" style="display:none"><i class="ti ti-inbox" style="font-size:26px;display:block;margin-bottom:6px"></i>No entries match</div></div>
+    </div>
+    <div class="sub-section" id="applicator-queue"><div class="queue-pad" id="aQueuePad"></div></div>
+    <div class="sub-section" id="applicator-history">
+      <div class="toolbar">
+        <input type="search" id="aHSearch" placeholder="Search resolved…" oninput="renderHistory('applicator')">
+        <button class="btn btn-red" style="margin-left:auto;opacity:.6;cursor:default" disabled><i class="ti ti-history"></i> Resolved Items</button>
+      </div>
+      <div class="card-list" id="aHistCards"></div>
+      <div class="desktop-table"><table>
+        <thead><tr>
+          <th style="width:95px">Applicator #</th><th style="width:90px">Press</th>
+          <th style="width:150px">Terminal / Wire</th><th>Issue / Notes</th>
+          <th style="width:120px">By</th><th style="width:108px">Status</th>
+          <th style="width:52px">Days</th><th style="width:130px;text-align:right;padding-right:14px">Actions</th>
+        </tr></thead><tbody id="aHistBody"></tbody>
+      </table><div id="aHistEmpty" class="empty" style="display:none"><i class="ti ti-history" style="font-size:26px;display:block;margin-bottom:6px"></i>No resolved items yet</div></div>
     </div>
   </div>
 
-  <!-- QUEUE ORDER TAB -->
-  <div id="tab-queue" class="section">
-    <div class="queue-pad">
-      <div class="queue-info">
-        <strong style="color:var(--hl-text)"><i class="ti ti-drag-drop" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>Drag to reorder</strong> — or use the arrows on mobile.<br>
-        This order is shown to technicians as their estimated wait time on the ticket page.<br>
-        <span style="color:var(--hl-text3)">Waiting on Parts items are shown grayed out and excluded from ETA calculations.</span>
+  <!-- MACHINE SECTION -->
+  <div id="section-machine" style="display:none">
+    <div class="tab-bar">
+      <div class="tab active" onclick="switchSubTab('machine','log')">Issue Log</div>
+      <div class="tab" onclick="switchSubTab('machine','queue')"><i class="ti ti-list-numbers" style="font-size:11px;margin-right:3px;vertical-align:-1px"></i>Queue</div>
+      <div class="tab" onclick="switchSubTab('machine','history')"><i class="ti ti-history" style="font-size:11px;margin-right:3px;vertical-align:-1px"></i>History</div>
+    </div>
+    <div class="sub-section active" id="machine-log">
+      <div class="toolbar">
+        <input type="search" id="mSearch" placeholder="Search machine, description…" oninput="renderSection('machine')">
+        <select id="mFilter" onchange="renderSection('machine')">
+          <option value="">All statuses</option><option value="open">Open</option>
+          <option value="inprog">In progress</option><option value="waiting">Waiting on parts</option>
+        </select>
+        <button class="btn btn-red" onclick="openModal('machine')" style="margin-left:auto"><i class="ti ti-plus"></i> Log Issue</button>
       </div>
-      <div class="queue-list-drag" id="queueDragList"></div>
-      <div class="queue-empty" id="queueEmpty" style="display:none"><i class="ti ti-check" style="font-size:26px;display:block;margin-bottom:6px;color:#50a870"></i>No open items in the queue</div>
-      <div class="queue-save-bar" id="queueSaveBar" style="display:none">
-        <span style="font-size:12px;color:var(--hl-text3)" id="queueSaveHint">Drag items to set your work order</span>
-        <button class="btn btn-red" onclick="saveQueueOrder()"><i class="ti ti-device-floppy"></i> Save Order</button>
+      <div class="stats" id="mStats"></div>
+      <div class="card-list" id="mCards"></div>
+      <div id="mEmptyM" class="empty" style="display:none"><i class="ti ti-inbox" style="font-size:26px;display:block;margin-bottom:6px"></i>No entries match</div>
+      <div class="desktop-table"><table>
+        <thead><tr>
+          <th style="width:110px">Machine #</th><th>Description</th>
+          <th style="width:200px">Result / Notes</th>
+          <th style="width:90px">By</th><th style="width:108px">Status</th>
+          <th style="width:52px">Days</th><th style="width:180px;text-align:right;padding-right:14px">Actions</th>
+        </tr></thead><tbody id="mBody"></tbody>
+      </table><div id="mEmptyD" class="empty" style="display:none"><i class="ti ti-inbox" style="font-size:26px;display:block;margin-bottom:6px"></i>No entries match</div></div>
+    </div>
+    <div class="sub-section" id="machine-queue"><div class="queue-pad" id="mQueuePad"></div></div>
+    <div class="sub-section" id="machine-history">
+      <div class="toolbar">
+        <input type="search" id="mHSearch" placeholder="Search resolved…" oninput="renderHistory('machine')">
+        <button class="btn btn-red" style="margin-left:auto;opacity:.6;cursor:default" disabled><i class="ti ti-history"></i> Resolved Items</button>
       </div>
+      <div class="card-list" id="mHistCards"></div>
+      <div class="desktop-table"><table>
+        <thead><tr>
+          <th style="width:110px">Machine #</th><th>Description</th>
+          <th style="width:200px">Result / Notes</th>
+          <th style="width:90px">By</th><th style="width:108px">Status</th>
+          <th style="width:52px">Days</th><th style="width:130px;text-align:right;padding-right:14px">Actions</th>
+        </tr></thead><tbody id="mHistBody"></tbody>
+      </table><div id="mHistEmpty" class="empty" style="display:none"><i class="ti ti-history" style="font-size:26px;display:block;margin-bottom:6px"></i>No resolved items yet</div></div>
     </div>
   </div>
 
-  <!-- CONTACTS TAB -->
-  <div id="tab-contacts" class="section">
-    <div class="contacts-pad" style="padding:0 1.25rem 1.5rem">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:.75rem 0;border-bottom:1px solid var(--hl-border);margin-bottom:.75rem;gap:8px">
-        <p style="font-size:12px;color:var(--hl-text2)">People to notify when a repair is complete.</p>
+  <!-- SETUP SECTION -->
+  <div id="section-setup" style="display:none">
+    <div class="tab-bar">
+      <div class="tab active" onclick="switchSubTab('setup','log')">Issue Log</div>
+      <div class="tab" onclick="switchSubTab('setup','queue')"><i class="ti ti-list-numbers" style="font-size:11px;margin-right:3px;vertical-align:-1px"></i>Queue</div>
+      <div class="tab" onclick="switchSubTab('setup','history')"><i class="ti ti-history" style="font-size:11px;margin-right:3px;vertical-align:-1px"></i>History</div>
+    </div>
+    <div class="sub-section active" id="setup-log">
+      <div class="toolbar">
+        <input type="search" id="sSearch" placeholder="Search terminal, AWG, document…" oninput="renderSection('setup')">
+        <select id="sFilter" onchange="renderSection('setup')">
+          <option value="">All statuses</option><option value="open">Open</option>
+          <option value="inprog">In progress</option><option value="waiting">Waiting on parts</option>
+        </select>
+        <button class="btn btn-red" onclick="openModal('setup')" style="margin-left:auto"><i class="ti ti-plus"></i> Log Issue</button>
+      </div>
+      <div class="stats" id="sStats"></div>
+      <div class="card-list" id="sCards"></div>
+      <div id="sEmptyM" class="empty" style="display:none"><i class="ti ti-inbox" style="font-size:26px;display:block;margin-bottom:6px"></i>No entries match</div>
+      <div class="desktop-table"><table>
+        <thead><tr>
+          <th style="width:110px">Terminal #</th><th style="width:80px">AWG</th>
+          <th>Issue / Notes</th><th style="width:150px">Document</th>
+          <th style="width:90px">By</th><th style="width:108px">Status</th>
+          <th style="width:52px">Days</th><th style="width:180px;text-align:right;padding-right:14px">Actions</th>
+        </tr></thead><tbody id="sBody"></tbody>
+      </table><div id="sEmptyD" class="empty" style="display:none"><i class="ti ti-inbox" style="font-size:26px;display:block;margin-bottom:6px"></i>No entries match</div></div>
+    </div>
+    <div class="sub-section" id="setup-queue"><div class="queue-pad" id="sQueuePad"></div></div>
+    <div class="sub-section" id="setup-history">
+      <div class="toolbar">
+        <input type="search" id="sHSearch" placeholder="Search resolved…" oninput="renderHistory('setup')">
+        <button class="btn btn-red" style="margin-left:auto;opacity:.6;cursor:default" disabled><i class="ti ti-history"></i> Resolved Items</button>
+      </div>
+      <div class="card-list" id="sHistCards"></div>
+      <div class="desktop-table"><table>
+        <thead><tr>
+          <th style="width:110px">Terminal #</th><th style="width:80px">AWG</th>
+          <th>Issue / Notes</th><th style="width:150px">Document</th>
+          <th style="width:90px">By</th><th style="width:108px">Status</th>
+          <th style="width:52px">Days</th><th style="width:130px;text-align:right;padding-right:14px">Actions</th>
+        </tr></thead><tbody id="sHistBody"></tbody>
+      </table><div id="sHistEmpty" class="empty" style="display:none"><i class="ti ti-history" style="font-size:26px;display:block;margin-bottom:6px"></i>No resolved items yet</div></div>
+    </div>
+  </div>
+
+  <!-- CONTACTS SECTION -->
+  <div id="section-contacts" style="display:none">
+    <div class="contacts-pad" style="padding:1rem 1.25rem 1.5rem">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:.75rem;border-bottom:1px solid var(--hl-border);margin-bottom:.75rem;gap:8px">
+        <p style="font-size:12px;color:var(--hl-text2)">Shared contacts — used for notifications across all issue types.</p>
         <button class="btn" onclick="openContactModal()"><i class="ti ti-plus"></i> Add Contact</button>
       </div>
       <div id="contactList"></div>
@@ -306,12 +420,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
-<!-- Modals (unchanged) -->
-<div class="modal-overlay" id="modal">
+<!-- APPLICATOR MODAL -->
+<div class="modal-overlay" id="modal-applicator">
   <div class="modal">
-    <h2 id="modalTitle">Log Applicator Issue</h2>
+    <h2 id="aModalTitle">Log Applicator Issue</h2>
     <div class="row2">
-      <div class="field"><label>Applicator # *</label><input id="fApn" placeholder="e.g. APL-042" autocomplete="off"></div>
+      <div class="field"><label>Applicator # *</label><input id="fApn" placeholder="e.g. T-2430" autocomplete="off"></div>
       <div class="field"><label>Press / Machine</label><input id="fPress" placeholder="e.g. KM-4T #3"></div>
     </div>
     <div class="row2">
@@ -322,38 +436,91 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="field"><label>Notes / Resolution Steps</label><textarea id="fNotes" style="height:52px" placeholder="What's been done or what's pending…"></textarea></div>
     <div class="row2">
       <div class="field"><label>Ticket # <span style="font-weight:400;color:var(--hl-text3)">(optional)</span></label>
-        <div style="display:flex;align-items:center;gap:0">
-          <span style="height:38px;padding:0 10px;background:var(--hl-surface2);border:1px solid var(--hl-border2);border-right:none;border-radius:3px 0 0 3px;display:flex;align-items:center;font-size:12px;color:var(--hl-text3);font-family:monospace;white-space:nowrap">TKT-</span>
+        <div style="display:flex;align-items:center">
+          <span style="height:38px;padding:0 8px;background:var(--hl-surface2);border:1px solid var(--hl-border2);border-right:none;border-radius:3px 0 0 3px;display:flex;align-items:center;font-size:11px;color:var(--hl-text3);font-family:monospace">TKT-</span>
           <input id="fTicket" placeholder="4821" inputmode="numeric" maxlength="4" style="border-radius:0 3px 3px 0" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,4)">
         </div>
-        <div style="font-size:10px;color:var(--hl-text3);margin-top:3px">Assign a ticket number so the technician can track status</div>
       </div>
       <div class="field"><label>Status</label>
         <select id="fStatus"><option value="open">Open</option><option value="inprog">In progress</option><option value="waiting">Waiting on parts</option><option value="done">Resolved</option></select>
       </div>
     </div>
     <div class="field"><label>Logged By</label><input id="fBy" placeholder="Your name"></div>
-    <div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-red" onclick="saveEntry()">Save Entry</button></div>
+    <div class="modal-actions"><button class="btn" onclick="closeModal('applicator')">Cancel</button><button class="btn btn-red" onclick="saveEntry('applicator')">Save Entry</button></div>
   </div>
 </div>
 
+<!-- MACHINE MODAL -->
+<div class="modal-overlay" id="modal-machine">
+  <div class="modal">
+    <h2 id="mModalTitle">Log Machine Issue</h2>
+    <div class="row2">
+      <div class="field"><label>Machine # *</label><input id="mMachine" placeholder="e.g. KM-4T #2" autocomplete="off"></div>
+      <div class="field"><label>Logged By</label><input id="mBy" placeholder="Your name"></div>
+    </div>
+    <div class="field"><label>Description *</label><textarea id="mDesc" placeholder="Describe the machine problem…"></textarea></div>
+    <div class="field"><label>Result / Notes</label><textarea id="mResult" style="height:52px" placeholder="What was found, what was done…"></textarea></div>
+    <div class="row2">
+      <div class="field"><label>Status</label>
+        <select id="mStatus"><option value="open">Open</option><option value="inprog">In progress</option><option value="waiting">Waiting on parts</option><option value="done">Resolved</option></select>
+      </div>
+      <div class="field"><label>Ticket # <span style="font-weight:400;color:var(--hl-text3)">(optional)</span></label>
+        <div style="display:flex;align-items:center">
+          <span style="height:38px;padding:0 8px;background:var(--hl-surface2);border:1px solid var(--hl-border2);border-right:none;border-radius:3px 0 0 3px;display:flex;align-items:center;font-size:11px;color:var(--hl-text3);font-family:monospace">TKT-</span>
+          <input id="mTicket" placeholder="4821" inputmode="numeric" maxlength="4" style="border-radius:0 3px 3px 0" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,4)">
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions"><button class="btn" onclick="closeModal('machine')">Cancel</button><button class="btn btn-red" onclick="saveEntry('machine')">Save Entry</button></div>
+  </div>
+</div>
+
+<!-- SETUP SHEET MODAL -->
+<div class="modal-overlay" id="modal-setup">
+  <div class="modal">
+    <h2 id="sModalTitle">Log Setup Sheet Issue</h2>
+    <div class="row3">
+      <div class="field"><label>Terminal # *</label><input id="sTerminal" placeholder="e.g. 794956-1" autocomplete="off"></div>
+      <div class="field"><label>AWG</label><input id="sAwg" placeholder="e.g. 18 AWG"></div>
+      <div class="field"><label>Logged By</label><input id="sBy" placeholder="Your name"></div>
+    </div>
+    <div class="field"><label>Issue Description *</label><textarea id="sIssue" placeholder="What's wrong with the setup sheet…"></textarea></div>
+    <div class="field"><label>Document / File Reference</label><input id="sDoc" placeholder="e.g. SS-2024-0042, rev B"></div>
+    <div class="field"><label>Notes / Resolution</label><textarea id="sNotes" style="height:52px" placeholder="What was done or what's needed…"></textarea></div>
+    <div class="row2">
+      <div class="field"><label>Status</label>
+        <select id="sStatus"><option value="open">Open</option><option value="inprog">In progress</option><option value="waiting">Waiting on parts</option><option value="done">Resolved</option></select>
+      </div>
+      <div class="field"><label>Ticket # <span style="font-weight:400;color:var(--hl-text3)">(optional)</span></label>
+        <div style="display:flex;align-items:center">
+          <span style="height:38px;padding:0 8px;background:var(--hl-surface2);border:1px solid var(--hl-border2);border-right:none;border-radius:3px 0 0 3px;display:flex;align-items:center;font-size:11px;color:var(--hl-text3);font-family:monospace">TKT-</span>
+          <input id="sTicket" placeholder="4821" inputmode="numeric" maxlength="4" style="border-radius:0 3px 3px 0" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,4)">
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions"><button class="btn" onclick="closeModal('setup')">Cancel</button><button class="btn btn-red" onclick="saveEntry('setup')">Save Entry</button></div>
+  </div>
+</div>
+
+<!-- NOTIFY MODAL -->
 <div class="modal-overlay" id="notifyModal">
   <div class="modal">
-    <h2>Repair Complete — Notify</h2>
+    <h2>Notify — Issue Update</h2>
     <div style="background:var(--hl-bg);border:1px solid var(--hl-border);border-radius:3px;padding:10px 12px;margin-bottom:12px">
-      <div style="font-size:13px;font-weight:500;font-family:monospace" id="notifyApnLabel"></div>
-      <div style="font-size:11px;color:var(--hl-text3);margin-top:3px" id="notifyDetailLabel"></div>
+      <div style="font-size:13px;font-weight:500;font-family:monospace" id="notifyLabel"></div>
+      <div style="font-size:11px;color:var(--hl-text3);margin-top:3px" id="notifyDetail"></div>
     </div>
     <div class="field">
       <label>Recipients — click to select</label>
       <div class="recipient-list" id="notifyContactList"></div>
       <div style="font-size:10px;color:var(--hl-text3);margin-top:5px">Add contacts under the Contacts tab.</div>
     </div>
-    <div class="field"><label>Additional Note (optional)</label><textarea id="notifyNote" style="height:54px" placeholder="e.g. Returned to storage bay 3, ready for production."></textarea></div>
+    <div class="field"><label>Additional Note (optional)</label><textarea id="notifyNote" style="height:54px" placeholder="e.g. Ready to return to production."></textarea></div>
     <div class="modal-actions"><button class="btn" onclick="closeNotifyModal()">Cancel</button><button class="btn btn-red" onclick="sendNotify()"><i class="ti ti-mail"></i> Open in Email</button></div>
   </div>
 </div>
 
+<!-- CONTACT MODAL -->
 <div class="modal-overlay" id="contactModal">
   <div class="modal">
     <h2 id="contactModalTitle">Add Contact</h2>
@@ -368,6 +535,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
+<!-- PIN CHANGE MODAL -->
 <div class="modal-overlay" id="pinModal">
   <div class="modal" style="max-width:340px">
     <h2>Change PIN</h2>
@@ -382,18 +550,33 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="toast" id="toast"></div>
 
 <script>
-const DATA_FILE = 'hl_applicator_data.json';
-const META_FILE = 'hl_applicator_meta.json';
-const QUEUE_FILE = 'hl_queue_order.json';
+// ── FILES ──
+const DATA_FILE  = 'hl_applicator_data.json';   // legacy applicator (issues+contacts)
+const MACH_FILE  = 'hl_machine_data.json';
+const SETUP_FILE = 'hl_setup_data.json';
+const META_FILE  = 'hl_applicator_meta.json';
+const QUEUE_FILES = {
+  applicator: 'hl_queue_order.json',
+  machine:    'hl_queue_machine.json',
+  setup:      'hl_queue_setup.json'
+};
 const INACTIVITY = 30 * 60 * 1000;
 
-let entries = [], contacts = [], gistId = null;
-let queueOrder = []; // array of entry IDs in work order
-let editId = null, editCId = null, notifyId = null;
+// ── STATE ──
+// Each section has its own entries array and queue order
+const state = {
+  applicator: { entries:[], queue:[] },
+  machine:    { entries:[], queue:[] },
+  setup:      { entries:[], queue:[] }
+};
+let contacts = [], gistId = null;
+let editId = null, editSection = null, editCId = null;
+let notifyId = null, notifySection = null;
 let selectedRecipients = new Set();
 let pinBuffer = '', pinMode = 'unlock', pinSetupFirst = '';
 let inactivityTimer = null;
 let dragSrcIndex = null;
+let activeSection = 'applicator';
 
 const $ = id => document.getElementById(id);
 function toast(msg, color='#50a870'){
@@ -409,44 +592,36 @@ function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){}}
 function lsDel(k){ try{ localStorage.removeItem(k); }catch(e){}}
 function getToken(){ return lsGet('hl_token'); }
 
+// ── SCREENS ──
 function showScreen(id){
   ['setupScreen','pinScreen'].forEach(s=>$(s).classList.remove('active'));
   $('app').style.display='none';
-  if(id==='app'){ $('app').style.display='block'; }
-  else{ $(id).classList.add('active'); }
+  if(id==='app') $('app').style.display='block';
+  else $(id).classList.add('active');
 }
 function showSetup(){ lockApp(true); $('setupToken').value=''; $('setupErr').textContent=''; showScreen('setupScreen'); }
 
 async function doSetup(){
-  const token=$('setupToken').value.trim();
-  $('setupErr').textContent='';
+  const token=$('setupToken').value.trim(); $('setupErr').textContent='';
   if(!token.startsWith('ghp_')&&!token.startsWith('github_pat_')){ $('setupErr').textContent='Paste a valid GitHub token starting with ghp_'; return; }
   const btn=document.querySelector('#setupScreen .btn-full');
   btn.disabled=true; btn.innerHTML='<i class="ti ti-loader spin"></i> Connecting…';
   try{
     const r=await fetch('https://api.github.com/gists?per_page=1',{headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}});
-    if(!r.ok) throw new Error('Token invalid or no gist access ('+r.status+')');
+    if(!r.ok) throw new Error('Token invalid ('+r.status+')');
     lsSet('hl_token',token);
     btn.disabled=false; btn.innerHTML='<i class="ti ti-plug-connected"></i> Connect';
-    showScreen('pinScreen');
-    await initPinScreen();
-  }catch(e){
-    btn.disabled=false; btn.innerHTML='<i class="ti ti-plug-connected"></i> Connect';
-    $('setupErr').textContent=e.message||'Could not connect — check token and try again';
-  }
+    showScreen('pinScreen'); await initPinScreen();
+  }catch(e){ btn.disabled=false; btn.innerHTML='<i class="ti ti-plug-connected"></i> Connect'; $('setupErr').textContent=e.message||'Could not connect'; }
 }
 
-async function gistAPI(method, path, body){
-  const token=getToken();
-  if(!token) throw new Error('No token');
-  const r=await fetch('https://api.github.com/'+path,{
-    method, headers:{'Authorization':'token '+token,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},
-    body:body?JSON.stringify(body):undefined
-  });
+// ── GIST ──
+async function gistAPI(method,path,body){
+  const token=getToken(); if(!token) throw new Error('No token');
+  const r=await fetch('https://api.github.com/'+path,{method,headers:{'Authorization':'token '+token,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},body:body?JSON.stringify(body):undefined});
   if(!r.ok) throw new Error('GitHub '+r.status);
   return r.json();
 }
-
 async function ensureGist(){
   if(gistId) return gistId;
   const cached=lsGet('hl_gist_id');
@@ -454,49 +629,48 @@ async function ensureGist(){
   const list=await gistAPI('GET','gists?per_page=100');
   const found=list.find(g=>g.files&&(g.files[DATA_FILE]||g.files[META_FILE]));
   if(found){ gistId=found.id; lsSet('hl_gist_id',gistId); return gistId; }
-  const created=await gistAPI('POST','gists',{
-    description:'H&L Applicator Issue Log',public:false,
-    files:{
-      [DATA_FILE]:{content:JSON.stringify({issues:[],contacts:[]},null,2)},
-      [META_FILE]:{content:JSON.stringify({pinHash:null},null,2)},
-      [QUEUE_FILE]:{content:JSON.stringify([],null,2)}
-    }
-  });
+  const created=await gistAPI('POST','gists',{description:'H&L Issue Log',public:false,files:{
+    [DATA_FILE]:{content:JSON.stringify({issues:[],contacts:[]},null,2)},
+    [MACH_FILE]:{content:JSON.stringify({issues:[]},null,2)},
+    [SETUP_FILE]:{content:JSON.stringify({issues:[]},null,2)},
+    [META_FILE]:{content:JSON.stringify({pinHash:null},null,2)},
+    [QUEUE_FILES.applicator]:{content:'[]'},
+    [QUEUE_FILES.machine]:{content:'[]'},
+    [QUEUE_FILES.setup]:{content:'[]'}
+  }});
   gistId=created.id; lsSet('hl_gist_id',gistId); return gistId;
 }
-
-async function readGist(){
-  const id=await ensureGist();
-  const g=await gistAPI('GET','gists/'+id);
-  const data=g.files[DATA_FILE]?JSON.parse(g.files[DATA_FILE].content):{issues:[],contacts:[]};
-  const meta=g.files[META_FILE]?JSON.parse(g.files[META_FILE].content):{pinHash:null};
-  const queue=g.files[QUEUE_FILE]?JSON.parse(g.files[QUEUE_FILE].content):[];
-  return{data,meta,queue};
-}
-
-async function writeGist(files){
-  const id=await ensureGist();
-  await gistAPI('PATCH','gists/'+id,{files});
-}
-
-async function pushData(silent=true){
+async function writeGist(files){ const id=await ensureGist(); await gistAPI('PATCH','gists/'+id,{files}); }
+async function pushMeta(h){ try{ await writeGist({[META_FILE]:{content:JSON.stringify({pinHash:h},null,2)}}); }catch(e){} }
+async function pushAll(silent=true){
   setSyncStatus('syncing');
   try{
-    await writeGist({[DATA_FILE]:{content:JSON.stringify({issues:entries,contacts:contacts},null,2)}});
+    await writeGist({
+      [DATA_FILE]:{content:JSON.stringify({issues:state.applicator.entries,contacts:contacts},null,2)},
+      [MACH_FILE]:{content:JSON.stringify({issues:state.machine.entries},null,2)},
+      [SETUP_FILE]:{content:JSON.stringify({issues:state.setup.entries},null,2)},
+      [QUEUE_FILES.applicator]:{content:JSON.stringify(state.applicator.queue,null,2)},
+      [QUEUE_FILES.machine]:{content:JSON.stringify(state.machine.queue,null,2)},
+      [QUEUE_FILES.setup]:{content:JSON.stringify(state.setup.queue,null,2)}
+    });
     saveLocal(); setSyncStatus('ok');
     if(!silent) toast('Synced to GitHub');
-  }catch(e){ setSyncStatus('error'); if(!silent) toast('Sync failed — check connection','#cc4444'); }
+  }catch(e){ setSyncStatus('error'); if(!silent) toast('Sync failed','#cc4444'); }
 }
-
-async function pushMeta(pinHash){
-  try{ await writeGist({[META_FILE]:{content:JSON.stringify({pinHash},null,2)}}); }catch(e){}
+async function pushSection(sec){
+  const fileMap = {
+    applicator: DATA_FILE,
+    machine: MACH_FILE,
+    setup: SETUP_FILE
+  };
+  const files = {};
+  if(sec==='applicator') files[DATA_FILE]={content:JSON.stringify({issues:state.applicator.entries,contacts:contacts},null,2)};
+  else files[fileMap[sec]]={content:JSON.stringify({issues:state[sec].entries},null,2)};
+  files[QUEUE_FILES[sec]]={content:JSON.stringify(state[sec].queue,null,2)};
+  setSyncStatus('syncing');
+  try{ await writeGist(files); saveLocal(); setSyncStatus('ok'); }
+  catch(e){ setSyncStatus('error'); }
 }
-
-async function pushQueueOrder(){
-  try{ await writeGist({[QUEUE_FILE]:{content:JSON.stringify(queueOrder,null,2)}}); }
-  catch(e){ toast('Could not save queue order','#cc4444'); }
-}
-
 function setSyncStatus(s){
   const el=$('syncStatus');
   if(s==='syncing') el.innerHTML='<i class="ti ti-loader spin"></i> Syncing…';
@@ -504,111 +678,99 @@ function setSyncStatus(s){
   else if(s==='error') el.innerHTML='<i class="ti ti-cloud-x" style="color:#cc4444"></i> Error';
   else el.innerHTML='';
 }
-
-function saveLocal(){ lsSet('hl_data',JSON.stringify({issues:entries,contacts:contacts})); }
+function saveLocal(){
+  lsSet('hl_data',JSON.stringify({
+    applicator: state.applicator,
+    machine: state.machine,
+    setup: state.setup,
+    contacts
+  }));
+}
 function loadLocal(){
-  try{ const r=lsGet('hl_data'); if(r){ const d=JSON.parse(r); entries=d.issues||[]; contacts=d.contacts||[]; }}catch(e){}
+  try{
+    const r=lsGet('hl_data'); if(!r) return;
+    const d=JSON.parse(r);
+    if(d.applicator){ state.applicator.entries=d.applicator.entries||[]; state.applicator.queue=d.applicator.queue||[]; }
+    if(d.machine){ state.machine.entries=d.machine.entries||[]; state.machine.queue=d.machine.queue||[]; }
+    if(d.setup){ state.setup.entries=d.setup.entries||[]; state.setup.queue=d.setup.queue||[]; }
+    if(Array.isArray(d.contacts)) contacts=d.contacts;
+    // Legacy: if old format with top-level issues array
+    if(d.issues){ state.applicator.entries=d.issues; }
+  }catch(e){}
 }
-
-// ── PIN ──
-function setPinLoading(msg){ $('pinLoading').textContent=msg||''; }
-function updateDots(){
-  for(let i=0;i<4;i++){ const d=$('d'+i); d.classList.remove('filled','error'); if(i<pinBuffer.length) d.classList.add('filled'); }
-}
-function dotError(){ for(let i=0;i<4;i++) $('d'+i).classList.add('error'); setTimeout(updateDots,700); }
-async function pinKey(k){
-  if(pinBuffer.length>=4) return;
-  pinBuffer+=k; updateDots(); $('pinError').textContent='';
-  if(pinBuffer.length===4) await handlePin();
-}
-function pinDel(){ pinBuffer=pinBuffer.slice(0,-1); updateDots(); }
-async function handlePin(){
-  if(pinMode==='setup1'){ pinSetupFirst=pinBuffer; pinBuffer=''; updateDots(); $('pinTitle').textContent='Confirm PIN'; $('pinSub').textContent='Re-enter your new PIN'; pinMode='setup2'; return; }
-  if(pinMode==='setup2'){
-    if(pinBuffer!==pinSetupFirst){ $('pinError').textContent='PINs do not match — try again'; dotError(); pinBuffer=''; pinSetupFirst=''; pinMode='setup1'; setTimeout(()=>{ $('pinTitle').textContent='Set a PIN'; $('pinSub').textContent='Choose a 4-digit PIN'; },800); return; }
-    const h=await sha256(pinBuffer); setPinLoading('Saving PIN…'); lsSet('hl_pin_hash',h); await pushMeta(h); setPinLoading(''); toast('PIN set'); await loadFromGist(); doUnlock(); return;
-  }
-  setPinLoading('Checking…');
-  const h=await sha256(pinBuffer);
-  let storedHash=lsGet('hl_pin_hash');
-  try{ const {meta}=await readGist(); if(meta.pinHash){ storedHash=meta.pinHash; lsSet('hl_pin_hash',meta.pinHash); } }catch(e){}
-  if(!storedHash){ pinSetupFirst=pinBuffer; pinBuffer=''; updateDots(); $('pinTitle').textContent='Confirm PIN'; $('pinSub').textContent='Re-enter your new PIN'; setPinLoading(''); pinMode='setup2'; return; }
-  if(h===storedHash){ setPinLoading('Loading…'); await loadFromGist(); setPinLoading(''); doUnlock(); }
-  else { setPinLoading(''); $('pinError').textContent='Incorrect PIN'; dotError(); pinBuffer=''; }
-}
-
-async function resetPinCache(){
-  setPinLoading('Syncing PIN from Gist…'); $('pinError').textContent=''; pinBuffer=''; updateDots();
-  try{ lsDel('hl_pin_hash'); const{meta}=await readGist(); if(meta.pinHash){ lsSet('hl_pin_hash',meta.pinHash); setPinLoading('PIN synced — enter your PIN'); } else{ setPinLoading('No PIN set in Gist yet'); } }
-  catch(e){ setPinLoading('Could not reach Gist — check connection'); }
-  setTimeout(()=>setPinLoading(''),3000);
-}
-
 async function loadFromGist(){
   try{
     const id=await ensureGist();
     const token=getToken();
     const r=await fetch('https://api.github.com/gists/'+id,{headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}});
     const g=await r.json();
-    lastGistUpdatedAt = g.updated_at;
-    const dataFile=g.files[DATA_FILE];
-    if(dataFile){ const data=JSON.parse(dataFile.content); if(Array.isArray(data.issues)) entries=data.issues; if(Array.isArray(data.contacts)) contacts=data.contacts; }
-    const metaFile=g.files[META_FILE];
-    if(metaFile){ const meta=JSON.parse(metaFile.content); if(meta.pinHash) lsSet('hl_pin_hash',meta.pinHash); }
-    const queueFile=g.files[QUEUE_FILE];
-    if(queueFile){ queueOrder=JSON.parse(queueFile.content)||[]; }
+    lastGistUpdatedAt=g.updated_at;
+    // Applicator
+    if(g.files[DATA_FILE]){ const d=JSON.parse(g.files[DATA_FILE].content); state.applicator.entries=d.issues||[]; if(d.contacts) contacts=d.contacts; }
+    // Machine
+    if(g.files[MACH_FILE]){ const d=JSON.parse(g.files[MACH_FILE].content); state.machine.entries=d.issues||[]; }
+    // Setup
+    if(g.files[SETUP_FILE]){ const d=JSON.parse(g.files[SETUP_FILE].content); state.setup.entries=d.issues||[]; }
+    // Queues
+    ['applicator','machine','setup'].forEach(sec=>{ const f=g.files[QUEUE_FILES[sec]]; if(f) state[sec].queue=JSON.parse(f.content)||[]; });
+    // Meta
+    if(g.files[META_FILE]){ const m=JSON.parse(g.files[META_FILE].content); if(m.pinHash) lsSet('hl_pin_hash',m.pinHash); }
     saveLocal();
   }catch(e){ loadLocal(); }
 }
 
-async function initPinScreen(){
-  const storedHash=lsGet('hl_pin_hash');
-  if(!storedHash){
-    try{ setPinLoading('Connecting…'); const{meta}=await readGist(); if(meta.pinHash){ lsSet('hl_pin_hash',meta.pinHash); setPinLoading(''); pinMode='unlock'; } else{ setPinLoading(''); $('pinTitle').textContent='Set a PIN'; $('pinSub').textContent='Choose a 4-digit PIN to protect this log'; pinMode='setup1'; } }
-    catch(e){ setPinLoading('Offline — enter PIN'); pinMode='unlock'; }
-  } else { pinMode='unlock'; }
+// ── PIN ──
+function setPinLoading(msg){ $('pinLoading').textContent=msg||''; }
+function updateDots(){ for(let i=0;i<4;i++){ const d=$('d'+i); d.classList.remove('filled','error'); if(i<pinBuffer.length) d.classList.add('filled'); } }
+function dotError(){ for(let i=0;i<4;i++) $('d'+i).classList.add('error'); setTimeout(updateDots,700); }
+async function pinKey(k){ if(pinBuffer.length>=4) return; pinBuffer+=k; updateDots(); $('pinError').textContent=''; if(pinBuffer.length===4) await handlePin(); }
+function pinDel(){ pinBuffer=pinBuffer.slice(0,-1); updateDots(); }
+async function handlePin(){
+  if(pinMode==='setup1'){ pinSetupFirst=pinBuffer; pinBuffer=''; updateDots(); $('pinTitle').textContent='Confirm PIN'; $('pinSub').textContent='Re-enter your new PIN'; pinMode='setup2'; return; }
+  if(pinMode==='setup2'){
+    if(pinBuffer!==pinSetupFirst){ $('pinError').textContent='PINs do not match'; dotError(); pinBuffer=''; pinSetupFirst=''; pinMode='setup1'; setTimeout(()=>{ $('pinTitle').textContent='Set a PIN'; $('pinSub').textContent='Choose a 4-digit PIN'; },800); return; }
+    const h=await sha256(pinBuffer); lsSet('hl_pin_hash',h); await pushMeta(h); await loadFromGist(); doUnlock(); return;
+  }
+  setPinLoading('Checking…');
+  const h=await sha256(pinBuffer);
+  let storedHash=lsGet('hl_pin_hash');
+  try{ const r=await fetch('https://api.github.com/gists/'+(await ensureGist()),{headers:{'Authorization':'token '+getToken(),'Accept':'application/vnd.github.v3+json'}}); const g=await r.json(); if(g.files[META_FILE]){ const m=JSON.parse(g.files[META_FILE].content); if(m.pinHash){ storedHash=m.pinHash; lsSet('hl_pin_hash',m.pinHash); } } }catch(e){}
+  if(!storedHash){ pinSetupFirst=pinBuffer; pinBuffer=''; updateDots(); $('pinTitle').textContent='Confirm PIN'; $('pinSub').textContent='Re-enter your new PIN'; setPinLoading(''); pinMode='setup2'; return; }
+  if(h===storedHash){ setPinLoading('Loading…'); await loadFromGist(); setPinLoading(''); doUnlock(); }
+  else{ setPinLoading(''); $('pinError').textContent='Incorrect PIN'; dotError(); pinBuffer=''; }
 }
-
+async function resetPinCache(){
+  setPinLoading('Syncing PIN…'); $('pinError').textContent=''; pinBuffer=''; updateDots();
+  try{ lsDel('hl_pin_hash'); const id=await ensureGist(); const r=await fetch('https://api.github.com/gists/'+id,{headers:{'Authorization':'token '+getToken(),'Accept':'application/vnd.github.v3+json'}}); const g=await r.json(); if(g.files[META_FILE]){ const m=JSON.parse(g.files[META_FILE].content); if(m.pinHash){ lsSet('hl_pin_hash',m.pinHash); setPinLoading('PIN synced — enter your PIN'); } else setPinLoading('No PIN set yet'); } }
+  catch(e){ setPinLoading('Could not reach Gist'); }
+  setTimeout(()=>setPinLoading(''),3000);
+}
+async function initPinScreen(){
+  const h=lsGet('hl_pin_hash');
+  if(!h){ try{ setPinLoading('Connecting…'); const id=await ensureGist(); const r=await fetch('https://api.github.com/gists/'+id,{headers:{'Authorization':'token '+getToken(),'Accept':'application/vnd.github.v3+json'}}); const g=await r.json(); if(g.files[META_FILE]){ const m=JSON.parse(g.files[META_FILE].content); if(m.pinHash){ lsSet('hl_pin_hash',m.pinHash); setPinLoading(''); pinMode='unlock'; } else{ setPinLoading(''); $('pinTitle').textContent='Set a PIN'; $('pinSub').textContent='Choose a 4-digit PIN'; pinMode='setup1'; } } }catch(e){ setPinLoading('Offline — enter PIN'); pinMode='unlock'; } }
+  else{ pinMode='unlock'; }
+}
 function resetInactivity(){ clearTimeout(inactivityTimer); inactivityTimer=setTimeout(lockApp,INACTIVITY); }
 function doUnlock(){
   sessionStorage.setItem('hl_s','1');
   showScreen('app'); resetInactivity();
   ['mousemove','keydown','click','touchstart'].forEach(e=>document.addEventListener(e,resetInactivity,{passive:true}));
-  render(); renderContacts(); renderQueueTab(); setSyncStatus('ok');
-  checkQRParams(); startPolling();
+  renderAll(); setSyncStatus('ok'); startPolling();
 }
-function lockApp(silent=false){
-  clearTimeout(inactivityTimer); stopPolling(); sessionStorage.removeItem('hl_s');
-  showScreen('pinScreen'); pinBuffer=''; updateDots();
-  $('pinTitle').textContent='Enter PIN'; $('pinSub').textContent='H&L Applicator Issue Log';
-  $('pinError').textContent=''; setPinLoading(''); pinMode='unlock';
-}
-
+function lockApp(silent=false){ clearTimeout(inactivityTimer); stopPolling(); sessionStorage.removeItem('hl_s'); showScreen('pinScreen'); pinBuffer=''; updateDots(); $('pinTitle').textContent='Enter PIN'; $('pinSub').textContent='H&L Issue Log'; $('pinError').textContent=''; setPinLoading(''); pinMode='unlock'; }
 async function initApp(){
-  const token=getToken();
-  if(!token){ showScreen('setupScreen'); return; }
+  const token=getToken(); if(!token){ showScreen('setupScreen'); return; }
   showScreen('pinScreen');
-  if(sessionStorage.getItem('hl_s')==='1'){
-    loadLocal(); doUnlock();
-    loadFromGist().then(()=>{ render(); renderContacts(); renderQueueTab(); setSyncStatus('ok'); }).catch(()=>{});
-    return;
-  }
-  // If opened via QR code scan, skip PIN and go straight to the log form
-  const rawSearch=window.location.search.replace(/%26/gi,'&');
-  const qrParams=new URLSearchParams(rawSearch);
-  if(qrParams.get('action')==='log'||qrParams.get('apn')){
-    loadLocal(); doUnlock();
-    loadFromGist().catch(()=>{});
-    return;
-  }
+  if(sessionStorage.getItem('hl_s')==='1'){ loadLocal(); doUnlock(); loadFromGist().then(()=>{ renderAll(); setSyncStatus('ok'); }).catch(()=>{}); return; }
   await initPinScreen();
 }
 
+// ── EXPORT / IMPORT ──
 function exportJSON(){
-  const blob=new Blob([JSON.stringify({exported:new Date().toISOString(),version:1,issues:entries,contacts:contacts},null,2)],{type:'application/json'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download=`hl_applicator_log_${new Date().toISOString().slice(0,10)}.json`; a.click();
-  toast(`Exported ${entries.length} issues, ${contacts.length} contacts`);
+  const data={exported:new Date().toISOString(),version:2,applicator:state.applicator.entries,machine:state.machine.entries,setup:state.setup.entries,contacts};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`hl_log_${new Date().toISOString().slice(0,10)}.json`; a.click();
+  toast(`Exported ${state.applicator.entries.length} applicator, ${state.machine.entries.length} machine, ${state.setup.entries.length} setup issues`);
 }
 function triggerImport(){ $('importFile').value=''; $('importFile').click(); }
 function importJSON(evt){
@@ -617,15 +779,19 @@ function importJSON(evt){
   r.onload=function(e){
     try{
       const d=JSON.parse(e.target.result);
-      if(!d.issues&&!d.contacts) throw 0;
-      const ni=Array.isArray(d.issues)?d.issues:[], nc=Array.isArray(d.contacts)?d.contacts:[];
-      if(!confirm(`Import ${ni.length} issues and ${nc.length} contacts?\nThis replaces current data.`)) return;
-      entries=ni; contacts=nc; saveLocal(); render(); renderContacts(); renderQueueTab(); pushData(false);
-    }catch(e){ alert('Not a valid HL Applicator Log JSON file.'); }
+      const na=Array.isArray(d.applicator)?d.applicator:(Array.isArray(d.issues)?d.issues:[]);
+      const nm=Array.isArray(d.machine)?d.machine:[];
+      const ns=Array.isArray(d.setup)?d.setup:[];
+      const nc=Array.isArray(d.contacts)?d.contacts:[];
+      if(!confirm(`Import ${na.length} applicator, ${nm.length} machine, ${ns.length} setup issues?\nThis replaces current data.`)) return;
+      state.applicator.entries=na; state.machine.entries=nm; state.setup.entries=ns; contacts=nc;
+      saveLocal(); renderAll(); pushAll(false);
+    }catch(e){ alert('Not a valid H&L Log JSON file.'); }
   };
   r.readAsText(f);
 }
 
+// ── PIN CHANGE ──
 function openChangePIN(){ $('pmCurrent').value=''; $('pmNew').value=''; $('pmConfirm').value=''; $('pinModalErr').textContent=''; $('pinModal').classList.add('open'); }
 function closePINModal(){ $('pinModal').classList.remove('open'); }
 async function savePIN(){
@@ -638,166 +804,83 @@ async function savePIN(){
   closePINModal(); toast('PIN updated on all devices');
 }
 
-// ── QUEUE ORDER TAB ──
-function getActiveQueue(){
-  // Active = open or inprog (not waiting, not done)
-  const active = entries.filter(e => e.status==='open'||e.status==='inprog');
-  const waiting = entries.filter(e => e.status==='waiting');
-
-  // Sort active by queueOrder if set, otherwise by date
-  const ordered = [];
-  const remaining = [...active];
-
-  // First place items that are in queueOrder in order
-  queueOrder.forEach(id => {
-    const idx = remaining.findIndex(e => e.id === id);
-    if(idx !== -1){ ordered.push(remaining.splice(idx,1)[0]); }
+// ── NAVIGATION ──
+function switchSection(sec){
+  activeSection=sec;
+  ['applicator','machine','setup','contacts'].forEach(s=>{
+    $('stab-'+s).classList.toggle('active',s===sec);
+    const el=$('section-'+s); if(el) el.style.display=s===sec?'block':'none';
   });
-  // Append any remaining active items not in queueOrder yet
-  remaining.forEach(e => ordered.push(e));
-
-  return { ordered, waiting };
+  if(sec==='applicator') renderSection('applicator');
+  else if(sec==='machine') renderSection('machine');
+  else if(sec==='setup') renderSection('setup');
+  else renderContacts();
+}
+function switchSubTab(sec,tab){
+  const tabs=['log','queue','history'];
+  const bar=$('section-'+sec).querySelector('.tab-bar');
+  bar.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',tabs[i]===tab));
+  tabs.forEach(t=>{ const el=$(sec+'-'+t); if(el) el.classList.toggle('active',t===tab); });
+  if(tab==='queue') renderQueueTab(sec);
+  else if(tab==='history') renderHistory(sec);
 }
 
-function renderQueueTab(){
-  const list = $('queueDragList');
-  const empty = $('queueEmpty');
-  const saveBar = $('queueSaveBar');
-  const { ordered, waiting } = getActiveQueue();
-  const all = [...ordered, ...waiting];
-
-  if(!all.length){ list.innerHTML=''; empty.style.display='block'; saveBar.style.display='none'; return; }
-  empty.style.display='none'; saveBar.style.display='flex';
-
-  list.innerHTML = '';
-  ordered.forEach((e,i) => list.appendChild(makeQueueItem(e,i,ordered.length,false)));
-  if(waiting.length){
-    const divider = document.createElement('div');
-    divider.style.cssText='font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--hl-text3);padding:8px 4px 4px;margin-top:4px';
-    divider.textContent='Waiting on Parts — excluded from ETA';
-    list.appendChild(divider);
-    waiting.forEach(e => list.appendChild(makeQueueItem(e,null,0,true)));
-  }
-}
-
-function makeQueueItem(e, pos, total, isWaiting){
-  const el = document.createElement('div');
-  el.className = 'queue-drag-item' + (isWaiting?' status-waiting':'');
-  el.dataset.id = e.id;
-
-  const posEl = isWaiting
-    ? `<div class="queue-position waiting-pos"><i class="ti ti-pause" style="font-size:10px"></i></div>`
-    : `<div class="queue-position">${pos+1}</div>`;
-
-  const detail = [e.press, e.terminal, e.wire].filter(Boolean).join(' · ') || e.issue.slice(0,40);
-  const tkt = e.ticketNum ? `<span style="font-size:9px;color:#5090d0;font-family:monospace;margin-left:6px">${e.ticketNum}</span>` : '';
-
-  el.innerHTML = `
-    <div class="queue-drag-handle"><i class="ti ti-grip-vertical"></i></div>
-    ${posEl}
-    <div style="flex:1;min-width:0">
-      <div style="display:flex;align-items:center;gap:4px">
-        <span class="queue-item-apn">${e.apn}</span>${tkt}
-      </div>
-      <div class="queue-item-detail">${detail}</div>
-    </div>
-    <div class="queue-item-right">
-      ${!isWaiting ? `<div class="queue-arrows">
-        <button class="queue-arrow" onclick="moveQueueItem(${e.id},-1)" ${pos===0?'disabled':''}><i class="ti ti-chevron-up" style="font-size:10px"></i></button>
-        <button class="queue-arrow" onclick="moveQueueItem(${e.id},1)" ${pos===total-1?'disabled':''}><i class="ti ti-chevron-down" style="font-size:10px"></i></button>
-      </div>` : ''}
-      <span class="badge badge-${e.status==='inprog'?'inprog':'open'}">${e.status==='inprog'?'In Progress':'Open'}</span>
-    </div>`;
-
-  if(!isWaiting){
-    // Drag events
-    el.draggable = true;
-    el.addEventListener('dragstart', ev => { dragSrcIndex=pos; el.classList.add('dragging'); ev.dataTransfer.effectAllowed='move'; });
-    el.addEventListener('dragend',   ev => { el.classList.remove('dragging'); document.querySelectorAll('.queue-drag-item').forEach(x=>x.classList.remove('drag-over')); });
-    el.addEventListener('dragover',  ev => { ev.preventDefault(); ev.dataTransfer.dropEffect='move'; el.classList.add('drag-over'); });
-    el.addEventListener('dragleave', ev => el.classList.remove('drag-over'));
-    el.addEventListener('drop',      ev => {
-      ev.preventDefault(); el.classList.remove('drag-over');
-      const { ordered } = getActiveQueue();
-      const toIndex = parseInt(el.dataset.pos || pos);
-      if(dragSrcIndex===null||dragSrcIndex===pos) return;
-      const ids = ordered.map(e=>e.id);
-      const [moved] = ids.splice(dragSrcIndex,1);
-      ids.splice(pos,0,moved);
-      queueOrder = ids;
-      $('queueSaveHint').textContent = 'Order changed — click Save Order to apply';
-      $('queueSaveHint').style.color = '#d4a030';
-      renderQueueTab();
-    });
-  }
-  return el;
-}
-
-function moveQueueItem(id, dir){
-  const { ordered } = getActiveQueue();
-  const ids = ordered.map(e=>e.id);
-  const idx = ids.indexOf(id);
-  if(idx===-1) return;
-  const newIdx = idx+dir;
-  if(newIdx<0||newIdx>=ids.length) return;
-  [ids[idx],ids[newIdx]]=[ids[newIdx],ids[idx]];
-  queueOrder = ids;
-  $('queueSaveHint').textContent = 'Order changed — click Save Order to apply';
-  $('queueSaveHint').style.color = '#d4a030';
-  renderQueueTab();
-}
-
-async function saveQueueOrder(){
-  const { ordered } = getActiveQueue();
-  queueOrder = ordered.map(e=>e.id);
-  setSyncStatus('syncing');
-  try{
-    await pushQueueOrder();
-    setSyncStatus('ok');
-    toast('Queue order saved');
-    $('queueSaveHint').textContent = 'Drag items to set your work order';
-    $('queueSaveHint').style.color = '';
-    renderQueueTab(); // re-render to confirm positions
-  }catch(e){ setSyncStatus('error'); }
-}
-
-// ── RENDER ──
-function switchTab(t){
-  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
-  document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));
-  document.querySelector(`.tab[onclick="switchTab('${t}')"]`).classList.add('active');
-  $('tab-'+t).classList.add('active');
-  if(t==='queue') renderQueueTab();
-}
+// ── HELPERS ──
 function days(ts){ return Math.round((Date.now()-ts)/86400000); }
 function badge(s){
   const m={open:['badge-open','Open'],inprog:['badge-inprog','In Progress'],waiting:['badge-waiting','Waiting Parts'],done:['badge-done','Resolved']};
   const[c,l]=m[s]||m.open; return`<span class="badge ${c}">${l}</span>`;
 }
 function ini(n){ return n.split(' ').map(w=>w[0]||'').join('').toUpperCase().slice(0,2); }
-function getFiltered(){
-  const q=$('searchInput').value.toLowerCase(), fs=$('filterStatus').value, fa=$('filterAge').value;
-  return entries.filter(e=>{
-    const mq=!q||[e.apn,e.issue,e.press,e.terminal,e.wire].some(v=>(v||'').toLowerCase().includes(q));
-    return mq&&(!fs||e.status===fs)&&(!fa||e.status!=='done'&&days(e.date)>3);
-  });
+function tktBadge(e){ return e.ticketNum?`<span style="font-size:10px;background:rgba(20,80,160,.2);border:1px solid rgba(20,80,160,.4);color:#5090d0;border-radius:3px;padding:2px 6px;font-family:monospace;white-space:nowrap;display:inline-block;margin-bottom:3px">${e.ticketNum}</span><br>`:''; }
+function actionBtns(e,sec,hist=false){
+  return `<div style="display:flex;align-items:center;justify-content:flex-end;gap:4px;flex-wrap:wrap">
+    ${!hist?`<button class="btn-sm btn-notify" onclick="openNotify(${e.id},'${sec}')"><i class="ti ti-mail"></i> Notify</button>`:''}
+    <button class="btn-sm" style="border-color:var(--hl-border);color:var(--hl-text2)" onclick="openModal('${sec}',${e.id})"><i class="ti ti-edit"></i> Edit</button>
+    <button class="btn-sm btn-del" onclick="delEntry('${sec}',${e.id})"><i class="ti ti-trash"></i> Delete</button>
+    ${e.ticketNum?`<button class="btn-sm" style="border-color:#1a5a1a;color:#50a870;background:rgba(26,90,26,.2)" onclick="shareTicket('${sec}',${e.id})"><i class="ti ti-link"></i> Link</button>`:''}
+  </div>`;
 }
-function render(){
-  const f=getFiltered();
-  const total=entries.filter(e=>e.status!=='done').length, open=entries.filter(e=>e.status==='open').length;
+
+// ── RENDER ALL ──
+function renderAll(){
+  renderSection('applicator');
+  renderSection('machine');
+  renderSection('setup');
+  renderContacts();
+}
+
+// ── STATS ──
+function renderStats(sec,prefix){
+  const entries=state[sec].entries.filter(e=>e.status!=='done');
+  const total=entries.length, open=entries.filter(e=>e.status==='open').length;
   const wait=entries.filter(e=>e.status==='waiting').length, over=entries.filter(e=>e.status!=='done'&&days(e.date)>3).length;
-  $('statsBar').innerHTML=
+  $(prefix+'Stats').innerHTML=
     `<div class="stat"><div class="stat-label">On Hand</div><div class="stat-val">${total}</div></div>`+
     `<div class="stat"><div class="stat-label">Open</div><div class="stat-val">${open}</div></div>`+
     `<div class="stat"><div class="stat-label">Waiting Parts</div><div class="stat-val">${wait}</div></div>`+
     `<div class="stat${over>0?' stat-over':''}"><div class="stat-label">Overdue &gt;3d</div><div class="stat-val">${over}</div></div>`;
-  renderCards(f); renderTable(f);
 }
-function renderCards(f){
-  const cl=$('cardList'), em=$('emptyMobile');
-  if(!f.length){cl.innerHTML='';em.style.display='block';return;} em.style.display='none';
-  cl.innerHTML=f.map(e=>{
-    const d=days(e.date), ac=(e.status!=='done'&&d>3)?'age-warn':'age-ok';
+
+// ── APPLICATOR RENDER ──
+function renderSection(sec){
+  if(sec==='applicator') renderApplicator();
+  else if(sec==='machine') renderMachine();
+  else if(sec==='setup') renderSetup();
+}
+function renderApplicator(){
+  const q=($('aSearch')?.value||'').toLowerCase(), fs=$('aFilter')?.value||'';
+  const active=state.applicator.entries.filter(e=>e.status!=='done');
+  const f=active.filter(e=>{
+    const mq=!q||[e.apn,e.issue,e.press,e.terminal,e.wire].some(v=>(v||'').toLowerCase().includes(q));
+    return mq&&(!fs||e.status===fs);
+  });
+  renderStats('applicator','a');
+  // mobile cards
+  const cl=$('aCards'), em=$('aEmptyM');
+  if(!f.length){cl.innerHTML='';em.style.display='block';}
+  else{ em.style.display='none'; cl.innerHTML=f.map(e=>{
+    const d=days(e.date),ac=(e.status!=='done'&&d>3)?'age-warn':'age-ok';
     const tw=[e.terminal,e.wire].filter(Boolean).map(t=>`<span class="chip">${t}</span>`).join('');
     return`<div class="entry-card status-${e.status}">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;gap:8px">
@@ -806,160 +889,319 @@ function renderCards(f){
       </div>
       ${tw?`<div style="margin-bottom:6px">${tw}</div>`:''}
       <div class="entry-issue">${e.issue}</div>${e.notes?`<div class="sub-text">${e.notes}</div>`:''}
-      <div class="entry-card-footer">
-        <div style="font-size:11px;color:var(--hl-text3)">${e.by||''}</div>
-        <div style="display:flex;gap:4px">
-          <button class="btn-sm btn-notify" onclick="openNotify(${e.id})"><i class="ti ti-mail"></i> Notify</button>
-          <button class="btn-sm btn-edit" onclick="editEntry(${e.id})"><i class="ti ti-edit"></i> Edit</button>
-          <button class="btn-sm btn-del" onclick="delEntry(${e.id})"><i class="ti ti-trash"></i> Del</button>
-          ${e.ticketNum?`<button class="btn-sm" style="border-color:#1a5a1a;color:#50a870;background:rgba(26,90,26,.2)" onclick="shareTicket(${e.id})"><i class="ti ti-link"></i> Link</button>`:''}
-        </div>
-      </div>
+      <div class="entry-card-footer"><div style="font-size:11px;color:var(--hl-text3)">${e.by||''}</div>${actionBtns(e,'applicator')}</div>
     </div>`;
-  }).join('');
-}
-function renderTable(f){
-  const tb=$('tbody'), em=$('emptyDesktop');
-  if(!f.length){tb.innerHTML='';em.style.display='block';return;} em.style.display='none';
-  tb.innerHTML=f.map(e=>{
-    const d=days(e.date), ac=(e.status!=='done'&&d>3)?'age-warn':'age-ok';
+  }).join(''); }
+  // desktop table
+  const tb=$('aBody'), ed=$('aEmptyD');
+  if(!f.length){tb.innerHTML='';ed.style.display='block';}
+  else{ ed.style.display='none'; tb.innerHTML=f.map(e=>{
+    const d=days(e.date),ac=(e.status!=='done'&&d>3)?'age-warn':'age-ok';
     const tw=[e.terminal,e.wire].filter(Boolean).map(t=>`<span class="chip">${t}</span>`).join('')||`<span style="color:var(--hl-text3)">—</span>`;
     return`<tr>
       <td style="font-weight:500;font-family:monospace;font-size:12px">${e.apn}</td>
       <td style="color:var(--hl-text2);font-size:12px">${e.press||'—'}</td>
       <td>${tw}</td>
       <td><div style="font-size:12px">${e.issue}</div>${e.notes?`<div class="sub-text">${e.notes}</div>`:''}</td>
-      <td style="font-size:12px">
-        ${e.ticketNum?`<span style="font-size:10px;background:rgba(20,80,160,.2);border:1px solid rgba(20,80,160,.4);color:#5090d0;border-radius:3px;padding:2px 6px;font-family:monospace;white-space:nowrap;display:inline-block;margin-bottom:3px">${e.ticketNum}</span><br>`:''}
-        <span style="color:var(--hl-text2)">${e.by||'—'}</span>
-      </td>
+      <td style="font-size:12px">${tktBadge(e)}<span style="color:var(--hl-text2)">${e.by||'—'}</span></td>
       <td>${badge(e.status)}</td>
       <td class="${ac}" style="font-size:12px">${d}d</td>
-      <td style="text-align:right;padding-right:4px">
-        <div style="display:flex;align-items:center;justify-content:flex-end;gap:4px;flex-wrap:wrap">
-          <button class="btn-sm btn-notify" onclick="openNotify(${e.id})"><i class="ti ti-mail"></i> Notify</button>
-          <button class="btn-sm btn-edit" onclick="editEntry(${e.id})"><i class="ti ti-edit"></i> Edit</button>
-          <button class="btn-sm btn-del" onclick="delEntry(${e.id})"><i class="ti ti-trash"></i> Delete</button>
-          ${e.ticketNum?`<button class="btn-sm" style="border-color:#1a5a1a;color:#50a870;background:rgba(26,90,26,.2)" onclick="shareTicket(${e.id})"><i class="ti ti-link"></i> Link</button>`:''}
-        </div>
-      </td>
+      <td style="text-align:right;padding-right:4px">${actionBtns(e,'applicator')}</td>
     </tr>`;
-  }).join('');
-}
-function renderContacts(){
-  const list=$('contactList'), em=$('emptyContacts');
-  if(!contacts.length){list.innerHTML='';em.style.display='block';return;} em.style.display='none';
-  const sorted=[...contacts].sort((a,b)=>a.name.localeCompare(b.name));
-  list.innerHTML=sorted.map(c=>`
-    <div class="contact-row">
-      <div class="contact-avatar">${ini(c.name)}</div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:500">${c.name}${c.role?` <span style="font-weight:400;font-size:11px;color:var(--hl-text3)">— ${c.role}</span>`:''}</div>
-        <div style="font-size:11px;color:var(--hl-text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.email}</div>
-      </div>
-      <div style="display:flex;gap:4px;flex-shrink:0">
-        <button class="btn-sm btn-edit" onclick="editContact(${c.id})"><i class="ti ti-edit"></i> Edit</button>
-        <button class="btn-sm btn-del" onclick="delContact(${c.id})"><i class="ti ti-trash"></i> Delete</button>
-      </div>
-    </div>`).join('');
+  }).join(''); }
 }
 
-// ── CRUD ──
-function openModal(id=null){
-  editId=id; const e=id?entries.find(x=>x.id===id):null;
-  $('modalTitle').textContent=e?'Edit Entry':'Log Applicator Issue';
-  $('fApn').value=e?.apn||''; $('fPress').value=e?.press||''; $('fTerminal').value=e?.terminal||'';
-  $('fWire').value=e?.wire||''; $('fIssue').value=e?.issue||''; $('fNotes').value=e?.notes||'';
-  $('fStatus').value=e?.status||'open'; $('fBy').value=e?.by||'';
-  $('fTicket').value=e?.ticketNum?e.ticketNum.replace('TKT-',''):'';
-  $('modal').classList.add('open');
+// ── MACHINE RENDER ──
+function renderMachine(){
+  const q=($('mSearch')?.value||'').toLowerCase(), fs=$('mFilter')?.value||'';
+  const active=state.machine.entries.filter(e=>e.status!=='done');
+  const f=active.filter(e=>{
+    const mq=!q||[e.machine,e.desc,e.result].some(v=>(v||'').toLowerCase().includes(q));
+    return mq&&(!fs||e.status===fs);
+  });
+  renderStats('machine','m');
+  const cl=$('mCards'),em=$('mEmptyM');
+  if(!f.length){cl.innerHTML='';em.style.display='block';}
+  else{ em.style.display='none'; cl.innerHTML=f.map(e=>{
+    const d=days(e.date),ac=(e.status!=='done'&&d>3)?'age-warn':'age-ok';
+    return`<div class="entry-card status-${e.status}">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;gap:8px">
+        <div><div class="entry-apn">${e.machine}</div></div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0"><span class="${ac}" style="font-size:11px">${d}d</span>${badge(e.status)}</div>
+      </div>
+      <div class="entry-issue">${e.desc}</div>${e.result?`<div class="sub-text">${e.result}</div>`:''}
+      <div class="entry-card-footer"><div style="font-size:11px;color:var(--hl-text3)">${e.by||''}</div>${actionBtns(e,'machine')}</div>
+    </div>`;
+  }).join(''); }
+  const tb=$('mBody'),ed=$('mEmptyD');
+  if(!f.length){tb.innerHTML='';ed.style.display='block';}
+  else{ ed.style.display='none'; tb.innerHTML=f.map(e=>{
+    const d=days(e.date),ac=(e.status!=='done'&&d>3)?'age-warn':'age-ok';
+    return`<tr>
+      <td style="font-weight:500;font-family:monospace;font-size:12px">${e.machine}</td>
+      <td><div style="font-size:12px">${e.desc}</div></td>
+      <td><div style="font-size:12px">${e.result||'—'}</div></td>
+      <td style="font-size:12px;color:var(--hl-text2)">${tktBadge(e)}${e.by||'—'}</td>
+      <td>${badge(e.status)}</td>
+      <td class="${ac}" style="font-size:12px">${d}d</td>
+      <td style="text-align:right;padding-right:4px">${actionBtns(e,'machine')}</td>
+    </tr>`;
+  }).join(''); }
 }
-function closeModal(){ $('modal').classList.remove('open'); editId=null; }
-function saveEntry(){
-  const apn=$('fApn').value.trim(), issue=$('fIssue').value.trim();
-  if(!apn||!issue){ alert('Applicator # and issue description are required.'); return; }
-  const existing = editId ? entries.find(e=>e.id===editId) : null;
-  const entry={
-    id:editId||Date.now(), apn, press:$('fPress').value.trim(),
-    terminal:$('fTerminal').value.trim(), wire:$('fWire').value.trim(),
-    issue, notes:$('fNotes').value.trim(), status:$('fStatus').value,
-    by:$('fBy').value.trim(), date:existing?existing.date:Date.now(),
-    // Ticket number — use form value if entered, otherwise keep existing
-    ...( (() => {
-      const typed = $('fTicket').value.trim();
-      if(typed) return {ticketNum: 'TKT-' + typed};
-      if(existing?.ticketNum) return {ticketNum: existing.ticketNum};
-      return {};
-    })() ),
-    ...(existing?.submittedBy && {submittedBy: existing.submittedBy}),
-    ...(existing?.priority    && {priority:    existing.priority}),
-  };
-  if(editId){const i=entries.findIndex(e=>e.id===editId);entries[i]=entry;} else entries.unshift(entry);
-  closeModal(); render(); renderQueueTab(); pushData(true);
+
+// ── SETUP RENDER ──
+function renderSetup(){
+  const q=($('sSearch')?.value||'').toLowerCase(), fs=$('sFilter')?.value||'';
+  const active=state.setup.entries.filter(e=>e.status!=='done');
+  const f=active.filter(e=>{
+    const mq=!q||[e.terminal,e.awg,e.issue,e.doc].some(v=>(v||'').toLowerCase().includes(q));
+    return mq&&(!fs||e.status===fs);
+  });
+  renderStats('setup','s');
+  const cl=$('sCards'),em=$('sEmptyM');
+  if(!f.length){cl.innerHTML='';em.style.display='block';}
+  else{ em.style.display='none'; cl.innerHTML=f.map(e=>{
+    const d=days(e.date),ac=(e.status!=='done'&&d>3)?'age-warn':'age-ok';
+    return`<div class="entry-card status-${e.status}">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;gap:8px">
+        <div><div class="entry-apn">${e.terminal}</div>${e.awg?`<div class="entry-press">${e.awg}</div>`:''}</div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0"><span class="${ac}" style="font-size:11px">${d}d</span>${badge(e.status)}</div>
+      </div>
+      ${e.doc?`<div style="margin-bottom:4px"><span class="chip">${e.doc}</span></div>`:''}
+      <div class="entry-issue">${e.issue}</div>${e.notes?`<div class="sub-text">${e.notes}</div>`:''}
+      <div class="entry-card-footer"><div style="font-size:11px;color:var(--hl-text3)">${e.by||''}</div>${actionBtns(e,'setup')}</div>
+    </div>`;
+  }).join(''); }
+  const tb=$('sBody'),ed=$('sEmptyD');
+  if(!f.length){tb.innerHTML='';ed.style.display='block';}
+  else{ ed.style.display='none'; tb.innerHTML=f.map(e=>{
+    const d=days(e.date),ac=(e.status!=='done'&&d>3)?'age-warn':'age-ok';
+    return`<tr>
+      <td style="font-weight:500;font-family:monospace;font-size:12px">${e.terminal}</td>
+      <td style="font-size:12px;color:var(--hl-text2)">${e.awg||'—'}</td>
+      <td><div style="font-size:12px">${e.issue}</div>${e.notes?`<div class="sub-text">${e.notes}</div>`:''}</td>
+      <td style="font-size:12px;color:var(--hl-text2)">${e.doc||'—'}</td>
+      <td style="font-size:12px">${tktBadge(e)}${e.by||'—'}</td>
+      <td>${badge(e.status)}</td>
+      <td class="${ac}" style="font-size:12px">${d}d</td>
+      <td style="text-align:right;padding-right:4px">${actionBtns(e,'setup')}</td>
+    </tr>`;
+  }).join(''); }
 }
-function editEntry(id){ openModal(id); }
-function delEntry(id){
+
+// ── HISTORY ──
+function renderHistory(sec){
+  const resolved=state[sec].entries.filter(e=>e.status==='done');
+  const q=($(sec[0]+'HSearch')?.value||'').toLowerCase();
+  const f=!q?resolved:resolved.filter(e=>Object.values(e).some(v=>typeof v==='string'&&v.toLowerCase().includes(q)));
+  if(sec==='applicator'){
+    const cl=$('aHistCards'),em=$('aHistEmpty'),tb=$('aHistBody');
+    if(!f.length){cl.innerHTML='';tb.innerHTML='';em.style.display='block';return;} em.style.display='none';
+    cl.innerHTML=f.map(e=>`<div class="entry-card status-done"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><div><div class="entry-apn">${e.apn}</div>${e.press?`<div class="entry-press">${e.press}</div>`:''}</div>${badge('done')}</div><div class="entry-issue">${e.issue}</div>${e.notes?`<div class="sub-text">${e.notes}</div>`:''}<div class="entry-card-footer"><div style="font-size:11px;color:var(--hl-text3)">${e.by||''}</div>${actionBtns(e,'applicator',true)}</div></div>`).join('');
+    tb.innerHTML=f.map(e=>{const tw=[e.terminal,e.wire].filter(Boolean).map(t=>`<span class="chip">${t}</span>`).join('')||'—';return`<tr><td style="font-family:monospace;font-size:12px">${e.apn}</td><td style="font-size:12px;color:var(--hl-text2)">${e.press||'—'}</td><td>${tw}</td><td><div style="font-size:12px">${e.issue}</div>${e.notes?`<div class="sub-text">${e.notes}</div>`:''}</td><td style="font-size:12px;color:var(--hl-text2)">${e.by||'—'}</td><td>${badge('done')}</td><td style="font-size:12px;color:var(--hl-text3)">${days(e.date)}d</td><td style="text-align:right;padding-right:4px">${actionBtns(e,'applicator',true)}</td></tr>`;}).join('');
+  } else if(sec==='machine'){
+    const cl=$('mHistCards'),em=$('mHistEmpty'),tb=$('mHistBody');
+    if(!f.length){cl.innerHTML='';tb.innerHTML='';em.style.display='block';return;} em.style.display='none';
+    cl.innerHTML=f.map(e=>`<div class="entry-card status-done"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><div class="entry-apn">${e.machine}</div>${badge('done')}</div><div class="entry-issue">${e.desc}</div>${e.result?`<div class="sub-text">${e.result}</div>`:''}<div class="entry-card-footer"><div style="font-size:11px;color:var(--hl-text3)">${e.by||''}</div>${actionBtns(e,'machine',true)}</div></div>`).join('');
+    tb.innerHTML=f.map(e=>`<tr><td style="font-family:monospace;font-size:12px">${e.machine}</td><td><div style="font-size:12px">${e.desc}</div></td><td style="font-size:12px;color:var(--hl-text2)">${e.result||'—'}</td><td style="font-size:12px;color:var(--hl-text2)">${e.by||'—'}</td><td>${badge('done')}</td><td style="font-size:12px;color:var(--hl-text3)">${days(e.date)}d</td><td style="text-align:right;padding-right:4px">${actionBtns(e,'machine',true)}</td></tr>`).join('');
+  } else {
+    const cl=$('sHistCards'),em=$('sHistEmpty'),tb=$('sHistBody');
+    if(!f.length){cl.innerHTML='';tb.innerHTML='';em.style.display='block';return;} em.style.display='none';
+    cl.innerHTML=f.map(e=>`<div class="entry-card status-done"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><div><div class="entry-apn">${e.terminal}</div>${e.awg?`<div class="entry-press">${e.awg}</div>`:''}</div>${badge('done')}</div><div class="entry-issue">${e.issue}</div>${e.notes?`<div class="sub-text">${e.notes}</div>`:''}<div class="entry-card-footer"><div style="font-size:11px;color:var(--hl-text3)">${e.by||''}</div>${actionBtns(e,'setup',true)}</div></div>`).join('');
+    tb.innerHTML=f.map(e=>`<tr><td style="font-family:monospace;font-size:12px">${e.terminal}</td><td style="font-size:12px;color:var(--hl-text2)">${e.awg||'—'}</td><td><div style="font-size:12px">${e.issue}</div></td><td style="font-size:12px;color:var(--hl-text2)">${e.doc||'—'}</td><td style="font-size:12px;color:var(--hl-text2)">${e.by||'—'}</td><td>${badge('done')}</td><td style="font-size:12px;color:var(--hl-text3)">${days(e.date)}d</td><td style="text-align:right;padding-right:4px">${actionBtns(e,'setup',true)}</td></tr>`).join('');
+  }
+}
+
+// ── QUEUE TAB ──
+function getActiveQueue(sec){
+  const active=state[sec].entries.filter(e=>e.status==='open'||e.status==='inprog');
+  const waiting=state[sec].entries.filter(e=>e.status==='waiting');
+  const order=state[sec].queue;
+  const ordered=[];
+  const rem=[...active];
+  order.forEach(id=>{ const i=rem.findIndex(e=>e.id===id); if(i!==-1) ordered.push(rem.splice(i,1)[0]); });
+  rem.forEach(e=>ordered.push(e));
+  return{ordered,waiting};
+}
+function renderQueueTab(sec){
+  const padId={applicator:'aQueuePad',machine:'mQueuePad',setup:'sQueuePad'}[sec];
+  const pad=$(padId); if(!pad) return;
+  const{ordered,waiting}=getActiveQueue(sec);
+  const all=[...ordered,...waiting];
+  if(!all.length){ pad.innerHTML='<div class="queue-empty"><i class="ti ti-check" style="font-size:26px;display:block;margin-bottom:6px;color:#50a870"></i>No open items</div>'; return; }
+  const primaryLabel={applicator:'Applicator #',machine:'Machine #',setup:'Terminal #'}[sec];
+  pad.innerHTML=`
+    <div class="queue-info"><strong style="color:var(--hl-text)"><i class="ti ti-drag-drop" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>Drag to set work order</strong> — or use arrows on mobile.<br>This order is used for ETA estimates on the ticket page.<br><span style="color:var(--hl-text3)">Waiting on Parts items are excluded from ETA.</span></div>
+    <div class="queue-list-drag" id="${sec}QList"></div>
+    <div class="queue-save-bar"><span style="font-size:12px;color:var(--hl-text3)" id="${sec}QHint">Drag items to set your work order</span><button class="btn btn-red" onclick="saveQueueOrder('${sec}')"><i class="ti ti-device-floppy"></i> Save Order</button></div>`;
+  const list=$(sec+'QList');
+  ordered.forEach((e,i)=>list.appendChild(makeQueueItem(e,i,ordered.length,false,sec)));
+  if(waiting.length){
+    const div=document.createElement('div');
+    div.style.cssText='font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--hl-text3);padding:8px 4px 4px;margin-top:4px';
+    div.textContent='Waiting on Parts — excluded from ETA';
+    list.appendChild(div);
+    waiting.forEach(e=>list.appendChild(makeQueueItem(e,null,0,true,sec)));
+  }
+}
+function makeQueueItem(e,pos,total,isWaiting,sec){
+  const el=document.createElement('div');
+  el.className='queue-drag-item'+(isWaiting?' status-waiting':'');
+  el.dataset.id=e.id;
+  const label={applicator:e.apn,machine:e.machine,setup:e.terminal}[sec]||'—';
+  const detail={applicator:[e.press,e.terminal,e.wire].filter(Boolean).join(' · ')||e.issue?.slice(0,40),machine:e.desc?.slice(0,50),setup:[e.awg,e.doc].filter(Boolean).join(' · ')||e.issue?.slice(0,40)}[sec]||'';
+  const tkt=e.ticketNum?`<span style="font-size:9px;color:#5090d0;font-family:monospace;margin-left:6px">${e.ticketNum}</span>`:'';
+  const posEl=isWaiting?`<div class="queue-position waiting-pos"><i class="ti ti-pause" style="font-size:10px"></i></div>`:`<div class="queue-position">${pos+1}</div>`;
+  el.innerHTML=`
+    <div class="queue-drag-handle"><i class="ti ti-grip-vertical"></i></div>
+    ${posEl}
+    <div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:4px"><span class="queue-item-apn">${label}</span>${tkt}</div><div class="queue-item-detail">${detail}</div></div>
+    <div class="queue-item-right">
+      ${!isWaiting?`<div class="queue-arrows"><button class="queue-arrow" onclick="moveQueue('${sec}',${e.id},-1)" ${pos===0?'disabled':''}><i class="ti ti-chevron-up" style="font-size:10px"></i></button><button class="queue-arrow" onclick="moveQueue('${sec}',${e.id},1)" ${pos===total-1?'disabled':''}><i class="ti ti-chevron-down" style="font-size:10px"></i></button></div>`:''}
+      <span class="badge badge-${e.status==='inprog'?'inprog':'open'}">${e.status==='inprog'?'In Progress':'Open'}</span>
+    </div>`;
+  if(!isWaiting){
+    el.draggable=true;
+    el.addEventListener('dragstart',ev=>{ dragSrcIndex=pos; el.classList.add('dragging'); ev.dataTransfer.effectAllowed='move'; });
+    el.addEventListener('dragend',  ()=>{ el.classList.remove('dragging'); document.querySelectorAll('.queue-drag-item').forEach(x=>x.classList.remove('drag-over')); });
+    el.addEventListener('dragover', ev=>{ ev.preventDefault(); el.classList.add('drag-over'); });
+    el.addEventListener('dragleave',()=>el.classList.remove('drag-over'));
+    el.addEventListener('drop',     ev=>{ ev.preventDefault(); el.classList.remove('drag-over'); if(dragSrcIndex===null||dragSrcIndex===pos) return; const{ordered}=getActiveQueue(sec); const ids=ordered.map(e=>e.id); const[m]=ids.splice(dragSrcIndex,1); ids.splice(pos,0,m); state[sec].queue=ids; markQueueDirty(sec); renderQueueTab(sec); });
+  }
+  return el;
+}
+function markQueueDirty(sec){ const h=$(sec+'QHint'); if(h){ h.textContent='Order changed — click Save Order to apply'; h.style.color='#d4a030'; } }
+function moveQueue(sec,id,dir){
+  const{ordered}=getActiveQueue(sec); const ids=ordered.map(e=>e.id); const idx=ids.indexOf(id); if(idx===-1) return;
+  const ni=idx+dir; if(ni<0||ni>=ids.length) return;
+  [ids[idx],ids[ni]]=[ids[ni],ids[idx]]; state[sec].queue=ids; markQueueDirty(sec); renderQueueTab(sec);
+}
+async function saveQueueOrder(sec){
+  state[sec].queue=getActiveQueue(sec).ordered.map(e=>e.id);
+  setSyncStatus('syncing');
+  try{ await writeGist({[QUEUE_FILES[sec]]:{content:JSON.stringify(state[sec].queue,null,2)}}); saveLocal(); setSyncStatus('ok'); toast('Queue order saved'); const h=$(sec+'QHint'); if(h){ h.textContent='Drag items to set your work order'; h.style.color=''; } renderQueueTab(sec); }
+  catch(e){ setSyncStatus('error'); }
+}
+
+// ── MODALS ──
+function openModal(sec,id=null){
+  editSection=sec; editId=id;
+  const e=id?state[sec].entries.find(x=>x.id===id):null;
+  if(sec==='applicator'){
+    $('aModalTitle').textContent=e?'Edit Applicator Entry':'Log Applicator Issue';
+    $('fApn').value=e?.apn||''; $('fPress').value=e?.press||''; $('fTerminal').value=e?.terminal||'';
+    $('fWire').value=e?.wire||''; $('fIssue').value=e?.issue||''; $('fNotes').value=e?.notes||'';
+    $('fStatus').value=e?.status||'open'; $('fBy').value=e?.by||'';
+    $('fTicket').value=e?.ticketNum?e.ticketNum.replace('TKT-',''):'';
+  } else if(sec==='machine'){
+    $('mModalTitle').textContent=e?'Edit Machine Entry':'Log Machine Issue';
+    $('mMachine').value=e?.machine||''; $('mDesc').value=e?.desc||'';
+    $('mResult').value=e?.result||''; $('mStatus').value=e?.status||'open';
+    $('mBy').value=e?.by||''; $('mTicket').value=e?.ticketNum?e.ticketNum.replace('TKT-',''):'';
+  } else {
+    $('sModalTitle').textContent=e?'Edit Setup Sheet Entry':'Log Setup Sheet Issue';
+    $('sTerminal').value=e?.terminal||''; $('sAwg').value=e?.awg||'';
+    $('sIssue').value=e?.issue||''; $('sDoc').value=e?.doc||'';
+    $('sNotes').value=e?.notes||''; $('sStatus').value=e?.status||'open';
+    $('sBy').value=e?.by||''; $('sTicket').value=e?.ticketNum?e.ticketNum.replace('TKT-',''):'';
+  }
+  $('modal-'+sec).classList.add('open');
+}
+function closeModal(sec){ $('modal-'+sec).classList.remove('open'); editId=null; editSection=null; }
+
+function saveEntry(sec){
+  let entry;
+  const existing=editId?state[sec].entries.find(e=>e.id===editId):null;
+  const tktRaw={applicator:$('fTicket'),machine:$('mTicket'),setup:$('sTicket')}[sec]?.value.trim();
+  const tkt=tktRaw?'TKT-'+tktRaw:(existing?.ticketNum||null);
+
+  if(sec==='applicator'){
+    const apn=$('fApn').value.trim(), issue=$('fIssue').value.trim();
+    if(!apn||!issue){ alert('Applicator # and issue description are required.'); return; }
+    entry={id:editId||Date.now(),apn,press:$('fPress').value.trim(),terminal:$('fTerminal').value.trim(),wire:$('fWire').value.trim(),issue,notes:$('fNotes').value.trim(),status:$('fStatus').value,by:$('fBy').value.trim(),date:existing?.date||Date.now(),...(tkt&&{ticketNum:tkt}),...(existing?.submittedBy&&{submittedBy:existing.submittedBy}),...(existing?.priority&&{priority:existing.priority})};
+  } else if(sec==='machine'){
+    const machine=$('mMachine').value.trim(), desc=$('mDesc').value.trim();
+    if(!machine||!desc){ alert('Machine # and description are required.'); return; }
+    entry={id:editId||Date.now(),machine,desc,result:$('mResult').value.trim(),status:$('mStatus').value,by:$('mBy').value.trim(),date:existing?.date||Date.now(),...(tkt&&{ticketNum:tkt})};
+  } else {
+    const terminal=$('sTerminal').value.trim(), issue=$('sIssue').value.trim();
+    if(!terminal||!issue){ alert('Terminal # and issue description are required.'); return; }
+    entry={id:editId||Date.now(),terminal,awg:$('sAwg').value.trim(),issue,doc:$('sDoc').value.trim(),notes:$('sNotes').value.trim(),status:$('sStatus').value,by:$('sBy').value.trim(),date:existing?.date||Date.now(),...(tkt&&{ticketNum:tkt})};
+  }
+  if(editId){const i=state[sec].entries.findIndex(e=>e.id===editId);state[sec].entries[i]=entry;} else state[sec].entries.unshift(entry);
+  closeModal(sec); renderSection(sec); renderHistory(sec); renderQueueTab(sec); pushSection(sec);
+}
+function delEntry(sec,id){
   if(!confirm('Remove this entry?')) return;
-  entries=entries.filter(e=>e.id!==id);
-  queueOrder=queueOrder.filter(qid=>qid!==id);
-  render(); renderQueueTab(); pushData(true); pushQueueOrder();
+  state[sec].entries=state[sec].entries.filter(e=>e.id!==id);
+  state[sec].queue=state[sec].queue.filter(qid=>qid!==id);
+  renderSection(sec); renderHistory(sec); renderQueueTab(sec); pushSection(sec);
 }
 
+// ── NOTIFY ──
+function openNotify(id,sec){
+  notifyId=id; notifySection=sec; selectedRecipients=new Set();
+  const e=state[sec].entries.find(x=>x.id===id);
+  const label={applicator:`Applicator ${e.apn}${e.press?' — '+e.press:''}`,machine:`Machine ${e.machine}`,setup:`Terminal ${e.terminal}${e.awg?' — '+e.awg:''}`}[sec];
+  const detail={applicator:[e.terminal,e.wire,e.issue].filter(Boolean).join(' | '),machine:e.desc,setup:[e.doc,e.issue].filter(Boolean).join(' | ')}[sec];
+  $('notifyLabel').textContent=label; $('notifyDetail').textContent=detail||''; $('notifyNote').value='';
+  const cl=$('notifyContactList');
+  if(!contacts.length){ cl.innerHTML=`<div style="font-size:12px;color:var(--hl-text3);padding:12px">No contacts added yet.</div>`; }
+  else cl.innerHTML=contacts.map(c=>`<div class="recipient-row" data-id="${c.id}" onclick="toggleRecipient(${c.id})"><div class="recipient-check"><div class="check-box"><i class="ti ti-check check-icon" style="display:none"></i></div></div><div class="recipient-info"><div class="recipient-name">${c.name}${c.role?` <span style="font-size:11px;font-weight:400;color:var(--hl-text3)">— ${c.role}</span>`:''}</div><div class="recipient-email">${c.email}</div></div></div>`).join('');
+  $('notifyModal').classList.add('open');
+}
+function closeNotifyModal(){ $('notifyModal').classList.remove('open'); notifyId=null; notifySection=null; }
 function toggleRecipient(id){
   if(selectedRecipients.has(id)) selectedRecipients.delete(id); else selectedRecipients.add(id);
   const row=document.querySelector(`.recipient-row[data-id="${id}"]`);
   if(row){ row.classList.toggle('checked',selectedRecipients.has(id)); const ic=row.querySelector('.check-icon'); if(ic) ic.style.display=selectedRecipients.has(id)?'block':'none'; }
 }
-function openNotify(id){
-  notifyId=id; selectedRecipients=new Set();
-  const e=entries.find(x=>x.id===id);
-  $('notifyApnLabel').textContent=`Applicator ${e.apn}${e.press?' — '+e.press:''}`;
-  $('notifyDetailLabel').textContent=[e.terminal,e.wire,e.issue].filter(Boolean).join(' | ');
-  $('notifyNote').value='';
-  const cl=$('notifyContactList');
-  if(!contacts.length){ cl.innerHTML=`<div style="font-size:12px;color:var(--hl-text3);padding:12px">No contacts added yet.</div>`; }
-  else cl.innerHTML=contacts.map(c=>`
-    <div class="recipient-row" data-id="${c.id}" onclick="toggleRecipient(${c.id})">
-      <div class="recipient-check"><div class="check-box"><i class="ti ti-check check-icon" style="display:none"></i></div></div>
-      <div class="recipient-info"><div class="recipient-name">${c.name}${c.role?` <span style="font-size:11px;font-weight:400;color:var(--hl-text3)">— ${c.role}</span>`:''}</div><div class="recipient-email">${c.email}</div></div>
-    </div>`).join('');
-  $('notifyModal').classList.add('open');
-}
-function closeNotifyModal(){ $('notifyModal').classList.remove('open'); notifyId=null; }
 function getGreeting(){ const h=new Date().getHours(); return h<12?'Good morning':h<17?'Good afternoon':'Good evening'; }
 function sendNotify(){
-  const e=entries.find(x=>x.id===notifyId);
+  const e=state[notifySection].entries.find(x=>x.id===notifyId);
   if(!selectedRecipients.size){ alert('Select at least one recipient.'); return; }
-  const recipientContacts=[...selectedRecipients].map(id=>contacts.find(c=>c.id===id)).filter(Boolean);
-  const to=recipientContacts.map(c=>c.email).join(',');
+  const rc=[...selectedRecipients].map(id=>contacts.find(c=>c.id===id)).filter(Boolean);
+  const to=rc.map(c=>c.email).join(',');
   const note=$('notifyNote').value.trim();
-  const firstNames=recipientContacts.map(c=>c.name.split(' ')[0]);
-  const salutation=firstNames.length===1?firstNames[0]:firstNames.length===2?firstNames.join(' & '):'All';
-
-  // Status-based message and subject
-  const statusMessages = {
-    done:    { subject: `Applicator ${e.apn} — Repair Complete`,          line: `has been repaired and is ready to return to production.` },
-    inprog:  { subject: `Applicator ${e.apn} — Repair In Progress`,        line: `is currently being repaired and is not yet available for production.` },
-    waiting: { subject: `Applicator ${e.apn} — Waiting on Parts`,          line: `is on hold — we are waiting on parts before the repair can be completed.` },
-    open:    { subject: `Applicator ${e.apn} — Issue Logged`,              line: `has been pulled from production and logged for repair. We will provide updates as work progresses.` },
-  };
-  const sm = statusMessages[e.status] || statusMessages.open;
-
+  const fn=rc.map(c=>c.name.split(' ')[0]);
+  const sal=fn.length===1?fn[0]:fn.length===2?fn.join(' & '):'All';
+  const statusLine={done:'has been resolved and is ready to return to production.',inprog:'is currently being worked on.',waiting:'is on hold — waiting on parts.',open:'has been logged and is queued for repair.'}[e.status]||'has been logged.';
+  const sectionLabel={applicator:`Applicator ${e.apn}`,machine:`Machine ${e.machine}`,setup:`Terminal ${e.terminal}`}[notifySection];
+  const statusText={done:'Resolved',inprog:'In Progress',waiting:'Waiting on Parts',open:'Open'}[e.status];
+  const subj=`${sectionLabel} — ${statusText}`;
+  const desc={applicator:e.issue,machine:e.desc,setup:e.issue}[notifySection];
+  const base=window.location.origin+window.location.pathname.replace('index.html','').replace(/\/$/,'');
   const body=[
-    `${getGreeting()}, ${salutation}!`,'',
-    `Applicator ${e.apn}${e.press?' ('+e.press+')':''} ${sm.line}`,'',
-    `Status: ${e.status==='done'?'Resolved':e.status==='inprog'?'In Progress':e.status==='waiting'?'Waiting on Parts':'Open'}`,
-    `Issue: ${e.issue}`,
-    e.terminal?`Terminal P/N: ${e.terminal}`:null,
-    e.wire?`Wire: ${e.wire}`:null,
-    e.notes?`Resolution/Notes: ${e.notes}`:null,
+    `${getGreeting()}, ${sal}!`,'',
+    `${sectionLabel} ${statusLine}`,'',
+    `Status: ${statusText}`,
+    `Description: ${desc}`,
+    {applicator:e.terminal?`Terminal P/N: ${e.terminal}`:null,machine:null,setup:e.awg?`AWG: ${e.awg}`:null}[notifySection],
+    {applicator:e.wire?`Wire: ${e.wire}`:null,machine:null,setup:e.doc?`Document: ${e.doc}`:null}[notifySection],
+    {applicator:e.notes?`Notes: ${e.notes}`:null,machine:e.result?`Result: ${e.result}`:null,setup:e.notes?`Notes: ${e.notes}`:null}[notifySection],
     note?'':null, note?`Additional Note: ${note}`:null,'',
-    `Logged by: ${e.by||'—'}`,`Days in shop: ${days(e.date)}`,
-    e.ticketNum?'\nTrack this ticket: '+window.location.origin+'/t.html?id='+e.ticketNum.replace('TKT-',''):null,
+    `Logged by: ${e.by||'—'}`,`Days open: ${days(e.date)}`,
+    e.ticketNum?`\nTrack this ticket: ${base}/ticket.html?ticket=${e.ticketNum}`:null
   ].filter(l=>l!==null).join('\n');
-
-  window.location.href=`mailto:${to}?subject=${encodeURIComponent(sm.subject)}&body=${encodeURIComponent(body)}`;
+  window.location.href=`mailto:${to}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
   closeNotifyModal();
+}
+
+// ── SHARE TICKET ──
+function shareTicket(sec,id){
+  const e=state[sec].entries.find(x=>x.id===id);
+  if(!e||!e.ticketNum){ toast('No ticket number on this entry','#cc4444'); return; }
+  const base=window.location.origin+window.location.pathname.replace('index.html','').replace(/\/$/,'');
+  const url=base+'/ticket.html?ticket='+e.ticketNum;
+  navigator.clipboard.writeText(url).then(()=>toast('Ticket link copied')).catch(()=>prompt('Copy this link:',url));
+}
+
+// ── CONTACTS ──
+function renderContacts(){
+  const list=$('contactList'),em=$('emptyContacts');
+  if(!contacts.length){list.innerHTML='';em.style.display='block';return;} em.style.display='none';
+  const sorted=[...contacts].sort((a,b)=>a.name.localeCompare(b.name));
+  list.innerHTML=sorted.map(c=>`<div class="contact-row"><div class="contact-avatar">${ini(c.name)}</div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500">${c.name}${c.role?` <span style="font-weight:400;font-size:11px;color:var(--hl-text3)">— ${c.role}</span>`:''}</div><div style="font-size:11px;color:var(--hl-text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.email}</div></div><div style="display:flex;gap:4px;flex-shrink:0"><button class="btn-sm" style="border-color:var(--hl-border);color:var(--hl-text2)" onclick="openContactModal(${c.id})"><i class="ti ti-edit"></i> Edit</button><button class="btn-sm btn-del" onclick="delContact(${c.id})"><i class="ti ti-trash"></i> Delete</button></div></div>`).join('');
 }
 function parseOutlookEmail(raw){
   const t=raw.trim();
@@ -986,72 +1228,39 @@ function saveContact(){
   if(!nameField&&parsed?.name) $('cName').value=parsed.name;
   const c={id:editCId||Date.now(),name,email,role:$('cRole').value.trim()};
   if(editCId){const i=contacts.findIndex(x=>x.id===editCId);contacts[i]=c;} else contacts.push(c);
-  closeContactModal(); renderContacts(); pushData(true);
+  closeContactModal(); renderContacts(); pushSection('applicator'); // contacts stored in applicator file
 }
-function editContact(id){ openContactModal(id); }
-function delContact(id){ if(!confirm('Remove this contact?')) return; contacts=contacts.filter(c=>c.id!==id); renderContacts(); pushData(true); }
-
-function shareTicket(id){
-  const e=entries.find(x=>x.id===id);
-  if(!e||!e.ticketNum){ toast('No ticket number on this entry','#cc4444'); return; }
-    const base=window.location.origin;
-    const url=base+'/t.html?id='+e.ticketNum.replace('TKT-','');
-  navigator.clipboard.writeText(url)
-    .then(()=>toast('Ticket link copied — paste it and send to '+(e.submittedBy||e.by||'them')))
-    .catch(()=>prompt('Copy this link:',url));
-}
-
-function checkQRParams(){
-  // The QR code encodes & as %26 for ZPL compatibility.
-  // When the phone opens the URL, %26 may stay encoded as-is in the query string,
-  // causing URLSearchParams to see one giant param instead of many.
-  // Fix: decode %26 back to & before parsing.
-  const rawSearch = window.location.search.replace(/%26/gi, '&');
-  const p = new URLSearchParams(rawSearch);
-  if(p.get('action')==='log'||p.get('apn')){
-    openModal();
-    if(p.get('apn'))      $('fApn').value     =p.get('apn');
-    if(p.get('press'))    $('fPress').value   =p.get('press');
-    if(p.get('terminal')) $('fTerminal').value=p.get('terminal');
-    if(p.get('wire'))     $('fWire').value    =p.get('wire');
-    setTimeout(()=>$('fIssue').focus(),100);
-    window.history.replaceState({},'',window.location.pathname);
-  }
-}
+function delContact(id){ if(!confirm('Remove this contact?')) return; contacts=contacts.filter(c=>c.id!==id); renderContacts(); pushSection('applicator'); }
 
 // ── POLLING ──
 const POLL_INTERVAL=30000;
 let pollTimer=null, lastGistUpdatedAt=null, isEditing=false;
-
 async function pollForChanges(){
-  if($('app').style.display==='none') return;
-  if(isEditing) return;
+  if($('app').style.display==='none'||isEditing) return;
   try{
-    const id=await ensureGist();
-    const token=getToken();
+    const id=await ensureGist(); const token=getToken();
     const r=await fetch('https://api.github.com/gists/'+id,{headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}});
     if(!r.ok) return;
     const g=await r.json();
     if(lastGistUpdatedAt&&g.updated_at!==lastGistUpdatedAt){
-      const dataFile=g.files[DATA_FILE];
-      if(dataFile){ const data=JSON.parse(dataFile.content); if(Array.isArray(data.issues)) entries=data.issues; if(Array.isArray(data.contacts)) contacts=data.contacts; saveLocal(); render(); renderContacts(); }
-      const queueFile=g.files[QUEUE_FILE];
-      if(queueFile){ queueOrder=JSON.parse(queueFile.content)||[]; renderQueueTab(); }
-      setSyncStatus('ok'); showPollToast();
+      if(g.files[DATA_FILE]){ const d=JSON.parse(g.files[DATA_FILE].content); state.applicator.entries=d.issues||[]; if(d.contacts) contacts=d.contacts; }
+      if(g.files[MACH_FILE]){ const d=JSON.parse(g.files[MACH_FILE].content); state.machine.entries=d.issues||[]; }
+      if(g.files[SETUP_FILE]){ const d=JSON.parse(g.files[SETUP_FILE].content); state.setup.entries=d.issues||[]; }
+      ['applicator','machine','setup'].forEach(sec=>{ const f=g.files[QUEUE_FILES[sec]]; if(f) state[sec].queue=JSON.parse(f.content)||[]; });
+      saveLocal(); renderAll(); setSyncStatus('ok'); showPollToast();
     }
     lastGistUpdatedAt=g.updated_at;
   }catch(e){}
 }
 function showPollToast(){
-  let t=document.getElementById('_polltost');
-  if(!t){ t=document.createElement('div'); t.id='_polltost'; t.style.cssText='position:fixed;bottom:56px;left:50%;transform:translateX(-50%);background:var(--hl-surface);border:1px solid var(--hl-border2);border-left:3px solid #5090d0;color:var(--hl-text);font-size:11px;padding:7px 14px;border-radius:4px;z-index:998;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap'; document.body.appendChild(t); }
+  let t=document.getElementById('_pt'); if(!t){ t=document.createElement('div'); t.id='_pt'; t.style.cssText='position:fixed;bottom:56px;left:50%;transform:translateX(-50%);background:var(--hl-surface);border:1px solid var(--hl-border2);border-left:3px solid #5090d0;color:var(--hl-text);font-size:11px;padding:7px 14px;border-radius:4px;z-index:998;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap'; document.body.appendChild(t); }
   t.innerHTML='<i class="ti ti-refresh" style="font-size:11px;vertical-align:-1px;margin-right:4px"></i>Updated from another device';
   t.style.opacity='1'; setTimeout(()=>t.style.opacity='0',3000);
 }
 function startPolling(){ stopPolling(); pollTimer=setInterval(pollForChanges,POLL_INTERVAL); }
 function stopPolling(){ if(pollTimer){ clearInterval(pollTimer); pollTimer=null; } }
 document.addEventListener('DOMContentLoaded',()=>{
-  ['modal','notifyModal','contactModal','pinModal'].forEach(id=>{
+  ['modal-applicator','modal-machine','modal-setup','notifyModal','contactModal','pinModal'].forEach(id=>{
     const el=document.getElementById(id); if(!el) return;
     new MutationObserver(()=>{ isEditing=el.classList.contains('open'); }).observe(el,{attributes:true,attributeFilter:['class']});
   });
@@ -1059,11 +1268,11 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 $('setupToken').addEventListener('keydown',e=>{ if(e.key==='Enter') doSetup(); });
 document.addEventListener('keydown',function(e){
-  const pinActive=document.getElementById('pinScreen').classList.contains('active');
-  if(!pinActive) return;
+  const pa=document.getElementById('pinScreen').classList.contains('active');
+  if(!pa) return;
   const tag=document.activeElement.tagName;
   if(tag==='INPUT'||tag==='TEXTAREA') return;
-  if((e.key>='0'&&e.key<='9')||(e.code>='Numpad0'&&e.code<='Numpad9')){ const digit=e.key.length===1?e.key:e.code.replace('Numpad',''); pinKey(digit); }
+  if((e.key>='0'&&e.key<='9')||(e.code>='Numpad0'&&e.code<='Numpad9')){ pinKey(e.key.length===1?e.key:e.code.replace('Numpad','')); }
   if(e.key==='Backspace'||e.key==='Delete') pinDel();
 });
 
@@ -1072,7 +1281,7 @@ initApp();
 <script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('sw.js').then(r=>console.log('SW registered:',r.scope)).catch(e=>console.log('SW failed:',e));
+    navigator.serviceWorker.register('sw.js').then(r=>console.log('SW:',r.scope)).catch(e=>console.log('SW fail:',e));
   });
 }
 </script>
