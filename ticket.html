@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>H&L Applicator — Submit a Ticket</title>
+<title>H&L — Submit a Ticket</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -13,20 +13,26 @@
   --hl-red-hover:#e02828;--hl-text:#f0f0f0;--hl-text2:#aaaaaa;--hl-text3:#666666;
 }
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--hl-bg);color:var(--hl-text);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:2rem 1rem}
-
 .top{width:100%;max-width:480px;display:flex;align-items:center;gap:10px;margin-bottom:1.75rem}
 .hl-logo{width:36px;height:36px;background:var(--hl-red);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
 .top-title{font-size:16px;font-weight:500}
 .top-sub{font-size:11px;color:var(--hl-text3);margin-top:1px}
 
+/* type selector */
+.type-selector{width:100%;max-width:480px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1.25rem}
+.type-btn{padding:10px 6px;border:1px solid var(--hl-border2);border-radius:5px;background:var(--hl-surface);color:var(--hl-text2);cursor:pointer;text-align:center;font-size:11px;letter-spacing:.03em;transition:all .1s;touch-action:manipulation}
+.type-btn i{display:block;font-size:20px;margin-bottom:4px;color:var(--hl-text3)}
+.type-btn:hover{border-color:var(--hl-border);color:var(--hl-text)}
+.type-btn.active{border-color:var(--hl-red);background:rgba(204,34,34,.1);color:var(--hl-text)}
+.type-btn.active i{color:var(--hl-red)}
+
 .tabs{display:flex;width:100%;max-width:480px;border:1px solid var(--hl-border2);border-radius:6px;overflow:hidden;margin-bottom:1.5rem}
-.tab-btn{flex:1;height:40px;border:none;background:var(--hl-surface2);color:var(--hl-text2);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;border-right:1px solid var(--hl-border2);transition:background .1s;letter-spacing:.02em}
+.tab-btn{flex:1;height:40px;border:none;background:var(--hl-surface2);color:var(--hl-text2);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;border-right:1px solid var(--hl-border2);transition:background .1s}
 .tab-btn:last-child{border-right:none}
 .tab-btn.active{background:var(--hl-red);color:#fff}
 .tab-btn:hover:not(.active){background:var(--hl-surface);color:var(--hl-text)}
 
 .card{width:100%;max-width:480px;background:var(--hl-surface);border:1px solid var(--hl-border2);border-top:2px solid var(--hl-red);border-radius:6px;padding:1.5rem}
-
 .section{display:none}.section.active{display:block}
 
 .field{margin-bottom:14px}
@@ -40,7 +46,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .field-err{font-size:10px;color:#cc4444;margin-top:4px;display:none}
 .field.has-err input,.field.has-err textarea{border-color:#cc4444}
 .field.has-err .field-err{display:block}
-
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 
 .btn{width:100%;height:44px;border:none;border-radius:5px;font-size:14px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:.02em;touch-action:manipulation}
@@ -50,33 +55,29 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .btn-outline{background:transparent;border:1px solid var(--hl-border2);color:var(--hl-text2)}
 .btn-outline:hover{border-color:var(--hl-border);color:var(--hl-text)}
 
-/* Success card */
 .success-icon{width:56px;height:56px;background:rgba(30,120,60,.2);border:1px solid rgba(30,120,60,.4);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;font-size:24px;color:#50a870}
 .ticket-number{background:var(--hl-surface2);border:1px solid var(--hl-border2);border-radius:4px;padding:14px;text-align:center;margin:1rem 0}
 .ticket-number .label{font-size:10px;color:var(--hl-text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px}
-.ticket-number .num{font-size:28px;font-weight:700;font-family:monospace;color:var(--hl-text);letter-spacing:.08em}
+.ticket-number .num{font-size:28px;font-weight:700;font-family:monospace;letter-spacing:.08em}
+.ticket-type-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 10px;border-radius:20px;margin-top:8px}
 
-/* Status display */
 .status-card{border:1px solid var(--hl-border);border-radius:4px;overflow:hidden;margin-top:1rem}
 .status-header{padding:12px 14px;background:var(--hl-surface2);border-bottom:1px solid var(--hl-border)}
 .status-apn{font-size:16px;font-weight:600;font-family:monospace}
-.status-press{font-size:11px;color:var(--hl-text3);margin-top:2px}
+.status-type{font-size:10px;color:var(--hl-text3);text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
 .status-body{padding:14px}
 .status-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--hl-border)}
 .status-row:last-child{border-bottom:none}
 .status-key{font-size:11px;color:var(--hl-text3);text-transform:uppercase;letter-spacing:.07em}
-.status-val{font-size:13px;color:var(--hl-text);text-align:right;max-width:60%}
+.status-val{font-size:13px;text-align:right;max-width:65%}
 .badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:3px;font-size:11px;font-weight:500;white-space:nowrap;letter-spacing:.04em;text-transform:uppercase}
 .badge-open{background:rgba(180,60,20,.25);color:#e07050;border:1px solid rgba(180,60,20,.4)}
 .badge-inprog{background:rgba(160,120,20,.25);color:#d4a030;border:1px solid rgba(160,120,20,.4)}
 .badge-waiting{background:rgba(20,80,160,.25);color:#5090d0;border:1px solid rgba(20,80,160,.4)}
 .badge-done{background:rgba(30,120,60,.25);color:#50a870;border:1px solid rgba(30,120,60,.4)}
-
 .spinner{width:20px;height:20px;border:2px solid var(--hl-border2);border-top-color:var(--hl-red);border-radius:50%;animation:spin .7s linear infinite;margin:2rem auto}
 @keyframes spin{to{transform:rotate(360deg)}}
-
 .err-box{background:rgba(58,16,16,.3);border:1px solid #552020;border-radius:4px;padding:12px 14px;font-size:13px;color:#e07070;text-align:center;margin-top:1rem}
-
 .footer{margin-top:2rem;font-size:11px;color:var(--hl-text3);text-align:center}
 </style>
 </head>
@@ -85,7 +86,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="top">
   <div class="hl-logo">H&L</div>
   <div>
-    <div class="top-title">Applicator Issue Tickets</div>
+    <div class="top-title">Issue Tickets</div>
     <div class="top-sub">Submit a problem or check your ticket status</div>
   </div>
 </div>
@@ -95,39 +96,123 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <button class="tab-btn" onclick="switchTab('status')"><i class="ti ti-search" style="font-size:15px"></i> Check Status</button>
 </div>
 
-<!-- SUBMIT SECTION -->
 <div class="card">
+
+  <!-- SUBMIT -->
   <div class="section active" id="sec-submit">
-    <div class="field" id="f-name">
-      <label>Your Name *</label>
-      <input type="text" id="iName" placeholder="e.g. John Smith" autocomplete="name">
-      <div class="field-err">Please enter your name</div>
+
+    <!-- Issue type selector -->
+    <div style="font-size:10px;color:var(--hl-text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Issue Type *</div>
+    <div class="type-selector" style="width:100%;margin-bottom:1.25rem">
+      <div class="type-btn active" id="type-applicator" onclick="selectType('applicator')">
+        <i class="ti ti-tool"></i>Applicator
+      </div>
+      <div class="type-btn" id="type-machine" onclick="selectType('machine')">
+        <i class="ti ti-settings-2"></i>Machine
+      </div>
+      <div class="type-btn" id="type-setup" onclick="selectType('setup')">
+        <i class="ti ti-file-description"></i>Setup Sheet
+      </div>
     </div>
-    <div class="row2">
-      <div class="field" id="f-apn">
-        <label>Applicator # *</label>
-        <input type="text" id="iApn" placeholder="T-0000" autocomplete="off" oninput="formatApn(this)">
-        <div class="field-hint">Format: T- followed by 4 digits</div>
-        <div class="field-err" id="apn-err">Must be T- followed by 4 digits (e.g. T-1234)</div>
+
+    <!-- APPLICATOR FIELDS -->
+    <div id="fields-applicator">
+      <div class="field" id="fa-name">
+        <label>Your Name *</label>
+        <input type="text" id="aName" placeholder="e.g. John Smith" autocomplete="name">
+        <div class="field-err">Please enter your name</div>
+      </div>
+      <div class="row2">
+        <div class="field" id="fa-apn">
+          <label>Applicator # *</label>
+          <input type="text" id="aApn" placeholder="T-0000" autocomplete="off" oninput="formatApn(this)">
+          <div class="field-hint">Format: T- followed by 4 digits</div>
+          <div class="field-err">Must be T- followed by 4 digits</div>
+        </div>
+        <div class="field">
+          <label>Press / Machine</label>
+          <input type="text" id="aPress" placeholder="e.g. KM-4T #2" autocomplete="off">
+        </div>
+      </div>
+      <div class="field" id="fa-issue">
+        <label>Describe the Issue *</label>
+        <textarea id="aIssue" placeholder="Crimp height off, blade worn, carrier jammed…"></textarea>
+        <div class="field-err">Please describe the issue</div>
       </div>
       <div class="field">
-        <label>Press / Machine</label>
-        <input type="text" id="iPress" placeholder="e.g. KM-4T #2" autocomplete="off">
+        <label>Priority</label>
+        <select id="aPriority">
+          <option value="normal">Normal — can wait for scheduled repair</option>
+          <option value="high">High — affecting production now</option>
+          <option value="urgent">Urgent — line is down</option>
+        </select>
       </div>
     </div>
-    <div class="field" id="f-issue">
-      <label>Describe the Issue *</label>
-      <textarea id="iIssue" placeholder="Describe what's wrong — crimp height off, blade worn, carrier jammed, feeds skipping…"></textarea>
-      <div class="field-err">Please describe the issue</div>
+
+    <!-- MACHINE FIELDS -->
+    <div id="fields-machine" style="display:none">
+      <div class="field" id="fm-name">
+        <label>Your Name *</label>
+        <input type="text" id="mName" placeholder="e.g. John Smith" autocomplete="name">
+        <div class="field-err">Please enter your name</div>
+      </div>
+      <div class="field" id="fm-machine">
+        <label>Machine # *</label>
+        <input type="text" id="mMachine" placeholder="e.g. KM-4T #2" autocomplete="off">
+        <div class="field-err">Please enter the machine number</div>
+      </div>
+      <div class="field" id="fm-desc">
+        <label>Describe the Problem *</label>
+        <textarea id="mDesc" placeholder="What is the machine doing or not doing…"></textarea>
+        <div class="field-err">Please describe the problem</div>
+      </div>
+      <div class="field">
+        <label>Priority</label>
+        <select id="mPriority">
+          <option value="normal">Normal — can wait for scheduled repair</option>
+          <option value="high">High — affecting production now</option>
+          <option value="urgent">Urgent — line is down</option>
+        </select>
+      </div>
     </div>
-    <div class="field">
-      <label>Priority</label>
-      <select id="iPriority">
-        <option value="normal">Normal — can wait for scheduled repair</option>
-        <option value="high">High — affecting production now</option>
-        <option value="urgent">Urgent — line is down</option>
-      </select>
+
+    <!-- SETUP SHEET FIELDS -->
+    <div id="fields-setup" style="display:none">
+      <div class="field" id="fs-name">
+        <label>Your Name *</label>
+        <input type="text" id="sName" placeholder="e.g. John Smith" autocomplete="name">
+        <div class="field-err">Please enter your name</div>
+      </div>
+      <div class="row2">
+        <div class="field" id="fs-terminal">
+          <label>Terminal # *</label>
+          <input type="text" id="sTerminal" placeholder="e.g. 794956-1" autocomplete="off">
+          <div class="field-err">Please enter the terminal number</div>
+        </div>
+        <div class="field">
+          <label>AWG</label>
+          <input type="text" id="sAwg" placeholder="e.g. 18 AWG">
+        </div>
+      </div>
+      <div class="field" id="fs-issue">
+        <label>Describe the Issue *</label>
+        <textarea id="sIssue" placeholder="What's wrong with the setup sheet…"></textarea>
+        <div class="field-err">Please describe the issue</div>
+      </div>
+      <div class="field">
+        <label>Document / File Reference</label>
+        <input type="text" id="sDoc" placeholder="e.g. SS-2024-0042, rev B">
+      </div>
+      <div class="field">
+        <label>Priority</label>
+        <select id="sPriority">
+          <option value="normal">Normal</option>
+          <option value="high">High — blocking production</option>
+          <option value="urgent">Urgent</option>
+        </select>
+      </div>
     </div>
+
     <button class="btn btn-red" id="submitBtn" onclick="submitTicket()"><i class="ti ti-send"></i> Submit Ticket</button>
   </div>
 
@@ -136,11 +221,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div style="text-align:center;padding:.5rem 0">
       <div class="success-icon"><i class="ti ti-check"></i></div>
       <div style="font-size:16px;font-weight:500;margin-bottom:6px">Ticket Submitted!</div>
-      <div style="font-size:13px;color:var(--hl-text2)">Your issue has been logged. Save your ticket number to check the status later.</div>
+      <div style="font-size:13px;color:var(--hl-text2)">Save your ticket number to check the status later.</div>
     </div>
     <div class="ticket-number">
       <div class="label">Your Ticket Number</div>
       <div class="num" id="successTktNum"></div>
+      <div id="successTypeBadge" style="margin-top:8px"></div>
     </div>
     <div style="font-size:12px;color:var(--hl-text3);text-align:center;margin-bottom:1.25rem">
       Use this number under <strong style="color:var(--hl-text2)">Check Status</strong> to track your repair progress.
@@ -148,7 +234,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <button class="btn btn-outline" onclick="resetSubmit()"><i class="ti ti-plus"></i> Submit Another Ticket</button>
   </div>
 
-  <!-- STATUS SECTION -->
+  <!-- STATUS -->
   <div class="section" id="sec-status">
     <div class="field">
       <label>Ticket Number</label>
@@ -162,302 +248,229 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="field-hint">Enter the 4-digit number from your ticket</div>
     </div>
     <button class="btn btn-red" onclick="lookupTicket()"><i class="ti ti-search"></i> Check Status</button>
-
     <div id="statusResult"></div>
   </div>
+
 </div>
 
-<div class="footer">H&L Manufacturing · Applicator Repair System</div>
+<div class="footer">H&L Manufacturing · Issue Tracking System</div>
 
 <script>
-// ── CONFIG — same token as main app, stored locally ──
-// Gist ID is not sensitive — it's just a public identifier for where data lives
-// Token is needed to write — scoped to gist only
-const GIST_ID  = '934943f5c9d8ea126f30a27526c95771';
+const GIST_ID   = '934943f5c9d8ea126f30a27526c95771';
 const DATA_FILE  = 'hl_applicator_data.json';
-const QUEUE_FILE = 'hl_queue_order.json';
-
-// Token split across two parts so GitHub scanner doesn't auto-revoke it
+const MACH_FILE  = 'hl_machine_data.json';
+const SETUP_FILE = 'hl_setup_data.json';
+const QUEUE_FILES = { applicator:'hl_queue_order.json', machine:'hl_queue_machine.json', setup:'hl_queue_setup.json' };
 const _ta = 'ghp_socP3KgxO9ReG88';
 const _tb = 'LmIC4GCXujCWUrv4Mu4zp';
 const TOKEN = _ta + _tb;
 
-function getToken(){ return TOKEN; }
-function getGistId(){ return GIST_ID; }
+let currentType = 'applicator';
 
-// ── TAB SWITCHING ──
+function selectType(type){
+  currentType = type;
+  ['applicator','machine','setup'].forEach(t=>{
+    document.getElementById('type-'+t).classList.toggle('active', t===type);
+    document.getElementById('fields-'+t).style.display = t===type ? 'block' : 'none';
+  });
+}
+
 function switchTab(tab){
-  document.querySelectorAll('.tab-btn').forEach((b,i)=>{
-    b.classList.toggle('active', (i===0&&tab==='submit')||(i===1&&tab==='status'));
-  });
-  ['submit','success','status'].forEach(s=>{
-    const el=document.getElementById('sec-'+s);
-    if(el) el.classList.remove('active');
-  });
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',(i===0&&tab==='submit')||(i===1&&tab==='status')));
+  ['submit','success','status'].forEach(s=>{ const el=document.getElementById('sec-'+s); if(el) el.classList.remove('active'); });
   document.getElementById('sec-'+tab).classList.add('active');
   if(tab==='status') setTimeout(()=>document.getElementById('iTicket').focus(),100);
 }
 
-// ── APPLICATOR # FORMATTER ──
 function formatApn(input){
-  let v = input.value.toUpperCase().replace(/[^T0-9\-]/g,'');
-  // Auto-insert T- prefix
-  if(v && !v.startsWith('T')){ v = 'T-' + v.replace(/[^0-9]/g,''); }
-  else if(v === 'T'){ v = 'T-'; }
-  else if(v.startsWith('T') && !v.startsWith('T-')){ v = 'T-' + v.slice(1).replace(/[^0-9]/g,''); }
-  // Limit digits to 4
-  const parts = v.split('-');
-  if(parts.length>=2) v = 'T-' + parts.slice(1).join('').replace(/[^0-9]/g,'').slice(0,4);
-  input.value = v;
+  let v=input.value.toUpperCase().replace(/[^T0-9\-]/g,'');
+  if(v&&!v.startsWith('T')){ v='T-'+v.replace(/[^0-9]/g,''); }
+  else if(v==='T'){ v='T-'; }
+  else if(v.startsWith('T')&&!v.startsWith('T-')){ v='T-'+v.slice(1).replace(/[^0-9]/g,''); }
+  const parts=v.split('-');
+  if(parts.length>=2) v='T-'+parts.slice(1).join('').replace(/[^0-9]/g,'').slice(0,4);
+  input.value=v;
 }
 
-function validateApn(val){
-  return /^T-\d{4}$/.test(val.trim());
-}
+function makeTktNum(){ return 'TKT-'+Math.floor(1000+Math.random()*9000); }
 
-// ── TICKET NUMBER GENERATOR ──
-function makeTktNum(){
-  const n = Math.floor(1000 + Math.random()*9000);
-  return 'TKT-' + n;
-}
-
-// ── GIST API ──
-async function gistAPI(method, path, body){
-  const token = getToken();
-  const r = await fetch('https://api.github.com/'+path,{
-    method,
-    headers:{'Authorization':'token '+token,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},
-    body: body?JSON.stringify(body):undefined
-  });
+async function gistAPI(method,path,body){
+  const r=await fetch('https://api.github.com/'+path,{method,headers:{'Authorization':'token '+TOKEN,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},body:body?JSON.stringify(body):undefined});
   if(!r.ok) throw new Error('GitHub API error '+r.status);
   return r.json();
 }
 
-async function loadData(){
-  const id = getGistId();
-  if(!id) throw new Error('No gist ID configured.');
-  const g = await gistAPI('GET','gists/'+id);
-  const f = g.files[DATA_FILE];
-  const data = f ? JSON.parse(f.content) : {issues:[],contacts:[]};
-  const qf = g.files[QUEUE_FILE];
-  data.queueOrder = qf ? JSON.parse(qf.content) : [];
-  return data;
+async function loadAllData(){
+  const g=await gistAPI('GET','gists/'+GIST_ID);
+  const applicator=g.files[DATA_FILE]?JSON.parse(g.files[DATA_FILE].content):{issues:[],contacts:[]};
+  const machine=g.files[MACH_FILE]?JSON.parse(g.files[MACH_FILE].content):{issues:[]};
+  const setup=g.files[SETUP_FILE]?JSON.parse(g.files[SETUP_FILE].content):{issues:[]};
+  const queues={};
+  ['applicator','machine','setup'].forEach(sec=>{ const f=g.files[QUEUE_FILES[sec]]; queues[sec]=f?JSON.parse(f.content):[]; });
+  return{applicator,machine,setup,queues};
 }
 
-async function saveData(data){
-  const id = getGistId();
-  if(!id) throw new Error('No gist ID configured.');
-  await gistAPI('PATCH','gists/'+id,{
-    files:{[DATA_FILE]:{content:JSON.stringify(data,null,2)}}
-  });
+async function saveSection(sec, data){
+  const fileMap={applicator:DATA_FILE,machine:MACH_FILE,setup:SETUP_FILE};
+  await gistAPI('PATCH','gists/'+GIST_ID,{files:{[fileMap[sec]]:{content:JSON.stringify(data,null,2)}}});
 }
 
-// ── SUBMIT TICKET ──
 async function submitTicket(){
-  // Validate
-  let valid = true;
+  const type=currentType;
+  let name='', valid=true;
 
-  const name = document.getElementById('iName').value.trim();
-  const fName = document.getElementById('f-name');
-  fName.classList.toggle('has-err', !name);
-  if(!name) valid=false;
+  // Clear previous errors
+  document.querySelectorAll('.field.has-err').forEach(f=>f.classList.remove('has-err'));
 
-  const apn = document.getElementById('iApn').value.trim();
-  const fApn = document.getElementById('f-apn');
-  const apnOk = validateApn(apn);
-  fApn.classList.toggle('has-err', !apnOk);
-  if(!apnOk) valid=false;
-
-  const issue = document.getElementById('iIssue').value.trim();
-  const fIssue = document.getElementById('f-issue');
-  fIssue.classList.toggle('has-err', !issue);
-  if(!issue) valid=false;
-
+  if(type==='applicator'){
+    name=document.getElementById('aName').value.trim();
+    const apn=document.getElementById('aApn').value.trim();
+    const issue=document.getElementById('aIssue').value.trim();
+    if(!name){ document.getElementById('fa-name').classList.add('has-err'); valid=false; }
+    if(!/^T-\d{4}$/.test(apn)){ document.getElementById('fa-apn').classList.add('has-err'); valid=false; }
+    if(!issue){ document.getElementById('fa-issue').classList.add('has-err'); valid=false; }
+  } else if(type==='machine'){
+    name=document.getElementById('mName').value.trim();
+    const machine=document.getElementById('mMachine').value.trim();
+    const desc=document.getElementById('mDesc').value.trim();
+    if(!name){ document.getElementById('fm-name').classList.add('has-err'); valid=false; }
+    if(!machine){ document.getElementById('fm-machine').classList.add('has-err'); valid=false; }
+    if(!desc){ document.getElementById('fm-desc').classList.add('has-err'); valid=false; }
+  } else {
+    name=document.getElementById('sName').value.trim();
+    const terminal=document.getElementById('sTerminal').value.trim();
+    const issue=document.getElementById('sIssue').value.trim();
+    if(!name){ document.getElementById('fs-name').classList.add('has-err'); valid=false; }
+    if(!terminal){ document.getElementById('fs-terminal').classList.add('has-err'); valid=false; }
+    if(!issue){ document.getElementById('fs-issue').classList.add('has-err'); valid=false; }
+  }
   if(!valid) return;
 
-  const btn = document.getElementById('submitBtn');
+  const btn=document.getElementById('submitBtn');
   btn.disabled=true;
   btn.innerHTML='<span style="width:18px;height:18px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block"></span> Submitting…';
 
-  const priority = document.getElementById('iPriority').value;
-  const press = document.getElementById('iPress').value.trim();
-  const tktNum = makeTktNum();
-
-  // Priority label in notes
-  const priorityLabel = {normal:'Normal priority',high:'HIGH priority — affecting production',urgent:'URGENT — line is down'}[priority];
-
-  const entry = {
-    id: Date.now(),
-    apn,
-    press,
-    terminal: '',
-    wire: '',
-    issue,
-    notes: `${priorityLabel} | Submitted by: ${name} | Ref: ${tktNum}`,
-    status: 'open',
-    by: name,
-    date: Date.now(),
-    ticketNum: tktNum,
-    submittedBy: name,
-    priority,
-  };
+  const tktNum=makeTktNum();
+  const now=Date.now();
 
   try{
-    const data = await loadData();
-    data.issues.unshift(entry);
-    await saveData(data);
+    const allData=await loadAllData();
+    let entry={};
 
-    // Store ticket locally for easy lookup
-    const myTickets = JSON.parse(localStorage.getItem('hl_my_tickets')||'[]');
-    myTickets.unshift({tktNum, apn, date: Date.now()});
-    localStorage.setItem('hl_my_tickets', JSON.stringify(myTickets.slice(0,20)));
+    if(type==='applicator'){
+      const priority=document.getElementById('aPriority').value;
+      const priorityLabel={normal:'Normal priority',high:'HIGH priority — affecting production',urgent:'URGENT — line is down'}[priority];
+      entry={id:now,apn:document.getElementById('aApn').value.trim(),press:document.getElementById('aPress').value.trim(),terminal:'',wire:'',issue:document.getElementById('aIssue').value.trim(),notes:priorityLabel+' | Submitted by: '+name+' | Ref: '+tktNum,status:'open',by:name,date:now,ticketNum:tktNum,submittedBy:name,priority,issueType:'applicator'};
+      allData.applicator.issues.unshift(entry);
+      await saveSection('applicator',allData.applicator);
+    } else if(type==='machine'){
+      const priority=document.getElementById('mPriority').value;
+      const priorityLabel={normal:'Normal priority',high:'HIGH priority — affecting production',urgent:'URGENT — line is down'}[priority];
+      entry={id:now,machine:document.getElementById('mMachine').value.trim(),desc:document.getElementById('mDesc').value.trim(),result:priorityLabel+' | Submitted by: '+name,status:'open',by:name,date:now,ticketNum:tktNum,submittedBy:name,priority,issueType:'machine'};
+      allData.machine.issues.unshift(entry);
+      await saveSection('machine',allData.machine);
+    } else {
+      const priority=document.getElementById('sPriority').value;
+      const priorityLabel={normal:'Normal priority',high:'HIGH priority — blocking production',urgent:'URGENT'}[priority];
+      entry={id:now,terminal:document.getElementById('sTerminal').value.trim(),awg:document.getElementById('sAwg').value.trim(),issue:document.getElementById('sIssue').value.trim(),doc:document.getElementById('sDoc').value.trim(),notes:priorityLabel+' | Submitted by: '+name,status:'open',by:name,date:now,ticketNum:tktNum,submittedBy:name,priority,issueType:'setup'};
+      allData.setup.issues.unshift(entry);
+      await saveSection('setup',allData.setup);
+    }
 
-    document.getElementById('successTktNum').textContent = tktNum;
+    // Save to local for quick lookup
+    const myTickets=JSON.parse(localStorage.getItem('hl_my_tickets')||'[]');
+    myTickets.unshift({tktNum,type,date:now});
+    localStorage.setItem('hl_my_tickets',JSON.stringify(myTickets.slice(0,20)));
+
+    // Show success
+    document.getElementById('successTktNum').textContent=tktNum;
+    const typeInfo={applicator:{label:'Applicator Issue',color:'#e07050',bg:'rgba(180,60,20,.15)'},machine:{label:'Machine Issue',color:'#d4a030',bg:'rgba(160,120,20,.15)'},setup:{label:'Setup Sheet Issue',color:'#5090d0',bg:'rgba(20,80,160,.15)'}}[type];
+    document.getElementById('successTypeBadge').innerHTML=`<span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 12px;border-radius:20px;background:${typeInfo.bg};color:${typeInfo.color};border:1px solid ${typeInfo.color}">${typeInfo.label}</span>`;
     document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
     document.getElementById('sec-success').classList.add('active');
   }catch(e){
     btn.disabled=false;
     btn.innerHTML='<i class="ti ti-send"></i> Submit Ticket';
-    showErr('Could not submit — make sure you are connected and try again. (' + e.message + ')');
+    showErr('Could not submit — make sure you are connected and try again. ('+e.message+')');
   }
 }
 
 function resetSubmit(){
-  document.getElementById('iName').value='';
-  document.getElementById('iApn').value='';
-  document.getElementById('iPress').value='';
-  document.getElementById('iIssue').value='';
-  document.getElementById('iPriority').value='normal';
+  // Clear all fields
+  ['aName','aApn','aPress','aIssue','mName','mMachine','mDesc','sName','sTerminal','sAwg','sIssue','sDoc'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  ['aPriority','mPriority','sPriority'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value='normal'; });
   document.getElementById('submitBtn').disabled=false;
   document.getElementById('submitBtn').innerHTML='<i class="ti ti-send"></i> Submit Ticket';
-  ['f-name','f-apn','f-issue'].forEach(id=>document.getElementById(id).classList.remove('has-err'));
+  document.querySelectorAll('.field.has-err').forEach(f=>f.classList.remove('has-err'));
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.getElementById('sec-submit').classList.add('active');
-  document.getElementById('iName').focus();
+  selectType('applicator');
 }
 
-// ── STATUS LOOKUP ──
 async function lookupTicket(){
-  const raw = document.getElementById('iTicket').value.trim().replace(/[^0-9]/g,'');
-  const tkt = raw ? 'TKT-' + raw : '';
-  const result = document.getElementById('statusResult');
-
+  const raw=document.getElementById('iTicket').value.trim().replace(/[^0-9]/g,'');
+  const tkt=raw?'TKT-'+raw:'';
+  const result=document.getElementById('statusResult');
   if(!tkt){ result.innerHTML='<div class="err-box">Please enter your 4-digit ticket number.</div>'; return; }
   if(!/^TKT-\d{4}$/.test(tkt)){ result.innerHTML='<div class="err-box">Please enter all 4 digits of your ticket number.</div>'; return; }
-
   result.innerHTML='<div class="spinner"></div>';
-
   try{
-    const data = await loadData();
-    const entry = data.issues.find(e=>e.ticketNum===tkt);
-
-    if(!entry){
-      result.innerHTML=`<div class="err-box"><i class="ti ti-ticket-off" style="font-size:16px;display:block;margin-bottom:6px"></i>Ticket <strong>${tkt}</strong> not found.<br><span style="font-size:11px;opacity:.8">Double-check the number and try again.</span></div>`;
-      return;
+    const allData=await loadAllData();
+    // Search all three sections
+    let entry=null, foundSec=null;
+    for(const [sec,key] of [['applicator','applicator'],['machine','machine'],['setup','setup']]){
+      const found=allData[key].issues.find(e=>e.ticketNum===tkt);
+      if(found){ entry=found; foundSec=sec; break; }
     }
+    if(!entry){ result.innerHTML=`<div class="err-box"><i class="ti ti-ticket-off" style="font-size:16px;display:block;margin-bottom:6px"></i>Ticket <strong>${tkt}</strong> not found.<br><span style="font-size:11px;opacity:.8">Double-check the number and try again.</span></div>`; return; }
 
-    const statusBadge = {
-      open:    '<span class="badge badge-open">Open</span>',
-      inprog:  '<span class="badge badge-inprog">In Progress</span>',
-      waiting: '<span class="badge badge-waiting">Waiting on Parts</span>',
-      done:    '<span class="badge badge-done">Resolved</span>',
-    }[entry.status]||'<span class="badge badge-open">Open</span>';
+    // ETA calculation using queue order
+    const queueOrder=allData.queues[foundSec]||[];
+    const active=allData[foundSec].issues.filter(e=>e.status==='open'||e.status==='inprog');
+    const orderedIds=[];
+    queueOrder.forEach(id=>{ if(active.find(e=>e.id===id)) orderedIds.push(id); });
+    active.forEach(e=>{ if(!orderedIds.includes(e.id)) orderedIds.push(e.id); });
+    const myPos=orderedIds.indexOf(entry.id);
+    const ahead=myPos===-1?orderedIds.length:myPos;
+    const pos=ahead+1;
+    const daysMin=Math.ceil(ahead/2)+1, daysMax=Math.ceil(ahead/2)+2;
+    let rangeText=daysMin<=1&&daysMax<=1?'Today or tomorrow':daysMin===daysMax?'~'+daysMin+' day'+(daysMin!==1?'s':''):daysMin+'-'+daysMax+' days';
+    const priorityLabel={urgent:'Urgent',high:'High',normal:'Normal'}[entry.priority||'normal'];
+    const priorityColor={urgent:'#e07050',high:'#d4a030',normal:'#aaa'}[entry.priority||'normal'];
 
-    const statusMsg = {
-      open:    'Your ticket has been received and is queued for repair.',
-      inprog:  'A technician is currently working on your applicator.',
-      waiting: 'Repair is on hold — we are waiting on parts before we can proceed.',
-      done:    'Your applicator has been repaired and is ready to return to production.',
-    }[entry.status]||'';
+    const statusBadge={open:'<span class="badge badge-open">Open</span>',inprog:'<span class="badge badge-inprog">In Progress</span>',waiting:'<span class="badge badge-waiting">Waiting on Parts</span>',done:'<span class="badge badge-done">Resolved</span>'}[entry.status]||'<span class="badge badge-open">Open</span>';
+    const statusMsg={open:'Your ticket has been received and is queued.',inprog:'A technician is currently working on this.',waiting:'On hold — waiting on parts before repair can continue.',done:'This issue has been resolved.'}[entry.status]||'';
 
-    // ETA CALCULATION — uses your saved queue order from the log
-    const queueOrder = data.queueOrder || [];
-    const activeIds = data.issues
-      .filter(function(e){ return e.status==='open'||e.status==='inprog'; })
-      .map(function(e){ return e.id; });
+    // Primary label per type
+    const primaryLabel={applicator:`Applicator ${entry.apn}`,machine:`Machine ${entry.machine}`,setup:`Terminal ${entry.terminal}`}[foundSec];
+    const typeLabel={applicator:'Applicator Issue',machine:'Machine Issue',setup:'Setup Sheet Issue'}[foundSec];
+    const descField={applicator:entry.issue,machine:entry.desc,setup:entry.issue}[foundSec];
+    const submitted=new Date(entry.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    const daysIn=Math.round((Date.now()-entry.date)/86400000);
 
-    // Build ordered list: queueOrder first, then any remaining by date
-    const orderedIds = [];
-    queueOrder.forEach(function(id){ if(activeIds.indexOf(id)!==-1) orderedIds.push(id); });
-    activeIds.forEach(function(id){ if(orderedIds.indexOf(id)===-1) orderedIds.push(id); });
-
-    const myPos = orderedIds.indexOf(entry.id);
-    const ahead = myPos === -1 ? orderedIds.length : myPos;
-
-    const pos = ahead + 1;
-    const queueDaysMin = Math.ceil(ahead / 2) + 1;
-    const queueDaysMax = Math.ceil(ahead / 2) + 2;
-
-    let rangeText;
-    if(queueDaysMin <= 1 && queueDaysMax <= 1){
-      rangeText = 'Today or tomorrow';
-    } else if(queueDaysMin === queueDaysMax){
-      rangeText = '~' + queueDaysMin + ' day' + (queueDaysMin!==1?'s':'');
+    let etaHtml='';
+    if(entry.status==='done'){ etaHtml=''; }
+    else if(entry.status==='inprog'){
+      etaHtml='<div style="margin-top:10px;padding:12px 14px;background:rgba(160,120,20,.1);border:1px solid rgba(160,120,20,.3);border-radius:4px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#d4a030;margin-bottom:4px">Estimated Completion</div><div style="font-size:15px;font-weight:600">Currently being worked on</div><div style="font-size:11px;color:#aaa;margin-top:3px">A technician is actively working on this now.</div></div>';
+    } else if(entry.status==='waiting'){
+      etaHtml='<div style="margin-top:10px;padding:12px 14px;background:rgba(20,80,160,.1);border:1px solid rgba(20,80,160,.3);border-radius:4px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#5090d0;margin-bottom:4px">Estimated Completion</div><div style="font-size:15px;font-weight:600">On hold - awaiting parts</div><div style="font-size:11px;color:#aaa;margin-top:3px">Repair will begin once parts arrive.</div></div>';
     } else {
-      rangeText = queueDaysMin + '-' + queueDaysMax + ' days';
+      etaHtml='<div style="margin-top:10px;padding:12px 14px;background:rgba(30,120,60,.1);border:1px solid rgba(30,120,60,.3);border-radius:4px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#50a870;margin-bottom:4px">Estimated Completion</div><div style="font-size:22px;font-weight:700;line-height:1">'+rangeText+'</div><div style="font-size:11px;color:#aaa;margin-top:6px;display:flex;gap:12px;flex-wrap:wrap"><span>Queue position: <strong style="color:#f0f0f0">#'+pos+'</strong></span><span>Priority: <strong style="color:'+priorityColor+'">'+priorityLabel+'</strong></span><span>'+ahead+' ahead in queue</span></div></div>';
     }
-
-    const priorityLabel = entry.priority==='urgent'?'Urgent':entry.priority==='high'?'High':'Normal';
-    const priorityColor = entry.priority==='urgent'?'#e07050':entry.priority==='high'?'#d4a030':'#aaa';
-
-    let etaHtml = '';
-    if(entry.status === 'done'){
-      etaHtml = '';
-    } else if(entry.status === 'inprog'){
-      etaHtml = '<div style="margin-top:10px;padding:12px 14px;background:rgba(160,120,20,.1);border:1px solid rgba(160,120,20,.3);border-radius:4px">'
-              + '<div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#d4a030;margin-bottom:4px">Estimated Completion</div>'
-              + '<div style="font-size:15px;font-weight:600;color:#f0f0f0">Currently being worked on</div>'
-              + '<div style="font-size:11px;color:#aaa;margin-top:3px">A technician is actively working on your applicator now.</div>'
-              + '</div>';
-    } else if(entry.status === 'waiting'){
-      etaHtml = '<div style="margin-top:10px;padding:12px 14px;background:rgba(20,80,160,.1);border:1px solid rgba(20,80,160,.3);border-radius:4px">'
-              + '<div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#5090d0;margin-bottom:4px">Estimated Completion</div>'
-              + '<div style="font-size:15px;font-weight:600;color:#f0f0f0">On hold - awaiting parts</div>'
-              + '<div style="font-size:11px;color:#aaa;margin-top:3px">Repair will begin once parts arrive.</div>'
-              + '</div>';
-    } else {
-      etaHtml = '<div style="margin-top:10px;padding:12px 14px;background:rgba(30,120,60,.1);border:1px solid rgba(30,120,60,.3);border-radius:4px">'
-              + '<div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#50a870;margin-bottom:4px">Estimated Completion</div>'
-              + '<div style="font-size:22px;font-weight:700;color:#f0f0f0;line-height:1">' + rangeText + '</div>'
-              + '<div style="font-size:11px;color:#aaa;margin-top:6px;display:flex;gap:12px;flex-wrap:wrap">'
-              + '<span>Queue position: <strong style="color:#f0f0f0">#' + pos + '</strong></span>'
-              + '<span>Priority: <strong style="color:' + priorityColor + '">' + priorityLabel + '</strong></span>'
-              + '<span>' + ahead + ' ahead in queue</span>'
-              + '</div>'
-              + '</div>';
-    }
-
-    const submitted = new Date(entry.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-    const daysIn = Math.round((Date.now()-entry.date)/86400000);
 
     result.innerHTML=`
       <div class="status-card">
         <div class="status-header">
-          <div class="status-apn">${entry.apn}</div>
-          ${entry.press?`<div class="status-press">${entry.press}</div>`:''}
+          <div class="status-apn">${primaryLabel}</div>
+          <div class="status-type">${typeLabel}</div>
         </div>
         <div class="status-body">
-          <div class="status-row">
-            <span class="status-key">Ticket</span>
-            <span class="status-val" style="font-family:monospace;font-weight:600">${tkt}</span>
-          </div>
-          <div class="status-row">
-            <span class="status-key">Status</span>
-            <span class="status-val">${statusBadge}</span>
-          </div>
-          <div class="status-row">
-            <span class="status-key">Issue</span>
-            <span class="status-val">${entry.issue}</span>
-          </div>
-          ${entry.notes&&entry.status==='done'?`<div class="status-row"><span class="status-key">Resolution</span><span class="status-val">${entry.notes}</span></div>`:''}
-          <div class="status-row">
-            <span class="status-key">Submitted</span>
-            <span class="status-val">${submitted} (${daysIn}d ago)</span>
-          </div>
-          <div class="status-row">
-            <span class="status-key">Submitted by</span>
-            <span class="status-val">${entry.submittedBy||entry.by||'—'}</span>
-          </div>
+          <div class="status-row"><span class="status-key">Ticket</span><span class="status-val" style="font-family:monospace;font-weight:600">${tkt}</span></div>
+          <div class="status-row"><span class="status-key">Status</span><span class="status-val">${statusBadge}</span></div>
+          <div class="status-row"><span class="status-key">Issue</span><span class="status-val">${descField}</span></div>
+          ${entry.status==='done'&&(entry.notes||entry.result)?`<div class="status-row"><span class="status-key">Resolution</span><span class="status-val">${entry.notes||entry.result}</span></div>`:''}
+          <div class="status-row"><span class="status-key">Submitted</span><span class="status-val">${submitted} (${daysIn}d ago)</span></div>
+          <div class="status-row"><span class="status-key">Submitted by</span><span class="status-val">${entry.submittedBy||entry.by||'—'}</span></div>
         </div>
       </div>
       ${etaHtml}
@@ -471,22 +484,19 @@ async function lookupTicket(){
 
 function showErr(msg){
   let el=document.getElementById('_submitErr');
-  if(!el){
-    el=document.createElement('div');
-    el.id='_submitErr';
-    el.className='err-box';
-    el.style.marginTop='12px';
-    document.querySelector('#sec-submit').appendChild(el);
-  }
+  if(!el){ el=document.createElement('div'); el.id='_submitErr'; el.className='err-box'; el.style.marginTop='12px'; document.getElementById('sec-submit').appendChild(el); }
   el.textContent=msg;
 }
 
-// Pre-fill ticket number if coming from success screen
-const urlParams = new URLSearchParams(window.location.search);
+// Pre-fill from URL params
+const urlParams=new URLSearchParams(window.location.search);
 if(urlParams.get('ticket')){
-  document.getElementById('iTicket').value = urlParams.get('ticket').toUpperCase().replace('TKT-','');
+  document.getElementById('iTicket').value=urlParams.get('ticket').toUpperCase().replace('TKT-','');
   switchTab('status');
   lookupTicket();
+}
+if(urlParams.get('type')&&['applicator','machine','setup'].includes(urlParams.get('type'))){
+  selectType(urlParams.get('type'));
 }
 </script>
 </body>
