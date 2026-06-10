@@ -825,8 +825,17 @@ function switchSubTab(sec,tab){
   else if(tab==='history') renderHistory(sec);
 }
 
+
 // ── HELPERS ──
 function days(ts){ return Math.round((Date.now()-ts)/86400000); }
+function daysLabel(ts){
+  const ms=Date.now()-ts;
+  const hrs=Math.floor(ms/3600000);
+  const d=Math.floor(ms/86400000);
+  if(hrs<1) return '<1hr';
+  if(hrs<24) return hrs+'hr'+(hrs!==1?'s':'');
+  return d+'d';
+}
 function badge(s){
   const m={open:['badge-open','Open'],inprog:['badge-inprog','In Progress'],waiting:['badge-waiting','Waiting Parts'],done:['badge-done','Resolved']};
   const[c,l]=m[s]||m.open; return`<span class="badge ${c}">${l}</span>`;
@@ -885,7 +894,7 @@ function renderApplicator(){
     return`<div class="entry-card status-${e.status}">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;gap:8px">
         <div><div class="entry-apn">${e.apn}</div>${e.press?`<div class="entry-press">${e.press}</div>`:''}</div>
-        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0"><span class="${ac}" style="font-size:11px">${d}d</span>${badge(e.status)}</div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0"><span class="${ac}" style="font-size:11px">${daysLabel(e.date)}</span>${badge(e.status)}</div>
       </div>
       ${tw?`<div style="margin-bottom:6px">${tw}</div>`:''}
       <div class="entry-issue">${e.issue}</div>${e.notes?`<div class="sub-text">${e.notes}</div>`:''}
@@ -905,7 +914,7 @@ function renderApplicator(){
       <td><div style="font-size:12px">${e.issue}</div>${e.notes?`<div class="sub-text">${e.notes}</div>`:''}</td>
       <td style="font-size:12px">${tktBadge(e)}<span style="color:var(--hl-text2)">${e.by||'—'}</span></td>
       <td>${badge(e.status)}</td>
-      <td class="${ac}" style="font-size:12px">${d}d</td>
+      <td class="${ac}" style="font-size:12px">${daysLabel(e.date)}</td>
       <td style="text-align:right;padding-right:4px">${actionBtns(e,'applicator')}</td>
     </tr>`;
   }).join(''); }
@@ -927,7 +936,7 @@ function renderMachine(){
     return`<div class="entry-card status-${e.status}">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;gap:8px">
         <div><div class="entry-apn">${e.machine}</div></div>
-        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0"><span class="${ac}" style="font-size:11px">${d}d</span>${badge(e.status)}</div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0"><span class="${ac}" style="font-size:11px">${daysLabel(e.date)}</span>${badge(e.status)}</div>
       </div>
       <div class="entry-issue">${e.desc}</div>${e.result?`<div class="sub-text">${e.result}</div>`:''}
       <div class="entry-card-footer"><div style="font-size:11px;color:var(--hl-text3)">${e.by||''}</div>${actionBtns(e,'machine')}</div>
@@ -943,7 +952,7 @@ function renderMachine(){
       <td><div style="font-size:12px">${e.result||'—'}</div></td>
       <td style="font-size:12px;color:var(--hl-text2)">${tktBadge(e)}${e.by||'—'}</td>
       <td>${badge(e.status)}</td>
-      <td class="${ac}" style="font-size:12px">${d}d</td>
+      <td class="${ac}" style="font-size:12px">${daysLabel(e.date)}</td>
       <td style="text-align:right;padding-right:4px">${actionBtns(e,'machine')}</td>
     </tr>`;
   }).join(''); }
@@ -965,7 +974,7 @@ function renderSetup(){
     return`<div class="entry-card status-${e.status}">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;gap:8px">
         <div><div class="entry-apn">${e.terminal}</div>${e.awg?`<div class="entry-press">${e.awg}</div>`:''}</div>
-        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0"><span class="${ac}" style="font-size:11px">${d}d</span>${badge(e.status)}</div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0"><span class="${ac}" style="font-size:11px">${daysLabel(e.date)}</span>${badge(e.status)}</div>
       </div>
       ${e.doc?`<div style="margin-bottom:4px"><span class="chip">${e.doc}</span></div>`:''}
       <div class="entry-issue">${e.issue}</div>${e.notes?`<div class="sub-text">${e.notes}</div>`:''}
@@ -983,7 +992,7 @@ function renderSetup(){
       <td style="font-size:12px;color:var(--hl-text2)">${e.doc||'—'}</td>
       <td style="font-size:12px">${tktBadge(e)}${e.by||'—'}</td>
       <td>${badge(e.status)}</td>
-      <td class="${ac}" style="font-size:12px">${d}d</td>
+      <td class="${ac}" style="font-size:12px">${daysLabel(e.date)}</td>
       <td style="text-align:right;padding-right:4px">${actionBtns(e,'setup')}</td>
     </tr>`;
   }).join(''); }
@@ -998,17 +1007,17 @@ function renderHistory(sec){
     const cl=$('aHistCards'),em=$('aHistEmpty'),tb=$('aHistBody');
     if(!f.length){cl.innerHTML='';tb.innerHTML='';em.style.display='block';return;} em.style.display='none';
     cl.innerHTML=f.map(e=>`<div class="entry-card status-done"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><div><div class="entry-apn">${e.apn}</div>${e.press?`<div class="entry-press">${e.press}</div>`:''}</div>${badge('done')}</div><div class="entry-issue">${e.issue}</div>${e.notes?`<div class="sub-text">${e.notes}</div>`:''}<div class="entry-card-footer"><div style="font-size:11px;color:var(--hl-text3)">${e.by||''}</div>${actionBtns(e,'applicator',true)}</div></div>`).join('');
-    tb.innerHTML=f.map(e=>{const tw=[e.terminal,e.wire].filter(Boolean).map(t=>`<span class="chip">${t}</span>`).join('')||'—';return`<tr><td style="font-family:monospace;font-size:12px">${e.apn}</td><td style="font-size:12px;color:var(--hl-text2)">${e.press||'—'}</td><td>${tw}</td><td><div style="font-size:12px">${e.issue}</div>${e.notes?`<div class="sub-text">${e.notes}</div>`:''}</td><td style="font-size:12px;color:var(--hl-text2)">${e.by||'—'}</td><td>${badge('done')}</td><td style="font-size:12px;color:var(--hl-text3)">${days(e.date)}d</td><td style="text-align:right;padding-right:4px">${actionBtns(e,'applicator',true)}</td></tr>`;}).join('');
+    tb.innerHTML=f.map(e=>{const tw=[e.terminal,e.wire].filter(Boolean).map(t=>`<span class="chip">${t}</span>`).join('')||'—';return`<tr><td style="font-family:monospace;font-size:12px">${e.apn}</td><td style="font-size:12px;color:var(--hl-text2)">${e.press||'—'}</td><td>${tw}</td><td><div style="font-size:12px">${e.issue}</div>${e.notes?`<div class="sub-text">${e.notes}</div>`:''}</td><td style="font-size:12px;color:var(--hl-text2)">${e.by||'—'}</td><td>${badge('done')}</td><td style="font-size:12px;color:var(--hl-text3)">${daysLabel(e.date)}</td><td style="text-align:right;padding-right:4px">${actionBtns(e,'applicator',true)}</td></tr>`;}).join('');
   } else if(sec==='machine'){
     const cl=$('mHistCards'),em=$('mHistEmpty'),tb=$('mHistBody');
     if(!f.length){cl.innerHTML='';tb.innerHTML='';em.style.display='block';return;} em.style.display='none';
     cl.innerHTML=f.map(e=>`<div class="entry-card status-done"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><div class="entry-apn">${e.machine}</div>${badge('done')}</div><div class="entry-issue">${e.desc}</div>${e.result?`<div class="sub-text">${e.result}</div>`:''}<div class="entry-card-footer"><div style="font-size:11px;color:var(--hl-text3)">${e.by||''}</div>${actionBtns(e,'machine',true)}</div></div>`).join('');
-    tb.innerHTML=f.map(e=>`<tr><td style="font-family:monospace;font-size:12px">${e.machine}</td><td><div style="font-size:12px">${e.desc}</div></td><td style="font-size:12px;color:var(--hl-text2)">${e.result||'—'}</td><td style="font-size:12px;color:var(--hl-text2)">${e.by||'—'}</td><td>${badge('done')}</td><td style="font-size:12px;color:var(--hl-text3)">${days(e.date)}d</td><td style="text-align:right;padding-right:4px">${actionBtns(e,'machine',true)}</td></tr>`).join('');
+    tb.innerHTML=f.map(e=>`<tr><td style="font-family:monospace;font-size:12px">${e.machine}</td><td><div style="font-size:12px">${e.desc}</div></td><td style="font-size:12px;color:var(--hl-text2)">${e.result||'—'}</td><td style="font-size:12px;color:var(--hl-text2)">${e.by||'—'}</td><td>${badge('done')}</td><td style="font-size:12px;color:var(--hl-text3)">${daysLabel(e.date)}</td><td style="text-align:right;padding-right:4px">${actionBtns(e,'machine',true)}</td></tr>`).join('');
   } else {
     const cl=$('sHistCards'),em=$('sHistEmpty'),tb=$('sHistBody');
     if(!f.length){cl.innerHTML='';tb.innerHTML='';em.style.display='block';return;} em.style.display='none';
     cl.innerHTML=f.map(e=>`<div class="entry-card status-done"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><div><div class="entry-apn">${e.terminal}</div>${e.awg?`<div class="entry-press">${e.awg}</div>`:''}</div>${badge('done')}</div><div class="entry-issue">${e.issue}</div>${e.notes?`<div class="sub-text">${e.notes}</div>`:''}<div class="entry-card-footer"><div style="font-size:11px;color:var(--hl-text3)">${e.by||''}</div>${actionBtns(e,'setup',true)}</div></div>`).join('');
-    tb.innerHTML=f.map(e=>`<tr><td style="font-family:monospace;font-size:12px">${e.terminal}</td><td style="font-size:12px;color:var(--hl-text2)">${e.awg||'—'}</td><td><div style="font-size:12px">${e.issue}</div></td><td style="font-size:12px;color:var(--hl-text2)">${e.doc||'—'}</td><td style="font-size:12px;color:var(--hl-text2)">${e.by||'—'}</td><td>${badge('done')}</td><td style="font-size:12px;color:var(--hl-text3)">${days(e.date)}d</td><td style="text-align:right;padding-right:4px">${actionBtns(e,'setup',true)}</td></tr>`).join('');
+    tb.innerHTML=f.map(e=>`<tr><td style="font-family:monospace;font-size:12px">${e.terminal}</td><td style="font-size:12px;color:var(--hl-text2)">${e.awg||'—'}</td><td><div style="font-size:12px">${e.issue}</div></td><td style="font-size:12px;color:var(--hl-text2)">${e.doc||'—'}</td><td style="font-size:12px;color:var(--hl-text2)">${e.by||'—'}</td><td>${badge('done')}</td><td style="font-size:12px;color:var(--hl-text3)">${daysLabel(e.date)}</td><td style="text-align:right;padding-right:4px">${actionBtns(e,'setup',true)}</td></tr>`).join('');
   }
 }
 
