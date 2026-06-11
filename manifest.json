@@ -1,7 +1,7 @@
 {
-  "name": "Applicator History",
-  "short_name": "Applicator Log",
-  "description": "H&L Applicator Issue Log — track incoming applicators and repairs",
+  "name": "H&L Issue Log",
+  "short_name": "Issue Log",
+  "description": "H&L Applicator Issue Log — track incoming applicators,Machines and repairs",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#111111",
