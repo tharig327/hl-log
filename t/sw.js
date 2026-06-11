@@ -1,12 +1,11 @@
-const CACHE = 'hl-applicator-v4';
+const CACHE = 'hl-tickets-v1';
 const ASSETS = [
   './',
   './index.html',
-  './qr.html',
-  './ticket.html',
   './manifest.json',
   'https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css'
 ];
+// ...rest identical to your existing sw.js (install/activate/fetch handlers)
 
 // Install — cache assets
 self.addEventListener('install', e=>{
