@@ -492,7 +492,7 @@ function renderOpenTickets(data){
 }
 
 function quickLookup(tktNum){
-  document.getElementById('iTicket').value = tktNum.replace('TKT-','');
+  document.getElementById('iTicket').value = tktNum.replace('TKT-','').replace('S-','');
   switchTab('status');
   lookupTicket();
 }
@@ -624,20 +624,20 @@ function resetSubmit(){
 
 async function lookupTicket(){
   const raw=document.getElementById('iTicket').value.trim().replace(/[^0-9]/g,'');
-  const tkt=raw?'TKT-'+raw:'';
   const result=document.getElementById('statusResult');
-  if(!tkt){ result.innerHTML='<div class="err-box">Please enter your 4-digit ticket number.</div>'; return; }
-  if(!/^TKT-\d{4}$/.test(tkt)){ result.innerHTML='<div class="err-box">Please enter all 4 digits of your ticket number.</div>'; return; }
+  if(!raw||raw.length<4){ result.innerHTML='<div class="err-box">Please enter all 4 digits of your ticket number.</div>'; return; }
+  // Search for both TKT- and S- prefixed versions
+  const tktVariants = ['TKT-'+raw, 'S-'+raw];
   result.innerHTML='<div class="spinner"></div>';
   try{
     const allData=await loadAllData();
     // Search all three sections
     let entry=null, foundSec=null;
     for(const [sec,key] of [['applicator','applicator'],['machine','machine'],['setup','setup']]){
-      const found=allData[key].issues.find(e=>e.ticketNum===tkt);
+      const found=allData[key].issues.find(e=>tktVariants.includes(e.ticketNum));
       if(found){ entry=found; foundSec=sec; break; }
     }
-    if(!entry){ result.innerHTML=`<div class="err-box"><i class="ti ti-ticket-off" style="font-size:16px;display:block;margin-bottom:6px"></i>Ticket <strong>${tkt}</strong> not found.<br><span style="font-size:11px;opacity:.8">Double-check the number and try again.</span></div>`; return; }
+    if(!entry){ result.innerHTML=`<div class="err-box"><i class="ti ti-ticket-off" style="font-size:16px;display:block;margin-bottom:6px"></i>Ticket <strong>TKT-${raw}</strong> not found.<br><span style="font-size:11px;opacity:.8">Double-check the number and try again.</span></div>`; return; }
 
     // ETA calculation using queue order
     const queueOrder=allData.queues[foundSec]||[];
@@ -707,7 +707,7 @@ function showErr(msg){
 initPage();
 const urlParams=new URLSearchParams(window.location.search);
 if(urlParams.get('ticket')){
-  document.getElementById('iTicket').value=urlParams.get('ticket').toUpperCase().replace('TKT-','');
+  document.getElementById('iTicket').value=urlParams.get('ticket').toUpperCase().replace('TKT-','').replace('S-','').replace(/[^0-9]/g,'');
   switchTab('status');
   if(getToken()) lookupTicket();
 }

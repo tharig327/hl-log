@@ -432,8 +432,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="field"><label>Terminal P/N</label><input id="fTerminal" placeholder="e.g. 794956-1"></div>
       <div class="field"><label>Wire Gauge / Type</label><input id="fWire" placeholder="e.g. 0.5mm² TXL"></div>
     </div>
-    <div class="field"><label>Issue Description *</label><textarea spellcheck="true" id="fIssue" placeholder="Crimp height off, blade worn, carrier jammed…"></textarea></div>
-    <div class="field"><label>Notes / Resolution Steps</label><textarea spellcheck="true" id="fNotes" style="height:52px" placeholder="What's been done or what's pending…"></textarea></div>
+    <div class="field"><label>Issue Description *</label><textarea id="fIssue" placeholder="Crimp height off, blade worn, carrier jammed…"></textarea></div>
+    <div class="field"><label>Notes / Resolution Steps</label><textarea id="fNotes" style="height:52px" placeholder="What's been done or what's pending…"></textarea></div>
     <div class="row2">
       <div class="field"><label>Ticket # <span style="font-weight:400;color:var(--hl-text3)">(optional)</span></label>
         <div style="display:flex;align-items:center">
@@ -446,6 +446,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       </div>
     </div>
     <div class="field"><label>Logged By</label><input id="fBy" placeholder="Your name"></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px 10px;background:var(--hl-surface2);border:1px solid var(--hl-border);border-radius:3px;cursor:pointer" onclick="this.querySelector('input').click()">
+      <input type="checkbox" id="fSuppress" style="width:15px;height:15px;accent-color:var(--hl-red);cursor:pointer;flex-shrink:0">
+      <div>
+        <div style="font-size:12px;font-weight:500;color:var(--hl-text)">Suppress notification</div>
+        <div style="font-size:10px;color:var(--hl-text3);margin-top:1px">Log this entry without triggering an email notification</div>
+      </div>
+    </div>
     <div class="modal-actions"><button class="btn" onclick="closeModal('applicator')">Cancel</button><button class="btn btn-red" onclick="saveEntry('applicator')">Save Entry</button></div>
   </div>
 </div>
@@ -458,8 +465,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="field"><label>Machine # *</label><input id="mMachine" placeholder="e.g. KM-4T #2" autocomplete="off"></div>
       <div class="field"><label>Logged By</label><input id="mBy" placeholder="Your name"></div>
     </div>
-    <div class="field"><label>Description *</label><textarea spellcheck="true" id="mDesc" placeholder="Describe the machine problem…"></textarea></div>
-    <div class="field"><label>Result / Notes</label><textarea spellcheck="true" id="mResult" style="height:52px" placeholder="What was found, what was done…"></textarea></div>
+    <div class="field"><label>Description *</label><textarea id="mDesc" placeholder="Describe the machine problem…"></textarea></div>
+    <div class="field"><label>Result / Notes</label><textarea id="mResult" style="height:52px" placeholder="What was found, what was done…"></textarea></div>
     <div class="row2">
       <div class="field"><label>Status</label>
         <select id="mStatus"><option value="open">Open</option><option value="inprog">In progress</option><option value="waiting">Waiting on parts</option><option value="done">Resolved</option></select>
@@ -469,6 +476,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
           <span style="height:38px;padding:0 8px;background:var(--hl-surface2);border:1px solid var(--hl-border2);border-right:none;border-radius:3px 0 0 3px;display:flex;align-items:center;font-size:11px;color:var(--hl-text3);font-family:monospace">TKT-</span>
           <input id="mTicket" placeholder="4821" inputmode="numeric" maxlength="4" style="border-radius:0 3px 3px 0" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,4)">
         </div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px 10px;background:var(--hl-surface2);border:1px solid var(--hl-border);border-radius:3px;cursor:pointer" onclick="this.querySelector('input').click()">
+      <input type="checkbox" id="mSuppress" style="width:15px;height:15px;accent-color:var(--hl-red);cursor:pointer;flex-shrink:0">
+      <div>
+        <div style="font-size:12px;font-weight:500;color:var(--hl-text)">Suppress notification</div>
+        <div style="font-size:10px;color:var(--hl-text3);margin-top:1px">Log this entry without triggering an email notification</div>
       </div>
     </div>
     <div class="modal-actions"><button class="btn" onclick="closeModal('machine')">Cancel</button><button class="btn btn-red" onclick="saveEntry('machine')">Save Entry</button></div>
@@ -484,9 +498,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="field"><label>AWG</label><input id="sAwg" placeholder="e.g. 18 AWG"></div>
       <div class="field"><label>Logged By</label><input id="sBy" placeholder="Your name"></div>
     </div>
-    <div class="field"><label>Issue Description *</label><textarea spellcheck="true" id="sIssue" placeholder="What's wrong with the setup sheet…"></textarea></div>
+    <div class="field"><label>Issue Description *</label><textarea id="sIssue" placeholder="What's wrong with the setup sheet…"></textarea></div>
     <div class="field"><label>Document / File Reference</label><input id="sDoc" placeholder="e.g. SS-2024-0042, rev B"></div>
-    <div class="field"><label>Notes / Resolution</label><textarea spellcheck="true" id="sNotes" style="height:52px" placeholder="What was done or what's needed…"></textarea></div>
+    <div class="field"><label>Notes / Resolution</label><textarea id="sNotes" style="height:52px" placeholder="What was done or what's needed…"></textarea></div>
     <div class="row2">
       <div class="field"><label>Status</label>
         <select id="sStatus"><option value="open">Open</option><option value="inprog">In progress</option><option value="waiting">Waiting on parts</option><option value="done">Resolved</option></select>
@@ -496,6 +510,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
           <span style="height:38px;padding:0 8px;background:var(--hl-surface2);border:1px solid var(--hl-border2);border-right:none;border-radius:3px 0 0 3px;display:flex;align-items:center;font-size:11px;color:var(--hl-text3);font-family:monospace">TKT-</span>
           <input id="sTicket" placeholder="4821" inputmode="numeric" maxlength="4" style="border-radius:0 3px 3px 0" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,4)">
         </div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px 10px;background:var(--hl-surface2);border:1px solid var(--hl-border);border-radius:3px;cursor:pointer" onclick="this.querySelector('input').click()">
+      <input type="checkbox" id="sSuppress" style="width:15px;height:15px;accent-color:var(--hl-red);cursor:pointer;flex-shrink:0">
+      <div>
+        <div style="font-size:12px;font-weight:500;color:var(--hl-text)">Suppress notification</div>
+        <div style="font-size:10px;color:var(--hl-text3);margin-top:1px">Log this entry without triggering an email notification</div>
       </div>
     </div>
     <div class="modal-actions"><button class="btn" onclick="closeModal('setup')">Cancel</button><button class="btn btn-red" onclick="saveEntry('setup')">Save Entry</button></div>
@@ -515,7 +536,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="recipient-list" id="notifyContactList"></div>
       <div style="font-size:10px;color:var(--hl-text3);margin-top:5px">Add contacts under the Contacts tab.</div>
     </div>
-    <div class="field"><label>Additional Note (optional)</label><textarea spellcheck="true" id="notifyNote" style="height:54px" placeholder="e.g. Ready to return to production."></textarea></div>
+    <div class="field"><label>Additional Note (optional)</label><textarea id="notifyNote" style="height:54px" placeholder="e.g. Ready to return to production."></textarea></div>
     <div class="modal-actions"><button class="btn" onclick="closeNotifyModal()">Cancel</button><button class="btn btn-red" onclick="sendNotify()"><i class="ti ti-mail"></i> Open in Email</button></div>
   </div>
 </div>
@@ -1109,20 +1130,23 @@ function openModal(sec,id=null){
     $('aModalTitle').textContent=e?'Edit Applicator Entry':'Log Applicator Issue';
     $('fApn').value=e?.apn||''; $('fPress').value=e?.press||''; $('fTerminal').value=e?.terminal||'';
     $('fWire').value=e?.wire||''; $('fIssue').value=e?.issue||''; $('fNotes').value=e?.notes||'';
-    $('fStatus').value=e?.status||'open'; $('fBy').value=e?.by||(id?'':lsGet('hl_user_name')||'');
-    $('fTicket').value=e?.ticketNum?e.ticketNum.replace('TKT-',''):'';
+    $('fStatus').value=e?.status||'open'; $('fBy').value=e?.by||'';
+    $('fTicket').value=e?.ticketNum?e.ticketNum.replace('TKT-','').replace('S-',''):''; $('fSuppress').checked=e?.ticketNum?.startsWith('S-')||false;
   } else if(sec==='machine'){
     $('mModalTitle').textContent=e?'Edit Machine Entry':'Log Machine Issue';
     $('mMachine').value=e?.machine||''; $('mDesc').value=e?.desc||'';
     $('mResult').value=e?.result||''; $('mStatus').value=e?.status||'open';
-    $('mBy').value=e?.by||(id?'':lsGet('hl_user_name')||''); $('mTicket').value=e?.ticketNum?e.ticketNum.replace('TKT-',''):'';
+    $('mBy').value=e?.by||''; $('mTicket').value=e?.ticketNum?e.ticketNum.replace('TKT-','').replace('S-',''):''; $('mSuppress').checked=e?.ticketNum?.startsWith('S-')||false;
   } else {
     $('sModalTitle').textContent=e?'Edit Setup Sheet Entry':'Log Setup Sheet Issue';
     $('sTerminal').value=e?.terminal||''; $('sAwg').value=e?.awg||'';
     $('sIssue').value=e?.issue||''; $('sDoc').value=e?.doc||'';
     $('sNotes').value=e?.notes||''; $('sStatus').value=e?.status||'open';
-    $('sBy').value=e?.by||(id?'':lsGet('hl_user_name')||''); $('sTicket').value=e?.ticketNum?e.ticketNum.replace('TKT-',''):'';
+    $('sBy').value=e?.by||''; $('sTicket').value=e?.ticketNum?e.ticketNum.replace('TKT-','').replace('S-',''):''; $('sSuppress').checked=e?.ticketNum?.startsWith('S-')||false;
   }
+  // Reset suppress checkbox
+  const chkMap = {applicator:'fSuppress',machine:'mSuppress',setup:'sSuppress'};
+  const chk = $(chkMap[sec]); if(chk) chk.checked = false;
   $('modal-'+sec).classList.add('open');
 }
 function closeModal(sec){ $('modal-'+sec).classList.remove('open'); editId=null; editSection=null; }
@@ -1130,26 +1154,27 @@ function closeModal(sec){ $('modal-'+sec).classList.remove('open'); editId=null;
 function saveEntry(sec){
   let entry;
   const existing=editId?state[sec].entries.find(e=>e.id===editId):null;
+  const suppressMap={applicator:'fSuppress',machine:'mSuppress',setup:'sSuppress'};
+  const suppress=$(suppressMap[sec])?.checked||false;
   const tktRaw={applicator:$('fTicket'),machine:$('mTicket'),setup:$('sTicket')}[sec]?.value.trim();
   const makeTkt=()=>'TKT-'+Math.floor(1000+Math.random()*9000);
   const tkt=tktRaw?'TKT-'+tktRaw:(existing?.ticketNum||makeTkt());
+  // If suppressed, prefix ticket with S- so notifier knows to skip it
+  const finalTkt = suppress ? 'S-'+tkt.replace('TKT-','') : tkt;
 
   if(sec==='applicator'){
     const apn=$('fApn').value.trim(), issue=$('fIssue').value.trim();
     if(!apn||!issue){ alert('Applicator # and issue description are required.'); return; }
-    entry={id:editId||Date.now(),apn,press:$('fPress').value.trim(),terminal:$('fTerminal').value.trim(),wire:$('fWire').value.trim(),issue,notes:$('fNotes').value.trim(),status:$('fStatus').value,by:$('fBy').value.trim(),date:existing?.date||Date.now(),...(tkt&&{ticketNum:tkt}),...(existing?.submittedBy&&{submittedBy:existing.submittedBy}),...(existing?.priority&&{priority:existing.priority})};
+    entry={id:editId||Date.now(),apn,press:$('fPress').value.trim(),terminal:$('fTerminal').value.trim(),wire:$('fWire').value.trim(),issue,notes:$('fNotes').value.trim(),status:$('fStatus').value,by:$('fBy').value.trim(),date:existing?.date||Date.now(),...(finalTkt&&{ticketNum:finalTkt}),...(existing?.submittedBy&&{submittedBy:existing.submittedBy}),...(existing?.priority&&{priority:existing.priority})};
   } else if(sec==='machine'){
     const machine=$('mMachine').value.trim(), desc=$('mDesc').value.trim();
     if(!machine||!desc){ alert('Machine # and description are required.'); return; }
-    entry={id:editId||Date.now(),machine,desc,result:$('mResult').value.trim(),status:$('mStatus').value,by:$('mBy').value.trim(),date:existing?.date||Date.now(),...(tkt&&{ticketNum:tkt})};
+    entry={id:editId||Date.now(),machine,desc,result:$('mResult').value.trim(),status:$('mStatus').value,by:$('mBy').value.trim(),date:existing?.date||Date.now(),...(finalTkt&&{ticketNum:finalTkt})};
   } else {
     const terminal=$('sTerminal').value.trim(), issue=$('sIssue').value.trim();
     if(!terminal||!issue){ alert('Terminal # and issue description are required.'); return; }
-    entry={id:editId||Date.now(),terminal,awg:$('sAwg').value.trim(),issue,doc:$('sDoc').value.trim(),notes:$('sNotes').value.trim(),status:$('sStatus').value,by:$('sBy').value.trim(),date:existing?.date||Date.now(),...(tkt&&{ticketNum:tkt})};
+    entry={id:editId||Date.now(),terminal,awg:$('sAwg').value.trim(),issue,doc:$('sDoc').value.trim(),notes:$('sNotes').value.trim(),status:$('sStatus').value,by:$('sBy').value.trim(),date:existing?.date||Date.now(),...(finalTkt&&{ticketNum:finalTkt})};
   }
-  // Remember the name for next time
-  const byVal = {applicator:$('fBy'),machine:$('mBy'),setup:$('sBy')}[sec]?.value.trim();
-  if(byVal) lsSet('hl_user_name', byVal);
   if(editId){const i=state[sec].entries.findIndex(e=>e.id===editId);state[sec].entries[i]=entry;} else state[sec].entries.unshift(entry);
   closeModal(sec); renderSection(sec); renderHistory(sec); renderQueueTab(sec); pushSection(sec);
 }
