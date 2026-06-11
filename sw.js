@@ -1,14 +1,12 @@
-const CACHE = 'hl-applicator-v4';
+const CACHE = 'hl-applicator-v5';
+
 const ASSETS = [
   './',
-  './index.html',
-  './qr.html',
-  './ticket.html',
   './manifest.json',
   'https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css'
 ];
 
-// Install — cache assets
+// Install
 self.addEventListener('install', e=>{
   e.waitUntil(
     caches.open(CACHE)
@@ -17,29 +15,31 @@ self.addEventListener('install', e=>{
   );
 });
 
-// Activate — delete ALL old caches immediately
+// Activate
 self.addEventListener('activate', e=>{
   e.waitUntil(
-    caches.keys()
-      .then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k))))
-      .then(()=>self.clients.claim())
+    caches.keys().then(keys =>
+      Promise.all(keys
+        .filter(k => k !== CACHE)
+        .map(k => caches.delete(k))
+      )
+    ).then(()=>self.clients.claim())
   );
 });
 
-// Fetch strategy:
-// - HTML files: network first, fall back to cache (so updates come through)
-// - Everything else: cache first, fall back to network
+// Fetch
 self.addEventListener('fetch', e=>{
   const url = new URL(e.request.url);
 
-  // Never cache GitHub API calls
   if(url.hostname==='api.github.com'){
-    e.respondWith(fetch(e.request).catch(()=>new Response('{"error":"offline"}',{headers:{'Content-Type':'application/json'}})));
+    e.respondWith(fetch(e.request).catch(()=>
+      new Response('{"error":"offline"}',{headers:{'Content-Type':'application/json'}})
+    ));
     return;
   }
 
-  // HTML pages — network first so you always get the latest
-  if(url.pathname.endsWith('.html')||url.pathname.endsWith('/')||url.pathname==='/'){
+  // HTML → ALWAYS NETWORK FIRST
+  if(url.pathname.endsWith('.html') || url.pathname==='/' || url.pathname.endsWith('/')){
     e.respondWith(
       fetch(e.request)
         .then(r=>{
@@ -52,7 +52,7 @@ self.addEventListener('fetch', e=>{
     return;
   }
 
-  // CSS/fonts/icons — cache first
+  // Everything else → cache first
   e.respondWith(
     caches.match(e.request).then(cached=>{
       if(cached) return cached;
