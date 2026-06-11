@@ -100,12 +100,36 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </head>
 <body>
 
+<!-- SETUP SCREEN -->
+<div id="setupScreen" style="display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem;width:100%;max-width:480px">
+  <div style="width:100%;background:var(--hl-surface);border:1px solid var(--hl-border2);border-top:2px solid var(--hl-red);border-radius:6px;padding:2rem">
+    <div style="width:44px;height:44px;background:var(--hl-red);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;margin:0 auto 1.25rem">H&L</div>
+    <div style="font-size:15px;font-weight:500;text-align:center;margin-bottom:6px">One-Time Setup</div>
+    <div style="font-size:12px;color:var(--hl-text3);text-align:center;margin-bottom:1.5rem;line-height:1.6">Paste the GitHub token to connect this device.<br>You only need to do this once.</div>
+    <div style="margin-bottom:10px">
+      <div style="font-size:9px;color:var(--hl-text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px">GitHub Token</div>
+      <input type="password" id="setupToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" spellcheck="false"
+        style="width:100%;font-size:13px;padding:9px 10px;border:1px solid var(--hl-border2);border-radius:3px;background:var(--hl-bg);color:var(--hl-text);font-family:monospace"
+        onkeydown="if(event.key==='Enter') doSetup()">
+      <div style="font-size:10px;color:var(--hl-text3);margin-top:5px;line-height:1.5">Ask your administrator for the token. It is stored on this device only.</div>
+    </div>
+    <div style="font-size:11px;color:#cc4444;min-height:16px;margin-bottom:8px" id="setupErr"></div>
+    <button onclick="doSetup()" style="width:100%;height:40px;font-size:13px;border:none;border-radius:4px;background:var(--hl-red);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:500" id="setupBtn">
+      <i class="ti ti-plug-connected"></i> Connect
+    </button>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div id="mainContent" style="display:none;flex-direction:column;align-items:center;width:100%">
+
 <div class="top">
   <div class="hl-logo">H&L</div>
   <div>
     <div class="top-title">Issue Tickets</div>
     <div class="top-sub">Submit a problem or check your ticket status</div>
   </div>
+  <button onclick="clearToken();location.reload()" title="Reset connection" style="margin-left:auto;background:none;border:none;color:var(--hl-text3);cursor:pointer;font-size:18px"><i class="ti ti-settings"></i></button>
 </div>
 
 <div class="tabs">
@@ -287,16 +311,64 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="footer">H&L Manufacturing · Issue Tracking System</div>
 
 <script>
-const GIST_ID   = '934943f5c9d8ea126f30a27526c95771';
+const GIST_ID    = '934943f5c9d8ea126f30a27526c95771';
 const DATA_FILE  = 'hl_applicator_data.json';
 const MACH_FILE  = 'hl_machine_data.json';
 const SETUP_FILE = 'hl_setup_data.json';
 const QUEUE_FILES = { applicator:'hl_queue_order.json', machine:'hl_queue_machine.json', setup:'hl_queue_setup.json' };
-const _ta = 'ghp_socP3KgxO9ReG88';
-const _tb = 'LmIC4GCXujCWUrv4Mu4zp';
-const TOKEN = _ta + _tb;
+
+function getToken(){ return localStorage.getItem('hl_ticket_token')||''; }
+function saveToken(t){ localStorage.setItem('hl_ticket_token', t); }
+function clearToken(){ localStorage.removeItem('hl_ticket_token'); }
 
 let currentType = 'applicator';
+
+// ── SETUP & INIT ──
+async function doSetup(){
+  const token = document.getElementById('setupToken').value.trim();
+  const err   = document.getElementById('setupErr');
+  const btn   = document.getElementById('setupBtn');
+  err.textContent = '';
+  if(!token.startsWith('ghp_') && !token.startsWith('github_pat_')){
+    err.textContent = 'Paste a valid GitHub token starting with ghp_';
+    return;
+  }
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ti ti-loader" style="animation:spin .7s linear infinite;display:inline-block"></i> Connecting…';
+  try{
+    const r = await fetch('https://api.github.com/gists/'+GIST_ID, {
+      headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}
+    });
+    if(!r.ok) throw new Error('Token invalid or no access ('+r.status+')');
+    saveToken(token);
+    showMain();
+  }catch(e){
+    err.textContent = e.message||'Could not connect — check token and try again';
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-plug-connected"></i> Connect';
+  }
+}
+
+function showMain(){
+  document.getElementById('setupScreen').style.display = 'none';
+  document.getElementById('mainContent').style.display = 'flex';
+  // Pre-fill name
+  const savedName = localStorage.getItem('hl_user_name')||'';
+  ['aName','mName','sName'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el && savedName) el.value = savedName;
+    if(el) el.addEventListener('blur', ()=>{ if(el.value.trim()) localStorage.setItem('hl_user_name', el.value.trim()); });
+  });
+}
+
+function initPage(){
+  if(getToken()){
+    showMain();
+  } else {
+    document.getElementById('setupScreen').style.display = 'flex';
+    document.getElementById('mainContent').style.display = 'none';
+  }
+}
 
 function selectType(type){
   currentType = type;
@@ -438,7 +510,7 @@ function formatApn(input){
 function makeTktNum(){ return 'TKT-'+Math.floor(1000+Math.random()*9000); }
 
 async function gistAPI(method,path,body){
-  const r=await fetch('https://api.github.com/'+path,{method,headers:{'Authorization':'token '+TOKEN,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},body:body?JSON.stringify(body):undefined});
+  const r=await fetch('https://api.github.com/'+path,{method,headers:{'Authorization':'token '+getToken(),'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},body:body?JSON.stringify(body):undefined});
   if(!r.ok) throw new Error('GitHub API error '+r.status);
   return r.json();
 }
@@ -631,12 +703,13 @@ function showErr(msg){
   el.textContent=msg;
 }
 
-// Pre-fill from URL params
+// Pre-fill from URL params & init
+initPage();
 const urlParams=new URLSearchParams(window.location.search);
 if(urlParams.get('ticket')){
   document.getElementById('iTicket').value=urlParams.get('ticket').toUpperCase().replace('TKT-','');
   switchTab('status');
-  lookupTicket();
+  if(getToken()) lookupTicket();
 }
 if(urlParams.get('type')&&['applicator','machine','setup'].includes(urlParams.get('type'))){
   selectType(urlParams.get('type'));
@@ -647,5 +720,6 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
 </script>
+</div>
 </body>
 </html>

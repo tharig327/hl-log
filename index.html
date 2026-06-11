@@ -425,7 +425,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="modal">
     <h2 id="aModalTitle">Log Applicator Issue</h2>
     <div class="row2">
-      <div class="field"><label>Applicator # *</label><input id="fApn" placeholder="e.g. T-2430" autocomplete="off"></div>
+      <div class="field"><label>Applicator # *</label><input id="fApn" placeholder="e.g. T-2430" autocomplete="off" oninput="formatApn(this)"></div>
       <div class="field"><label>Press / Machine</label><input id="fPress" placeholder="e.g. KM-4T #3"></div>
     </div>
     <div class="row2">
@@ -827,6 +827,15 @@ function switchSubTab(sec,tab){
 
 
 // ── HELPERS ──
+function formatApn(input){
+  let v = input.value.toUpperCase().replace(/[^T0-9\-]/g,'');
+  if(v && !v.startsWith('T')){ v = 'T-' + v.replace(/[^0-9]/g,''); }
+  else if(v === 'T'){ v = 'T-'; }
+  else if(v.startsWith('T') && !v.startsWith('T-')){ v = 'T-' + v.slice(1).replace(/[^0-9]/g,''); }
+  const parts = v.split('-');
+  if(parts.length >= 2) v = 'T-' + parts.slice(1).join('').replace(/[^0-9]/g,'').slice(0,4);
+  input.value = v;
+}
 function days(ts){ return Math.round((Date.now()-ts)/86400000); }
 function daysLabel(ts){
   const ms=Date.now()-ts;
@@ -1100,19 +1109,19 @@ function openModal(sec,id=null){
     $('aModalTitle').textContent=e?'Edit Applicator Entry':'Log Applicator Issue';
     $('fApn').value=e?.apn||''; $('fPress').value=e?.press||''; $('fTerminal').value=e?.terminal||'';
     $('fWire').value=e?.wire||''; $('fIssue').value=e?.issue||''; $('fNotes').value=e?.notes||'';
-    $('fStatus').value=e?.status||'open'; $('fBy').value=e?.by||'';
+    $('fStatus').value=e?.status||'open'; $('fBy').value=e?.by||(id?'':lsGet('hl_user_name')||'');
     $('fTicket').value=e?.ticketNum?e.ticketNum.replace('TKT-',''):'';
   } else if(sec==='machine'){
     $('mModalTitle').textContent=e?'Edit Machine Entry':'Log Machine Issue';
     $('mMachine').value=e?.machine||''; $('mDesc').value=e?.desc||'';
     $('mResult').value=e?.result||''; $('mStatus').value=e?.status||'open';
-    $('mBy').value=e?.by||''; $('mTicket').value=e?.ticketNum?e.ticketNum.replace('TKT-',''):'';
+    $('mBy').value=e?.by||(id?'':lsGet('hl_user_name')||''); $('mTicket').value=e?.ticketNum?e.ticketNum.replace('TKT-',''):'';
   } else {
     $('sModalTitle').textContent=e?'Edit Setup Sheet Entry':'Log Setup Sheet Issue';
     $('sTerminal').value=e?.terminal||''; $('sAwg').value=e?.awg||'';
     $('sIssue').value=e?.issue||''; $('sDoc').value=e?.doc||'';
     $('sNotes').value=e?.notes||''; $('sStatus').value=e?.status||'open';
-    $('sBy').value=e?.by||''; $('sTicket').value=e?.ticketNum?e.ticketNum.replace('TKT-',''):'';
+    $('sBy').value=e?.by||(id?'':lsGet('hl_user_name')||''); $('sTicket').value=e?.ticketNum?e.ticketNum.replace('TKT-',''):'';
   }
   $('modal-'+sec).classList.add('open');
 }
@@ -1138,6 +1147,9 @@ function saveEntry(sec){
     if(!terminal||!issue){ alert('Terminal # and issue description are required.'); return; }
     entry={id:editId||Date.now(),terminal,awg:$('sAwg').value.trim(),issue,doc:$('sDoc').value.trim(),notes:$('sNotes').value.trim(),status:$('sStatus').value,by:$('sBy').value.trim(),date:existing?.date||Date.now(),...(tkt&&{ticketNum:tkt})};
   }
+  // Remember the name for next time
+  const byVal = {applicator:$('fBy'),machine:$('mBy'),setup:$('sBy')}[sec]?.value.trim();
+  if(byVal) lsSet('hl_user_name', byVal);
   if(editId){const i=state[sec].entries.findIndex(e=>e.id===editId);state[sec].entries[i]=entry;} else state[sec].entries.unshift(entry);
   closeModal(sec); renderSection(sec); renderHistory(sec); renderQueueTab(sec); pushSection(sec);
 }
