@@ -100,36 +100,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </head>
 <body>
 
-<!-- SETUP SCREEN -->
-<div id="setupScreen" style="display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem;width:100%;max-width:480px">
-  <div style="width:100%;background:var(--hl-surface);border:1px solid var(--hl-border2);border-top:2px solid var(--hl-red);border-radius:6px;padding:2rem">
-    <div style="width:44px;height:44px;background:var(--hl-red);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;margin:0 auto 1.25rem">H&L</div>
-    <div style="font-size:15px;font-weight:500;text-align:center;margin-bottom:6px">One-Time Setup</div>
-    <div style="font-size:12px;color:var(--hl-text3);text-align:center;margin-bottom:1.5rem;line-height:1.6">Paste the GitHub token to connect this device.<br>You only need to do this once.</div>
-    <div style="margin-bottom:10px">
-      <div style="font-size:9px;color:var(--hl-text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px">GitHub Token</div>
-      <input type="password" id="setupToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" spellcheck="false"
-        style="width:100%;font-size:13px;padding:9px 10px;border:1px solid var(--hl-border2);border-radius:3px;background:var(--hl-bg);color:var(--hl-text);font-family:monospace"
-        onkeydown="if(event.key==='Enter') doSetup()">
-      <div style="font-size:10px;color:var(--hl-text3);margin-top:5px;line-height:1.5">Ask your administrator for the token. It is stored on this device only.</div>
-    </div>
-    <div style="font-size:11px;color:#cc4444;min-height:16px;margin-bottom:8px" id="setupErr"></div>
-    <button onclick="doSetup()" style="width:100%;height:40px;font-size:13px;border:none;border-radius:4px;background:var(--hl-red);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:500" id="setupBtn">
-      <i class="ti ti-plug-connected"></i> Connect
-    </button>
-  </div>
-</div>
-
-<!-- MAIN CONTENT -->
-<div id="mainContent" style="display:none;flex-direction:column;align-items:center;width:100%">
-
 <div class="top">
   <div class="hl-logo">H&L</div>
   <div>
     <div class="top-title">Issue Tickets</div>
     <div class="top-sub">Submit a problem or check your ticket status</div>
   </div>
-  <button onclick="clearToken();location.reload()" title="Reset connection" style="margin-left:auto;background:none;border:none;color:var(--hl-text3);cursor:pointer;font-size:18px"><i class="ti ti-settings"></i></button>
 </div>
 
 <div class="tabs">
@@ -178,7 +154,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       </div>
       <div class="field" id="fa-issue">
         <label>Describe the Issue *</label>
-        <textarea spellcheck="true" id="aIssue" placeholder="Crimp height off, blade worn, carrier jammed…"></textarea>
+        <textarea id="aIssue" placeholder="Crimp height off, blade worn, carrier jammed…"></textarea>
         <div class="field-err">Please describe the issue</div>
       </div>
       <div class="field">
@@ -205,7 +181,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       </div>
       <div class="field" id="fm-desc">
         <label>Describe the Problem *</label>
-        <textarea spellcheck="true" id="mDesc" placeholder="What is the machine doing or not doing…"></textarea>
+        <textarea id="mDesc" placeholder="What is the machine doing or not doing…"></textarea>
         <div class="field-err">Please describe the problem</div>
       </div>
       <div class="field">
@@ -238,7 +214,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       </div>
       <div class="field" id="fs-issue">
         <label>Describe the Issue *</label>
-        <textarea spellcheck="true" id="sIssue" placeholder="What's wrong with the setup sheet…"></textarea>
+        <textarea id="sIssue" placeholder="What's wrong with the setup sheet…"></textarea>
         <div class="field-err">Please describe the issue</div>
       </div>
       <div class="field">
@@ -311,64 +287,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="footer">H&L Manufacturing · Issue Tracking System</div>
 
 <script>
-const GIST_ID    = '934943f5c9d8ea126f30a27526c95771';
+const GIST_ID   = '934943f5c9d8ea126f30a27526c95771';
 const DATA_FILE  = 'hl_applicator_data.json';
 const MACH_FILE  = 'hl_machine_data.json';
 const SETUP_FILE = 'hl_setup_data.json';
 const QUEUE_FILES = { applicator:'hl_queue_order.json', machine:'hl_queue_machine.json', setup:'hl_queue_setup.json' };
-
-function getToken(){ return localStorage.getItem('hl_ticket_token')||''; }
-function saveToken(t){ localStorage.setItem('hl_ticket_token', t); }
-function clearToken(){ localStorage.removeItem('hl_ticket_token'); }
+const _ta = 'ghp_socP3KgxO9ReG88';
+const _tb = 'LmIC4GCXujCWUrv4Mu4zp';
+const TOKEN = _ta + _tb;
 
 let currentType = 'applicator';
-
-// ── SETUP & INIT ──
-async function doSetup(){
-  const token = document.getElementById('setupToken').value.trim();
-  const err   = document.getElementById('setupErr');
-  const btn   = document.getElementById('setupBtn');
-  err.textContent = '';
-  if(!token.startsWith('ghp_') && !token.startsWith('github_pat_')){
-    err.textContent = 'Paste a valid GitHub token starting with ghp_';
-    return;
-  }
-  btn.disabled = true;
-  btn.innerHTML = '<i class="ti ti-loader" style="animation:spin .7s linear infinite;display:inline-block"></i> Connecting…';
-  try{
-    const r = await fetch('https://api.github.com/gists/'+GIST_ID, {
-      headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}
-    });
-    if(!r.ok) throw new Error('Token invalid or no access ('+r.status+')');
-    saveToken(token);
-    showMain();
-  }catch(e){
-    err.textContent = e.message||'Could not connect — check token and try again';
-    btn.disabled = false;
-    btn.innerHTML = '<i class="ti ti-plug-connected"></i> Connect';
-  }
-}
-
-function showMain(){
-  document.getElementById('setupScreen').style.display = 'none';
-  document.getElementById('mainContent').style.display = 'flex';
-  // Pre-fill name
-  const savedName = localStorage.getItem('hl_user_name')||'';
-  ['aName','mName','sName'].forEach(id=>{
-    const el = document.getElementById(id);
-    if(el && savedName) el.value = savedName;
-    if(el) el.addEventListener('blur', ()=>{ if(el.value.trim()) localStorage.setItem('hl_user_name', el.value.trim()); });
-  });
-}
-
-function initPage(){
-  if(getToken()){
-    showMain();
-  } else {
-    document.getElementById('setupScreen').style.display = 'flex';
-    document.getElementById('mainContent').style.display = 'none';
-  }
-}
 
 function selectType(type){
   currentType = type;
@@ -510,7 +438,7 @@ function formatApn(input){
 function makeTktNum(){ return 'TKT-'+Math.floor(1000+Math.random()*9000); }
 
 async function gistAPI(method,path,body){
-  const r=await fetch('https://api.github.com/'+path,{method,headers:{'Authorization':'token '+getToken(),'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},body:body?JSON.stringify(body):undefined});
+  const r=await fetch('https://api.github.com/'+path,{method,headers:{'Authorization':'token '+TOKEN,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},body:body?JSON.stringify(body):undefined});
   if(!r.ok) throw new Error('GitHub API error '+r.status);
   return r.json();
 }
@@ -626,45 +554,37 @@ async function lookupTicket(){
   const raw=document.getElementById('iTicket').value.trim().replace(/[^0-9]/g,'');
   const result=document.getElementById('statusResult');
   if(!raw||raw.length<4){ result.innerHTML='<div class="err-box">Please enter all 4 digits of your ticket number.</div>'; return; }
-  // Search for both TKT- and S- prefixed versions
-  const tktVariants = ['TKT-'+raw, 'S-'+raw];
+  const tktVariants=['TKT-'+raw,'S-'+raw];
   result.innerHTML='<div class="spinner"></div>';
   try{
     const allData=await loadAllData();
-    // Search all three sections
-    let entry=null, foundSec=null;
+    let entry=null,foundSec=null;
     for(const [sec,key] of [['applicator','applicator'],['machine','machine'],['setup','setup']]){
       const found=allData[key].issues.find(e=>tktVariants.includes(e.ticketNum));
-      if(found){ entry=found; foundSec=sec; break; }
+      if(found){entry=found;foundSec=sec;break;}
     }
-    if(!entry){ result.innerHTML=`<div class="err-box"><i class="ti ti-ticket-off" style="font-size:16px;display:block;margin-bottom:6px"></i>Ticket <strong>TKT-${raw}</strong> not found.<br><span style="font-size:11px;opacity:.8">Double-check the number and try again.</span></div>`; return; }
-
-    // ETA calculation using queue order
+    if(!entry){result.innerHTML=`<div class="err-box"><i class="ti ti-ticket-off" style="font-size:16px;display:block;margin-bottom:6px"></i>Ticket <strong>TKT-${raw}</strong> not found.<br><span style="font-size:11px;opacity:.8">Double-check the number and try again.</span></div>`;return;}
     const queueOrder=allData.queues[foundSec]||[];
     const active=allData[foundSec].issues.filter(e=>e.status==='open'||e.status==='inprog');
     const orderedIds=[];
-    queueOrder.forEach(id=>{ if(active.find(e=>e.id===id)) orderedIds.push(id); });
-    active.forEach(e=>{ if(!orderedIds.includes(e.id)) orderedIds.push(e.id); });
+    queueOrder.forEach(id=>{if(active.find(e=>e.id===id))orderedIds.push(id);});
+    active.forEach(e=>{if(!orderedIds.includes(e.id))orderedIds.push(e.id);});
     const myPos=orderedIds.indexOf(entry.id);
     const ahead=myPos===-1?orderedIds.length:myPos;
     const pos=ahead+1;
-    const daysMin=Math.ceil(ahead/2)+1, daysMax=Math.ceil(ahead/2)+2;
+    const daysMin=Math.ceil(ahead/2)+1,daysMax=Math.ceil(ahead/2)+2;
     let rangeText=daysMin<=1&&daysMax<=1?'Today or tomorrow':daysMin===daysMax?'~'+daysMin+' day'+(daysMin!==1?'s':''):daysMin+'-'+daysMax+' days';
     const priorityLabel={urgent:'Urgent',high:'High',normal:'Normal'}[entry.priority||'normal'];
     const priorityColor={urgent:'#e07050',high:'#d4a030',normal:'#aaa'}[entry.priority||'normal'];
-
     const statusBadge={open:'<span class="badge badge-open">Open</span>',inprog:'<span class="badge badge-inprog">In Progress</span>',waiting:'<span class="badge badge-waiting">Waiting on Parts</span>',done:'<span class="badge badge-done">Resolved</span>'}[entry.status]||'<span class="badge badge-open">Open</span>';
-    const statusMsg={open:'Your ticket has been received and is queued.',inprog:'A technician is currently working on this.',waiting:'On hold — waiting on parts before repair can continue.',done:'This issue has been resolved.'}[entry.status]||'';
-
-    // Primary label per type
+    const statusMsg={open:'Your ticket has been received and is queued.',inprog:'A technician is currently working on this.',waiting:'On hold \u2014 waiting on parts before repair can continue.',done:'This issue has been resolved.'}[entry.status]||'';
     const primaryLabel={applicator:`Applicator ${entry.apn}`,machine:`Machine ${entry.machine}`,setup:`Terminal ${entry.terminal}`}[foundSec];
     const typeLabel={applicator:'Applicator Issue',machine:'Machine Issue',setup:'Setup Sheet Issue'}[foundSec];
     const descField={applicator:entry.issue,machine:entry.desc,setup:entry.issue}[foundSec];
     const submitted=new Date(entry.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
     const daysIn=Math.round((Date.now()-entry.date)/86400000);
-
     let etaHtml='';
-    if(entry.status==='done'){ etaHtml=''; }
+    if(entry.status==='done'){etaHtml='';}
     else if(entry.status==='inprog'){
       etaHtml='<div style="margin-top:10px;padding:12px 14px;background:rgba(160,120,20,.1);border:1px solid rgba(160,120,20,.3);border-radius:4px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#d4a030;margin-bottom:4px">Estimated Completion</div><div style="font-size:15px;font-weight:600">Currently being worked on</div><div style="font-size:11px;color:#aaa;margin-top:3px">A technician is actively working on this now.</div></div>';
     } else if(entry.status==='waiting'){
@@ -672,7 +592,6 @@ async function lookupTicket(){
     } else {
       etaHtml='<div style="margin-top:10px;padding:12px 14px;background:rgba(30,120,60,.1);border:1px solid rgba(30,120,60,.3);border-radius:4px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#50a870;margin-bottom:4px">Estimated Completion</div><div style="font-size:22px;font-weight:700;line-height:1">'+rangeText+'</div><div style="font-size:11px;color:#aaa;margin-top:6px;display:flex;gap:12px;flex-wrap:wrap"><span>Queue position: <strong style="color:#f0f0f0">#'+pos+'</strong></span><span>Priority: <strong style="color:'+priorityColor+'">'+priorityLabel+'</strong></span><span>'+ahead+' ahead in queue</span></div></div>';
     }
-
     result.innerHTML=`
       <div class="status-card">
         <div class="status-header">
@@ -680,12 +599,12 @@ async function lookupTicket(){
           <div class="status-type">${typeLabel}</div>
         </div>
         <div class="status-body">
-          <div class="status-row"><span class="status-key">Ticket</span><span class="status-val" style="font-family:monospace;font-weight:600">${tkt}</span></div>
+          <div class="status-row"><span class="status-key">Ticket</span><span class="status-val" style="font-family:monospace;font-weight:600">${entry.ticketNum}</span></div>
           <div class="status-row"><span class="status-key">Status</span><span class="status-val">${statusBadge}</span></div>
           <div class="status-row"><span class="status-key">Issue</span><span class="status-val">${descField}</span></div>
           ${entry.status==='done'&&(entry.notes||entry.result)?`<div class="status-row"><span class="status-key">Resolution</span><span class="status-val">${entry.notes||entry.result}</span></div>`:''}
           <div class="status-row"><span class="status-key">Submitted</span><span class="status-val">${submitted} (${daysIn}d ago)</span></div>
-          <div class="status-row"><span class="status-key">Submitted by</span><span class="status-val">${entry.submittedBy||entry.by||'—'}</span></div>
+          <div class="status-row"><span class="status-key">Submitted by</span><span class="status-val">${entry.submittedBy||entry.by||'\u2014'}</span></div>
         </div>
       </div>
       ${etaHtml}
@@ -693,7 +612,7 @@ async function lookupTicket(){
         <i class="ti ti-info-circle" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>${statusMsg}
       </div>`;
   }catch(e){
-    result.innerHTML=`<div class="err-box">Could not load ticket data — check your connection.<br><span style="font-size:11px;opacity:.8">${e.message}</span></div>`;
+    result.innerHTML=`<div class="err-box">Could not load ticket data \u2014 check your connection.<br><span style="font-size:11px;opacity:.8">${e.message}</span></div>`;
   }
 }
 
@@ -703,13 +622,12 @@ function showErr(msg){
   el.textContent=msg;
 }
 
-// Pre-fill from URL params & init
-initPage();
+// Pre-fill from URL params
 const urlParams=new URLSearchParams(window.location.search);
 if(urlParams.get('ticket')){
   document.getElementById('iTicket').value=urlParams.get('ticket').toUpperCase().replace('TKT-','').replace('S-','').replace(/[^0-9]/g,'');
   switchTab('status');
-  if(getToken()) lookupTicket();
+  lookupTicket();
 }
 if(urlParams.get('type')&&['applicator','machine','setup'].includes(urlParams.get('type'))){
   selectType(urlParams.get('type'));
@@ -720,6 +638,5 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
 </script>
-</div>
 </body>
 </html>
