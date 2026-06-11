@@ -98,12 +98,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .open-empty{text-align:center;padding:2rem 1rem;color:var(--hl-text3);font-size:13px}
 </style>
 </head>
-<script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(()=>{});
-}
-</script>
-</body>
 <body>
 
 <div class="top">
@@ -646,6 +640,11 @@ if(urlParams.get('ticket')){
 }
 if(urlParams.get('type')&&['applicator','machine','setup'].includes(urlParams.get('type'))){
   selectType(urlParams.get('type'));
+}
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
 </script>
 </body>
