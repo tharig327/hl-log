@@ -15,6 +15,12 @@
   --hl-border:#333333;--hl-border2:#444444;--hl-red:#cc2222;
   --hl-red-hover:#e02828;--hl-text:#f0f0f0;--hl-text2:#aaaaaa;--hl-text3:#666666;
 }
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+</script>
+</body>
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--hl-bg);color:var(--hl-text);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:2rem 1rem}
 .top{width:100%;max-width:480px;display:flex;align-items:center;gap:10px;margin-bottom:1.75rem}
 .hl-logo{width:36px;height:36px;background:var(--hl-red);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
