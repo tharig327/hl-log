@@ -1,2 +1,2 @@
-# hl-applicator-log
-hl-applicator-log
+# hl-issue-log
+hl-log
