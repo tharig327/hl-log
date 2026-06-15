@@ -56,6 +56,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .header p{font-size:11px;color:var(--hl-text3);margin-top:1px}
 .header-actions{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
 .sync-status{font-size:10px;color:var(--hl-text3);display:flex;align-items:center;gap:4px;padding:0 2px}
+.logged-in-user{font-size:10px;color:var(--hl-text2);display:flex;align-items:center;gap:4px;padding:0 4px;background:var(--hl-surface2);border:1px solid var(--hl-border);border-radius:3px;height:24px;white-space:nowrap}
+.logged-in-user i{font-size:11px;color:var(--hl-text3)}
 
 /* ── TOP SECTION TABS (Applicator / Machine / Setup) ── */
 .section-tabs{display:flex;border-bottom:2px solid var(--hl-border);background:var(--hl-surface)}
@@ -255,6 +257,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div><h1>H&L Issue Log</h1><p>Applicator · Machine · Setup Sheet</p></div>
     </div>
     <div class="header-actions">
+      <span class="logged-in-user" id="loggedInUser"></span>
       <span class="sync-status" id="syncStatus"></span>
       <button class="btn btn-sync" onclick="pushAll(false)" title="Sync"><i class="ti ti-cloud-upload"></i> <span class="btn-label">Sync</span></button>
       <button class="btn btn-import" onclick="triggerImport()" title="Import"><i class="ti ti-upload"></i> <span class="btn-label">Import</span></button>
@@ -880,9 +883,14 @@ function doUnlock(userName){
   showScreen('app'); resetInactivity();
   ['mousemove','keydown','click','touchstart'].forEach(e=>document.addEventListener(e,resetInactivity,{passive:true}));
   renderAll(); setSyncStatus('ok'); startPolling();
-  if(userName){ toast('Welcome, '+userName+'!','#50a870'); }
+  if(userName){
+    toast('Welcome, '+userName+'!','#50a870');
+    const el=document.getElementById('loggedInUser');
+    if(el) el.innerHTML='<i class="ti ti-user"></i>'+userName;
+  }
 }
-function lockApp(silent=false){ clearTimeout(inactivityTimer); stopPolling(); sessionStorage.removeItem('hl_s'); showScreen('pinScreen'); pinBuffer=''; updateDots(); $('pinTitle').textContent='Enter PIN'; $('pinSub').textContent='H&L Issue Log'; $('pinError').textContent=''; setPinLoading(''); pinMode='unlock'; }
+
+function lockApp(silent=false){ clearTimeout(inactivityTimer); stopPolling(); sessionStorage.removeItem('hl_s'); showScreen('pinScreen'); pinBuffer=''; updateDots(); $('pinTitle').textContent='Enter PIN'; $('pinSub').textContent='H&L Issue Log'; $('pinError').textContent=''; setPinLoading(''); pinMode='unlock'; const lu=document.getElementById('loggedInUser'); if(lu) lu.innerHTML=''; }
 async function initApp(){
   const token=getToken(); if(!token){ showScreen('setupScreen'); return; }
   showScreen('pinScreen');
