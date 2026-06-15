@@ -863,7 +863,7 @@ function lockApp(silent=false){ clearTimeout(inactivityTimer); stopPolling(); se
 async function initApp(){
   const token=getToken(); if(!token){ showScreen('setupScreen'); return; }
   showScreen('pinScreen');
-  if(sessionStorage.getItem('hl_s')==='1'){ loadLocal(); doUnlock(); loadFromGist().then(()=>{ renderAll(); setSyncStatus('ok'); }).catch(()=>{}); return; }
+  if(sessionStorage.getItem('hl_s')==='1'){ loadLocal(); doUnlock(lsGet('hl_user_name')||''); loadFromGist().then(()=>{ renderAll(); setSyncStatus('ok'); }).catch(()=>{}); return; }
   await initPinScreen();
 }
 
@@ -1270,19 +1270,19 @@ function openModal(sec,id=null){
     $('aModalTitle').textContent=e?'Edit Applicator Entry':'Log Applicator Issue';
     $('fApn').value=e?.apn||''; $('fPress').value=e?.press||''; $('fTerminal').value=e?.terminal||'';
     $('fWire').value=e?.wire||''; $('fIssue').value=e?.issue||''; $('fNotes').value=e?.notes||'';
-    $('fStatus').value=e?.status||'open'; $('fBy').value=e?.by||'';
+    $('fStatus').value=e?.status||'open'; $('fBy').value=e?.by||(id?'':(lsGet('hl_user_name')||''));
     $('fTicket').value=e?.ticketNum?e.ticketNum.replace('TKT-','').replace('S-',''):''; $('fSuppress').checked=e?.ticketNum?.startsWith('S-')||false;
   } else if(sec==='machine'){
     $('mModalTitle').textContent=e?'Edit Machine Entry':'Log Machine Issue';
     $('mMachine').value=e?.machine||''; $('mDesc').value=e?.desc||'';
     $('mResult').value=e?.result||''; $('mStatus').value=e?.status||'open';
-    $('mBy').value=e?.by||''; $('mTicket').value=e?.ticketNum?e.ticketNum.replace('TKT-','').replace('S-',''):''; $('mSuppress').checked=e?.ticketNum?.startsWith('S-')||false;
+    $('mBy').value=e?.by||(id?'':(lsGet('hl_user_name')||'')); $('mTicket').value=e?.ticketNum?e.ticketNum.replace('TKT-','').replace('S-',''):''; $('mSuppress').checked=e?.ticketNum?.startsWith('S-')||false;
   } else {
     $('sModalTitle').textContent=e?'Edit Setup Sheet Entry':'Log Setup Sheet Issue';
     $('sTerminal').value=e?.terminal||''; $('sAwg').value=e?.awg||'';
     $('sIssue').value=e?.issue||''; $('sDoc').value=e?.doc||'';
     $('sNotes').value=e?.notes||''; $('sStatus').value=e?.status||'open';
-    $('sBy').value=e?.by||''; $('sTicket').value=e?.ticketNum?e.ticketNum.replace('TKT-','').replace('S-',''):''; $('sSuppress').checked=e?.ticketNum?.startsWith('S-')||false;
+    $('sBy').value=e?.by||(id?'':(lsGet('hl_user_name')||'')); $('sTicket').value=e?.ticketNum?e.ticketNum.replace('TKT-','').replace('S-',''):''; $('sSuppress').checked=e?.ticketNum?.startsWith('S-')||false;
   }
   // Reset suppress checkbox
   const chkMap = {applicator:'fSuppress',machine:'mSuppress',setup:'sSuppress'};
