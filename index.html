@@ -799,20 +799,31 @@ async function handlePin(){
     lsSet('hl_users',JSON.stringify(users));
     await pushMeta(users); await loadFromGist(); doUnlock(); return;
   }
-  setPinLoading('Checking…');
   const h=await sha256(pinBuffer);
-  // Load users from gist
+  // Check local cache first — no network, instant response
   let users=[];
+  try{ users=JSON.parse(lsGet('hl_users')||'[]'); }catch(e){}
+  const matchedLocal=users.find(u=>u.pinHash===h);
+  if(matchedLocal){
+    lsSet('hl_user_name',matchedLocal.name);
+    setPinLoading('Loading…'); await loadFromGist(); setPinLoading('');
+    doUnlock(matchedLocal.name);
+    // Refresh user list from Gist in background
+    ensureGist().then(id=>fetch('https://api.github.com/gists/'+id,{headers:{'Authorization':'token '+getToken(),'Accept':'application/vnd.github.v3+json'}}))
+      .then(r=>r.json()).then(g=>{ if(g.files&&g.files[META_FILE]){ const m=JSON.parse(g.files[META_FILE].content); if(m.users) lsSet('hl_users',JSON.stringify(m.users)); } }).catch(()=>{});
+    return;
+  }
+  // Not cached locally — fetch from Gist
+  setPinLoading('Checking…');
   try{
     const r=await fetch('https://api.github.com/gists/'+(await ensureGist()),{headers:{'Authorization':'token '+getToken(),'Accept':'application/vnd.github.v3+json'}});
     const g=await r.json();
     if(g.files[META_FILE]){
       const m=JSON.parse(g.files[META_FILE].content);
       if(m.users){ users=m.users; lsSet('hl_users',JSON.stringify(users)); }
-      // Legacy single-pin migration
       else if(m.pinHash){ users=[{name:'Tyler',pinHash:m.pinHash}]; await pushMeta(users); lsSet('hl_users',JSON.stringify(users)); }
     }
-  }catch(e){ try{ users=JSON.parse(lsGet('hl_users')||'[]'); }catch(e2){} }
+  }catch(e){ /* stay with local cache */ }
   if(!users.length){
     // No users set — go to setup
     pinSetupFirst=pinBuffer; pinBuffer=''; updateDots();
