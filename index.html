@@ -49,27 +49,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .pin-error{font-size:12px;color:#cc4444;min-height:18px;margin-bottom:.5rem;text-align:center}
 .pin-loading{font-size:11px;color:var(--hl-text3);text-align:center;min-height:18px;margin-top:.5rem}
 #app{display:none}
-.header{padding:.75rem 1rem;border-bottom:1px solid var(--hl-border);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.header{padding:1rem 1.25rem .9rem;border-bottom:1px solid var(--hl-border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .header-left{display:flex;align-items:center;gap:12px}
 .hl-logo{width:32px;height:32px;background:var(--hl-red);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff;flex-shrink:0}
 .header h1{font-size:15px;font-weight:500;letter-spacing:.03em}
 .header p{font-size:11px;color:var(--hl-text3);margin-top:1px}
-.header-actions{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.header-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .sync-status{font-size:10px;color:var(--hl-text3);display:flex;align-items:center;gap:4px;padding:0 2px}
-.logged-in-user{font-size:10px;color:var(--hl-text2);display:flex;align-items:center;gap:4px;padding:0 4px;background:var(--hl-surface2);border:1px solid var(--hl-border);border-radius:3px;height:24px;white-space:nowrap}
-.logged-in-user i{font-size:11px;color:var(--hl-text3)}
 
 /* ── TOP SECTION TABS (Applicator / Machine / Setup) ── */
-.section-tabs{display:flex;border-bottom:2px solid var(--hl-border);background:var(--hl-surface)}
-.section-tab{flex:1;min-width:0;padding:8px 2px;font-size:10px;cursor:pointer;color:var(--hl-text3);border-bottom:3px solid transparent;margin-bottom:-2px;text-align:center;user-select:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;transition:color .1s;touch-action:manipulation;letter-spacing:.01em}
+.section-tabs{display:flex;border-bottom:2px solid var(--hl-border);background:var(--hl-surface);overflow-x:auto}
+.section-tab{flex:1;min-width:0;padding:11px 8px;font-size:12px;cursor:pointer;color:var(--hl-text3);border-bottom:3px solid transparent;margin-bottom:-2px;letter-spacing:.03em;text-align:center;user-select:none;white-space:nowrap;display:flex;align-items:center;justify-content:center;gap:5px;transition:color .1s}
 .section-tab.active{color:var(--hl-text);border-bottom-color:var(--hl-red);font-weight:500}
 .section-tab:hover:not(.active){color:var(--hl-text2)}
-.section-tab i{font-size:17px}
-.section-tab .tab-text{display:block;line-height:1.2}
-@media(min-width:520px){
-  .section-tab{flex-direction:row;padding:11px 8px;font-size:12px;gap:5px;letter-spacing:.03em;white-space:nowrap}
-  .section-tab i{font-size:14px}
-}
+.section-tab i{font-size:14px}
 
 /* ── SUB TABS (Log / Queue / History) ── */
 .tab-bar{display:flex;border-bottom:1px solid var(--hl-border);padding:0 1.25rem;background:var(--hl-bg);overflow-x:auto}
@@ -190,13 +183,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 /* Contacts pad */
 .contacts-pad{padding:0 1.25rem 1.5rem}
 
-@media(max-width:599px){
-  .btn-label{display:none}
-  .btn{padding:0 9px;height:32px;font-size:11px}
-  .sync-status{font-size:9px}
-  .header h1{font-size:13px}
-  .header p{display:none}
-}
 @media(min-width:600px){
   .card-list{display:none}
   .desktop-table{display:block}
@@ -257,13 +243,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div><h1>H&L Issue Log</h1><p>Applicator · Machine · Setup Sheet</p></div>
     </div>
     <div class="header-actions">
-      <span class="logged-in-user" id="loggedInUser"></span>
       <span class="sync-status" id="syncStatus"></span>
-      <button class="btn btn-sync" onclick="pushAll(false)" title="Sync"><i class="ti ti-cloud-upload"></i> <span class="btn-label">Sync</span></button>
-      <button class="btn btn-import" onclick="triggerImport()" title="Import"><i class="ti ti-upload"></i> <span class="btn-label">Import</span></button>
-      <button class="btn btn-export" onclick="exportJSON()" title="Export"><i class="ti ti-download"></i> <span class="btn-label">Export</span></button>
-      <button class="btn" onclick="openChangePIN()" title="Manage PINs"><i class="ti ti-lock"></i> <span class="btn-label">PIN</span></button>
-      <button class="btn" onclick="lockApp()" title="Lock"><i class="ti ti-logout"></i> <span class="btn-label">Lock</span></button>
+      <button class="btn btn-sync" onclick="pushAll(false)"><i class="ti ti-cloud-upload"></i> Sync</button>
+      <button class="btn btn-import" onclick="triggerImport()"><i class="ti ti-upload"></i> Import</button>
+      <button class="btn btn-export" onclick="exportJSON()"><i class="ti ti-download"></i> Export</button>
+      <button class="btn" onclick="openChangePIN()"><i class="ti ti-lock"></i> PIN</button>
+      <button class="btn" onclick="lockApp()"><i class="ti ti-logout"></i> Lock</button>
     </div>
   </div>
   <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(event)">
@@ -271,16 +256,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <!-- SECTION TABS -->
   <div class="section-tabs">
     <div class="section-tab active" onclick="switchSection('applicator')" id="stab-applicator">
-      <i class="ti ti-tool"></i><span class="tab-text">Applicator</span>
+      <i class="ti ti-tool"></i> Applicator Issues
     </div>
     <div class="section-tab" onclick="switchSection('machine')" id="stab-machine">
-      <i class="ti ti-settings-2"></i><span class="tab-text">Machine</span>
+      <i class="ti ti-settings-2"></i> Machine Issues
     </div>
     <div class="section-tab" onclick="switchSection('setup')" id="stab-setup">
-      <i class="ti ti-file-description"></i><span class="tab-text">Setup Sheet</span>
+      <i class="ti ti-file-description"></i> Setup Sheet Issues
     </div>
-    <div class="section-tab" onclick="switchSection('contacts')" id="stab-contacts">
-      <i class="ti ti-address-book"></i><span class="tab-text">Contacts</span>
+    <div class="section-tab" onclick="switchSection('contacts')" id="stab-contacts" style="flex:0 0 auto;padding-left:16px;padding-right:16px">
+      <i class="ti ti-address-book"></i> Contacts
     </div>
   </div>
 
@@ -552,7 +537,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div style="font-size:10px;color:var(--hl-text3);margin-top:5px">Add contacts under the Contacts tab.</div>
     </div>
     <div class="field"><label>Additional Note (optional)</label><textarea id="notifyNote" style="height:54px" placeholder="e.g. Ready to return to production."></textarea></div>
-    <div class="modal-actions"><button class="btn" onclick="closeNotifyModal()">Cancel</button><button class="btn btn-red" onclick="sendNotify()"><i class="ti ti-mail"></i> Open in Email</button></div>
+    <div class="modal-actions"><button class="btn" onclick="closeNotifyModal()">Cancel</button><button class="btn btn-red" onclick="sendNotify()"><i class="ti ti-send"></i> Send Notification</button></div>
   </div>
 </div>
 
@@ -573,37 +558,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <!-- PIN CHANGE MODAL -->
 <div class="modal-overlay" id="pinModal">
-  <div class="modal" style="max-width:420px">
-    <h2>Manage Users &amp; PINs</h2>
-
-    <!-- User List -->
-    <div style="margin-bottom:1rem">
-      <div style="font-size:9px;color:var(--hl-text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Users</div>
-      <div id="userList" style="border:1px solid var(--hl-border2);border-radius:3px;overflow:hidden;background:var(--hl-bg)"></div>
-    </div>
-
-    <!-- Add User -->
-    <div style="border:1px solid var(--hl-border);border-radius:4px;padding:10px 12px;margin-bottom:1rem;background:var(--hl-surface2)">
-      <div style="font-size:9px;color:var(--hl-text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Add New User</div>
-      <div class="row2" style="margin-bottom:8px">
-        <div class="field" style="margin-bottom:0"><label>Name *</label><input id="nuName" placeholder="e.g. John Smith" autocomplete="off"></div>
-        <div class="field" style="margin-bottom:0"><label>PIN *</label><input id="nuPin" type="password" inputmode="numeric" maxlength="4" placeholder="4-digit PIN" autocomplete="off"></div>
-      </div>
-      <button class="btn btn-red" style="width:100%" onclick="addUser()"><i class="ti ti-user-plus"></i> Add User</button>
-    </div>
-
-    <!-- Change Your PIN -->
-    <div style="border:1px solid var(--hl-border);border-radius:4px;padding:10px 12px;background:var(--hl-surface2)">
-      <div style="font-size:9px;color:var(--hl-text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Change Your PIN</div>
-      <div class="row2">
-        <div class="field" style="margin-bottom:8px"><label>Current PIN</label><input id="pmCurrent" type="password" inputmode="numeric" maxlength="4" placeholder="Current PIN" autocomplete="off"></div>
-        <div class="field" style="margin-bottom:8px"><label>New PIN</label><input id="pmNew" type="password" inputmode="numeric" maxlength="4" placeholder="New PIN" autocomplete="off"></div>
-      </div>
-      <button class="btn" style="width:100%" onclick="savePIN()"><i class="ti ti-refresh"></i> Update My PIN</button>
-    </div>
-
-    <div style="font-size:11px;color:#cc4444;min-height:16px;margin-top:8px" id="pinModalErr"></div>
-    <div class="modal-actions"><button class="btn" onclick="closePINModal()">Done</button></div>
+  <div class="modal" style="max-width:340px">
+    <h2>Change PIN</h2>
+    <div class="field"><label>Current PIN</label><input id="pmCurrent" type="password" inputmode="numeric" maxlength="4" placeholder="Current 4-digit PIN" autocomplete="off"></div>
+    <div class="field"><label>New PIN</label><input id="pmNew" type="password" inputmode="numeric" maxlength="4" placeholder="New 4-digit PIN" autocomplete="off"></div>
+    <div class="field"><label>Confirm New PIN</label><input id="pmConfirm" type="password" inputmode="numeric" maxlength="4" placeholder="Repeat new PIN" autocomplete="off"></div>
+    <div style="font-size:11px;color:#cc4444;min-height:16px;margin-top:4px" id="pinModalErr"></div>
+    <div class="modal-actions"><button class="btn" onclick="closePINModal()">Cancel</button><button class="btn btn-red" onclick="savePIN()">Save PIN</button></div>
   </div>
 </div>
 
@@ -620,6 +581,7 @@ const QUEUE_FILES = {
   machine:    'hl_queue_machine.json',
   setup:      'hl_queue_setup.json'
 };
+const NOTIFY_FILE = 'hl_notify_queue.json';
 const INACTIVITY = 30 * 60 * 1000;
 
 // ── STATE ──
@@ -701,7 +663,7 @@ async function ensureGist(){
   gistId=created.id; lsSet('hl_gist_id',gistId); return gistId;
 }
 async function writeGist(files){ const id=await ensureGist(); await gistAPI('PATCH','gists/'+id,{files}); }
-async function pushMeta(users){ try{ await writeGist({[META_FILE]:{content:JSON.stringify({users},null,2)}}); }catch(e){ console.error('pushMeta failed',e); } }
+async function pushMeta(h){ try{ await writeGist({[META_FILE]:{content:JSON.stringify({pinHash:h},null,2)}}); }catch(e){} }
 async function pushAll(silent=true){
   setSyncStatus('syncing');
   try{
@@ -774,14 +736,7 @@ async function loadFromGist(){
     // Queues
     ['applicator','machine','setup'].forEach(sec=>{ const f=g.files[QUEUE_FILES[sec]]; if(f) state[sec].queue=JSON.parse(f.content)||[]; });
     // Meta
-    if(g.files[META_FILE]){
-      const m=JSON.parse(g.files[META_FILE].content);
-      if(m.users) lsSet('hl_users',JSON.stringify(m.users));
-      else if(m.pinHash){ // Legacy migration
-        const users=[{name:'Tyler',pinHash:m.pinHash}];
-        lsSet('hl_users',JSON.stringify(users));
-      }
-    }
+    if(g.files[META_FILE]){ const m=JSON.parse(g.files[META_FILE].content); if(m.pinHash) lsSet('hl_pin_hash',m.pinHash); }
     saveLocal();
   }catch(e){ loadLocal(); }
 }
@@ -796,105 +751,39 @@ async function handlePin(){
   if(pinMode==='setup1'){ pinSetupFirst=pinBuffer; pinBuffer=''; updateDots(); $('pinTitle').textContent='Confirm PIN'; $('pinSub').textContent='Re-enter your new PIN'; pinMode='setup2'; return; }
   if(pinMode==='setup2'){
     if(pinBuffer!==pinSetupFirst){ $('pinError').textContent='PINs do not match'; dotError(); pinBuffer=''; pinSetupFirst=''; pinMode='setup1'; setTimeout(()=>{ $('pinTitle').textContent='Set a PIN'; $('pinSub').textContent='Choose a 4-digit PIN'; },800); return; }
-    // First time setup — create Tyler as the first user
-    const h=await sha256(pinBuffer);
-    const users=[{name:'Tyler',pinHash:h}];
-    lsSet('hl_users',JSON.stringify(users));
-    await pushMeta(users); await loadFromGist(); doUnlock(); return;
+    const h=await sha256(pinBuffer); lsSet('hl_pin_hash',h); await pushMeta(h); await loadFromGist(); doUnlock(); return;
   }
-  const h=await sha256(pinBuffer);
-  // Check local cache first — no network, instant response
-  let users=[];
-  try{ users=JSON.parse(lsGet('hl_users')||'[]'); }catch(e){}
-  const matchedLocal=users.find(u=>u.pinHash===h);
-  if(matchedLocal){
-    lsSet('hl_user_name',matchedLocal.name);
-    setPinLoading('Loading…'); await loadFromGist(); setPinLoading('');
-    doUnlock(matchedLocal.name);
-    // Refresh user list from Gist in background
-    ensureGist().then(id=>fetch('https://api.github.com/gists/'+id,{headers:{'Authorization':'token '+getToken(),'Accept':'application/vnd.github.v3+json'}}))
-      .then(r=>r.json()).then(g=>{ if(g.files&&g.files[META_FILE]){ const m=JSON.parse(g.files[META_FILE].content); if(m.users) lsSet('hl_users',JSON.stringify(m.users)); } }).catch(()=>{});
-    return;
-  }
-  // Not cached locally — fetch from Gist
   setPinLoading('Checking…');
-  try{
-    const r=await fetch('https://api.github.com/gists/'+(await ensureGist()),{headers:{'Authorization':'token '+getToken(),'Accept':'application/vnd.github.v3+json'}});
-    const g=await r.json();
-    if(g.files[META_FILE]){
-      const m=JSON.parse(g.files[META_FILE].content);
-      if(m.users){ users=m.users; lsSet('hl_users',JSON.stringify(users)); }
-      else if(m.pinHash){ users=[{name:'Tyler',pinHash:m.pinHash}]; await pushMeta(users); lsSet('hl_users',JSON.stringify(users)); }
-    }
-  }catch(e){ /* stay with local cache */ }
-  if(!users.length){
-    // No users set — go to setup
-    pinSetupFirst=pinBuffer; pinBuffer=''; updateDots();
-    $('pinTitle').textContent='Confirm PIN'; $('pinSub').textContent='Re-enter your new PIN';
-    setPinLoading(''); pinMode='setup2'; return;
-  }
-  const matched=users.find(u=>u.pinHash===h);
-  if(matched){
-    lsSet('hl_user_name',matched.name);
-    setPinLoading('Loading…'); await loadFromGist(); setPinLoading('');
-    doUnlock(matched.name);
-  } else{
-    setPinLoading(''); $('pinError').textContent='Incorrect PIN'; dotError(); pinBuffer='';
-  }
+  const h=await sha256(pinBuffer);
+  let storedHash=lsGet('hl_pin_hash');
+  try{ const r=await fetch('https://api.github.com/gists/'+(await ensureGist()),{headers:{'Authorization':'token '+getToken(),'Accept':'application/vnd.github.v3+json'}}); const g=await r.json(); if(g.files[META_FILE]){ const m=JSON.parse(g.files[META_FILE].content); if(m.pinHash){ storedHash=m.pinHash; lsSet('hl_pin_hash',m.pinHash); } } }catch(e){}
+  if(!storedHash){ pinSetupFirst=pinBuffer; pinBuffer=''; updateDots(); $('pinTitle').textContent='Confirm PIN'; $('pinSub').textContent='Re-enter your new PIN'; setPinLoading(''); pinMode='setup2'; return; }
+  if(h===storedHash){ setPinLoading('Loading…'); await loadFromGist(); setPinLoading(''); doUnlock(); }
+  else{ setPinLoading(''); $('pinError').textContent='Incorrect PIN'; dotError(); pinBuffer=''; }
 }
 async function resetPinCache(){
-  setPinLoading('Syncing from Gist…'); $('pinError').textContent=''; pinBuffer=''; updateDots();
-  try{
-    lsDel('hl_users');
-    const id=await ensureGist();
-    const r=await fetch('https://api.github.com/gists/'+id,{headers:{'Authorization':'token '+getToken(),'Accept':'application/vnd.github.v3+json'}});
-    const g=await r.json();
-    if(g.files[META_FILE]){
-      const m=JSON.parse(g.files[META_FILE].content);
-      if(m.users&&m.users.length){ lsSet('hl_users',JSON.stringify(m.users)); setPinLoading('Synced — enter your PIN'); }
-      else if(m.pinHash){ const users=[{name:'Tyler',pinHash:m.pinHash}]; lsSet('hl_users',JSON.stringify(users)); setPinLoading('Synced — enter your PIN'); }
-      else setPinLoading('No users set yet');
-    }
-  }catch(e){ setPinLoading('Could not reach Gist'); }
+  setPinLoading('Syncing PIN…'); $('pinError').textContent=''; pinBuffer=''; updateDots();
+  try{ lsDel('hl_pin_hash'); const id=await ensureGist(); const r=await fetch('https://api.github.com/gists/'+id,{headers:{'Authorization':'token '+getToken(),'Accept':'application/vnd.github.v3+json'}}); const g=await r.json(); if(g.files[META_FILE]){ const m=JSON.parse(g.files[META_FILE].content); if(m.pinHash){ lsSet('hl_pin_hash',m.pinHash); setPinLoading('PIN synced — enter your PIN'); } else setPinLoading('No PIN set yet'); } }
+  catch(e){ setPinLoading('Could not reach Gist'); }
   setTimeout(()=>setPinLoading(''),3000);
 }
 async function initPinScreen(){
-  const cached=lsGet('hl_users');
-  if(cached&&JSON.parse(cached).length){ pinMode='unlock'; return; }
-  try{
-    setPinLoading('Connecting…');
-    const id=await ensureGist();
-    const r=await fetch('https://api.github.com/gists/'+id,{headers:{'Authorization':'token '+getToken(),'Accept':'application/vnd.github.v3+json'}});
-    const g=await r.json();
-    if(g.files[META_FILE]){
-      const m=JSON.parse(g.files[META_FILE].content);
-      if(m.users&&m.users.length){ lsSet('hl_users',JSON.stringify(m.users)); setPinLoading(''); pinMode='unlock'; }
-      else if(m.pinHash){ // Legacy migration
-        const users=[{name:'Tyler',pinHash:m.pinHash}];
-        lsSet('hl_users',JSON.stringify(users)); await pushMeta(users);
-        setPinLoading(''); pinMode='unlock';
-      } else{ setPinLoading(''); $('pinTitle').textContent='Set a PIN'; $('pinSub').textContent='Choose a 4-digit PIN for your account'; pinMode='setup1'; }
-    } else{ setPinLoading(''); $('pinTitle').textContent='Set a PIN'; $('pinSub').textContent='Choose a 4-digit PIN for your account'; pinMode='setup1'; }
-  }catch(e){ setPinLoading('Offline — enter PIN'); pinMode='unlock'; }
+  const h=lsGet('hl_pin_hash');
+  if(!h){ try{ setPinLoading('Connecting…'); const id=await ensureGist(); const r=await fetch('https://api.github.com/gists/'+id,{headers:{'Authorization':'token '+getToken(),'Accept':'application/vnd.github.v3+json'}}); const g=await r.json(); if(g.files[META_FILE]){ const m=JSON.parse(g.files[META_FILE].content); if(m.pinHash){ lsSet('hl_pin_hash',m.pinHash); setPinLoading(''); pinMode='unlock'; } else{ setPinLoading(''); $('pinTitle').textContent='Set a PIN'; $('pinSub').textContent='Choose a 4-digit PIN'; pinMode='setup1'; } } }catch(e){ setPinLoading('Offline — enter PIN'); pinMode='unlock'; } }
+  else{ pinMode='unlock'; }
 }
 function resetInactivity(){ clearTimeout(inactivityTimer); inactivityTimer=setTimeout(lockApp,INACTIVITY); }
-function doUnlock(userName){
+function doUnlock(){
   sessionStorage.setItem('hl_s','1');
   showScreen('app'); resetInactivity();
   ['mousemove','keydown','click','touchstart'].forEach(e=>document.addEventListener(e,resetInactivity,{passive:true}));
   renderAll(); setSyncStatus('ok'); startPolling();
-  if(userName){
-    toast('Welcome, '+userName+'!','#50a870');
-    const el=document.getElementById('loggedInUser');
-    if(el) el.innerHTML='<i class="ti ti-user"></i>'+userName;
-  }
 }
-
-function lockApp(silent=false){ clearTimeout(inactivityTimer); stopPolling(); sessionStorage.removeItem('hl_s'); showScreen('pinScreen'); pinBuffer=''; updateDots(); $('pinTitle').textContent='Enter PIN'; $('pinSub').textContent='H&L Issue Log'; $('pinError').textContent=''; setPinLoading(''); pinMode='unlock'; const lu=document.getElementById('loggedInUser'); if(lu) lu.innerHTML=''; }
+function lockApp(silent=false){ clearTimeout(inactivityTimer); stopPolling(); sessionStorage.removeItem('hl_s'); showScreen('pinScreen'); pinBuffer=''; updateDots(); $('pinTitle').textContent='Enter PIN'; $('pinSub').textContent='H&L Issue Log'; $('pinError').textContent=''; setPinLoading(''); pinMode='unlock'; }
 async function initApp(){
   const token=getToken(); if(!token){ showScreen('setupScreen'); return; }
   showScreen('pinScreen');
-  if(sessionStorage.getItem('hl_s')==='1'){ loadLocal(); doUnlock(lsGet('hl_user_name')||''); loadFromGist().then(()=>{ renderAll(); setSyncStatus('ok'); }).catch(()=>{}); return; }
+  if(sessionStorage.getItem('hl_s')==='1'){ loadLocal(); doUnlock(); loadFromGist().then(()=>{ renderAll(); setSyncStatus('ok'); }).catch(()=>{}); return; }
   await initPinScreen();
 }
 
@@ -925,75 +814,16 @@ function importJSON(evt){
 }
 
 // ── PIN CHANGE ──
-function openChangePIN(){
-  $('pmCurrent').value=''; $('pmNew').value=''; $('nuName').value=''; $('nuPin').value='';
-  $('pinModalErr').textContent='';
-  renderUserList();
-  $('pinModal').classList.add('open');
-}
+function openChangePIN(){ $('pmCurrent').value=''; $('pmNew').value=''; $('pmConfirm').value=''; $('pinModalErr').textContent=''; $('pinModal').classList.add('open'); }
 function closePINModal(){ $('pinModal').classList.remove('open'); }
-
-function getUsers(){ try{ return JSON.parse(lsGet('hl_users')||'[]'); }catch(e){ return []; } }
-function saveUsersLocal(users){ lsSet('hl_users',JSON.stringify(users)); }
-
-function renderUserList(){
-  const users=getUsers();
-  const currentName=lsGet('hl_user_name')||'';
-  const ul=$('userList');
-  if(!users.length){ ul.innerHTML='<div style="padding:10px 12px;font-size:12px;color:var(--hl-text3)">No users set up yet.</div>'; return; }
-  ul.innerHTML=users.map((u,i)=>`
-    <div style="display:flex;align-items:center;padding:9px 12px;border-bottom:1px solid var(--hl-border);gap:8px">
-      <div style="width:30px;height:30px;border-radius:50%;background:var(--hl-red-dim);border:1px solid #551515;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:#cc4444;flex-shrink:0">${u.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)}</div>
-      <div style="flex:1;font-size:13px;font-weight:500">${u.name}${u.name===currentName?'<span style="font-size:10px;color:#50a870;margin-left:6px">(you)</span>':''}</div>
-      ${users.length>1?`<button class="btn-sm btn-del" onclick="removeUser(${i})"><i class="ti ti-trash"></i></button>`:''}
-    </div>`).join('');
-  // Remove border from last item
-  const divs=ul.querySelectorAll('div[style*="border-bottom"]');
-  if(divs.length) divs[divs.length-1].style.borderBottom='none';
-}
-
-async function addUser(){
-  const name=$('nuName').value.trim(), pin=$('nuPin').value.trim();
-  const err=$('pinModalErr');
-  err.textContent='';
-  if(!name){ err.textContent='Name is required'; return; }
-  if(!/^\d{4}$/.test(pin)){ err.textContent='PIN must be exactly 4 digits'; return; }
-  const users=getUsers();
-  if(users.find(u=>u.name.toLowerCase()===name.toLowerCase())){ err.textContent='A user with that name already exists'; return; }
-  const h=await sha256(pin);
-  users.push({name,pinHash:h});
-  saveUsersLocal(users);
-  await pushMeta(users);
-  $('nuName').value=''; $('nuPin').value='';
-  renderUserList();
-  toast('Added user: '+name);
-}
-
-async function removeUser(idx){
-  const users=getUsers();
-  const currentName=lsGet('hl_user_name')||'';
-  if(users[idx].name===currentName){ $('pinModalErr').textContent="You can't remove yourself"; return; }
-  if(!confirm('Remove user '+users[idx].name+'?')) return;
-  users.splice(idx,1);
-  saveUsersLocal(users);
-  await pushMeta(users);
-  renderUserList();
-  toast('User removed');
-}
-
 async function savePIN(){
-  const cur=$('pmCurrent').value.trim(), nw=$('pmNew').value.trim();
-  const err=$('pinModalErr'); err.textContent='';
-  if(!/^\d{4}$/.test(cur)||!/^\d{4}$/.test(nw)){ err.textContent='Both fields must be exactly 4 digits'; return; }
-  const curHash=await sha256(cur);
-  const users=getUsers();
-  const currentName=lsGet('hl_user_name')||'';
-  const idx=users.findIndex(u=>u.name===currentName&&u.pinHash===curHash);
-  if(idx===-1){ err.textContent='Current PIN is incorrect'; return; }
-  users[idx].pinHash=await sha256(nw);
-  saveUsersLocal(users);
-  await pushMeta(users);
-  closePINModal(); toast('PIN updated');
+  const cur=$('pmCurrent').value.trim(), nw=$('pmNew').value.trim(), cf=$('pmConfirm').value.trim();
+  const err=$('pinModalErr');
+  if(!/^\d{4}$/.test(cur)||!/^\d{4}$/.test(nw)||!/^\d{4}$/.test(cf)){ err.textContent='All fields must be exactly 4 digits'; return; }
+  if(nw!==cf){ err.textContent='New PINs do not match'; return; }
+  if(await sha256(cur)!==lsGet('hl_pin_hash')){ err.textContent='Current PIN is incorrect'; return; }
+  const h=await sha256(nw); lsSet('hl_pin_hash',h); await pushMeta(h);
+  closePINModal(); toast('PIN updated on all devices');
 }
 
 // ── NAVIGATION ──
@@ -1301,19 +1131,19 @@ function openModal(sec,id=null){
     $('aModalTitle').textContent=e?'Edit Applicator Entry':'Log Applicator Issue';
     $('fApn').value=e?.apn||''; $('fPress').value=e?.press||''; $('fTerminal').value=e?.terminal||'';
     $('fWire').value=e?.wire||''; $('fIssue').value=e?.issue||''; $('fNotes').value=e?.notes||'';
-    $('fStatus').value=e?.status||'open'; $('fBy').value=e?.by||(id?'':(lsGet('hl_user_name')||''));
+    $('fStatus').value=e?.status||'open'; $('fBy').value=e?.by||'';
     $('fTicket').value=e?.ticketNum?e.ticketNum.replace('TKT-','').replace('S-',''):''; $('fSuppress').checked=e?.ticketNum?.startsWith('S-')||false;
   } else if(sec==='machine'){
     $('mModalTitle').textContent=e?'Edit Machine Entry':'Log Machine Issue';
     $('mMachine').value=e?.machine||''; $('mDesc').value=e?.desc||'';
     $('mResult').value=e?.result||''; $('mStatus').value=e?.status||'open';
-    $('mBy').value=e?.by||(id?'':(lsGet('hl_user_name')||'')); $('mTicket').value=e?.ticketNum?e.ticketNum.replace('TKT-','').replace('S-',''):''; $('mSuppress').checked=e?.ticketNum?.startsWith('S-')||false;
+    $('mBy').value=e?.by||''; $('mTicket').value=e?.ticketNum?e.ticketNum.replace('TKT-','').replace('S-',''):''; $('mSuppress').checked=e?.ticketNum?.startsWith('S-')||false;
   } else {
     $('sModalTitle').textContent=e?'Edit Setup Sheet Entry':'Log Setup Sheet Issue';
     $('sTerminal').value=e?.terminal||''; $('sAwg').value=e?.awg||'';
     $('sIssue').value=e?.issue||''; $('sDoc').value=e?.doc||'';
     $('sNotes').value=e?.notes||''; $('sStatus').value=e?.status||'open';
-    $('sBy').value=e?.by||(id?'':(lsGet('hl_user_name')||'')); $('sTicket').value=e?.ticketNum?e.ticketNum.replace('TKT-','').replace('S-',''):''; $('sSuppress').checked=e?.ticketNum?.startsWith('S-')||false;
+    $('sBy').value=e?.by||''; $('sTicket').value=e?.ticketNum?e.ticketNum.replace('TKT-','').replace('S-',''):''; $('sSuppress').checked=e?.ticketNum?.startsWith('S-')||false;
   }
   // Reset suppress checkbox
   const chkMap = {applicator:'fSuppress',machine:'mSuppress',setup:'sSuppress'};
@@ -1375,34 +1205,65 @@ function toggleRecipient(id){
   if(row){ row.classList.toggle('checked',selectedRecipients.has(id)); const ic=row.querySelector('.check-icon'); if(ic) ic.style.display=selectedRecipients.has(id)?'block':'none'; }
 }
 function getGreeting(){ const h=new Date().getHours(); return h<12?'Good morning':h<17?'Good afternoon':'Good evening'; }
-function sendNotify(){
+async function sendNotify(){
   const e=state[notifySection].entries.find(x=>x.id===notifyId);
   if(!selectedRecipients.size){ alert('Select at least one recipient.'); return; }
   const rc=[...selectedRecipients].map(id=>contacts.find(c=>c.id===id)).filter(Boolean);
-  const to=rc.map(c=>c.email).join(',');
   const note=$('notifyNote').value.trim();
-  const fn=rc.map(c=>c.name.split(' ')[0]);
-  const sal=fn.length===1?fn[0]:fn.length===2?fn.join(' & '):'All';
-  const statusLine={done:'has been resolved and is ready to return to production.',inprog:'is currently being worked on.',waiting:'is on hold — waiting on parts.',open:'has been logged and is queued for repair.'}[e.status]||'has been logged.';
   const sectionLabel={applicator:`Applicator ${e.apn}`,machine:`Machine ${e.machine}`,setup:`Terminal ${e.terminal}`}[notifySection];
   const statusText={done:'Resolved',inprog:'In Progress',waiting:'Waiting on Parts',open:'Open'}[e.status];
-  const subj=`${sectionLabel} — ${statusText}`;
   const desc={applicator:e.issue,machine:e.desc,setup:e.issue}[notifySection];
   const base=window.location.origin+window.location.pathname.replace('index.html','').replace(/\/$/,'');
-  const body=[
-    `${getGreeting()}, ${sal}!`,'',
-    `${sectionLabel} ${statusLine}`,'',
-    `Status: ${statusText}`,
-    `Description: ${desc}`,
-    {applicator:e.terminal?`Terminal P/N: ${e.terminal}`:null,machine:null,setup:e.awg?`AWG: ${e.awg}`:null}[notifySection],
-    {applicator:e.wire?`Wire: ${e.wire}`:null,machine:null,setup:e.doc?`Document: ${e.doc}`:null}[notifySection],
-    {applicator:e.notes?`Notes: ${e.notes}`:null,machine:e.result?`Result: ${e.result}`:null,setup:e.notes?`Notes: ${e.notes}`:null}[notifySection],
-    note?'':null, note?`Additional Note: ${note}`:null,'',
-    `Logged by: ${e.by||'—'}`,`Days open: ${days(e.date)}`,
-    e.ticketNum?`\nTrack this ticket: ${base}/t/?ticket=${e.ticketNum}`:null
-  ].filter(l=>l!==null).join('\n');
-  window.location.href=`mailto:${to}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
-  closeNotifyModal();
+
+  // Build notification payload for the notifier to pick up
+  const notification = {
+    id: Date.now(),
+    entryId: e.id,
+    section: notifySection,
+    sectionLabel,
+    statusText,
+    status: e.status,
+    desc,
+    note: note||null,
+    ticketNum: e.ticketNum||null,
+    ticketUrl: e.ticketNum ? base+'/t/?ticket='+e.ticketNum : null,
+    priority: e.priority||'normal',
+    by: e.by||null,
+    daysOpen: days(e.date),
+    // Extra fields per section
+    terminal: e.terminal||null,
+    wire: e.wire||null,
+    awg: e.awg||null,
+    doc: e.doc||null,
+    notes: e.notes||null,
+    result: e.result||null,
+    // Recipients
+    recipients: rc.map(c=>({ name:c.name, email:c.email })),
+    queuedAt: Date.now(),
+    queuedBy: lsGet('hl_user_name')||'Unknown'
+  };
+
+  // Disable button while saving
+  const btn=document.querySelector('#notifyModal .btn-red');
+  if(btn){ btn.disabled=true; btn.innerHTML='<i class="ti ti-loader spin"></i> Queueing…'; }
+
+  try{
+    // Load existing queue, append, save back
+    const id=await ensureGist();
+    let queue=[];
+    try{
+      const g=await gistAPI('GET','gists/'+id);
+      if(g.files[NOTIFY_FILE]) queue=JSON.parse(g.files[NOTIFY_FILE].content)||[];
+    }catch(e2){}
+    queue.push(notification);
+    await writeGist({[NOTIFY_FILE]:{content:JSON.stringify(queue,null,2)}});
+    closeNotifyModal();
+    toast('Notification queued — email will send within 60 seconds');
+  }catch(err){
+    if(btn){ btn.disabled=false; btn.innerHTML='<i class="ti ti-send"></i> Send Notification'; }
+    toast('Could not queue notification — check connection','#cc4444');
+    console.error(err);
+  }
 }
 
 // ── SHARE TICKET ──
