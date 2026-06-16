@@ -96,6 +96,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .otc-desc{font-size:12px;color:var(--hl-text2);margin-top:5px}
 .otc-footer{display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid var(--hl-border);font-size:11px;color:var(--hl-text3);gap:8px;flex-wrap:wrap}
 .open-empty{text-align:center;padding:2rem 1rem;color:var(--hl-text3);font-size:13px}
+.issue-other{display:none;margin-top:8px}
+.issue-other.show{display:block}
 </style>
 </head>
 <body>
@@ -153,9 +155,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         </div>
       </div>
       <div class="field" id="fa-issue">
-        <label>Describe the Issue *</label>
-        <textarea id="aIssue" placeholder="Crimp height off, blade worn, carrier jammed…"></textarea>
-        <div class="field-err">Please describe the issue</div>
+        <label>Issue Type *</label>
+        <select id="aIssueSelect" onchange="onIssueSelect('a')">
+          <option value="">— Select a common issue —</option>
+          <option value="Damaged tooling">Damaged tooling</option>
+          <option value="Feed position">Feed position</option>
+          <option value="Bell mouth">Bell mouth</option>
+          <option value="Twisting">Twisting</option>
+          <option value="__other__">Other — describe below</option>
+        </select>
+        <div class="issue-other" id="aIssueWrap">
+          <textarea id="aIssue" placeholder="Describe the issue…" spellcheck="true" style="margin-top:8px"></textarea>
+        </div>
+        <div class="field-err">Please select or describe the issue</div>
       </div>
       <div class="field">
         <label>Priority</label>
@@ -180,9 +192,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <div class="field-err">Please enter the machine number</div>
       </div>
       <div class="field" id="fm-desc">
-        <label>Describe the Problem *</label>
-        <textarea id="mDesc" placeholder="What is the machine doing or not doing…"></textarea>
-        <div class="field-err">Please describe the problem</div>
+        <label>Issue Type *</label>
+        <select id="mIssueSelect" onchange="onIssueSelect('m')">
+          <option value="">— Select a common issue —</option>
+          <option value="Strip length">Strip length</option>
+          <option value="Overall length">Overall length</option>
+          <option value="__other__">Other — describe below</option>
+        </select>
+        <div class="issue-other" id="mIssueWrap">
+          <textarea id="mDesc" placeholder="Describe the problem…" spellcheck="true" style="margin-top:8px"></textarea>
+        </div>
+        <div class="field-err">Please select or describe the issue</div>
       </div>
       <div class="field">
         <label>Priority</label>
@@ -213,9 +233,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         </div>
       </div>
       <div class="field" id="fs-issue">
-        <label>Describe the Issue *</label>
-        <textarea id="sIssue" placeholder="What's wrong with the setup sheet…"></textarea>
-        <div class="field-err">Please describe the issue</div>
+        <label>Issue Type *</label>
+        <select id="sIssueSelect" onchange="onIssueSelect('s')">
+          <option value="">— Select a common issue —</option>
+          <option value="Crimp specs">Crimp specs</option>
+          <option value="Pull test">Pull test</option>
+          <option value="Tooling">Tooling</option>
+          <option value="__other__">Other — describe below</option>
+        </select>
+        <div class="issue-other" id="sIssueWrap">
+          <textarea id="sIssue" placeholder="Describe the issue…" spellcheck="true" style="margin-top:8px"></textarea>
+        </div>
+        <div class="field-err">Please select or describe the issue</div>
       </div>
       <div class="field">
         <label>Document / File Reference</label>
@@ -287,16 +316,78 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="footer">H&L Manufacturing · Issue Tracking System</div>
 
 <script>
-const GIST_ID   = '934943f5c9d8ea126f30a27526c95771';
-const DATA_FILE  = 'hl_applicator_data.json';
-const MACH_FILE  = 'hl_machine_data.json';
-const SETUP_FILE = 'hl_setup_data.json';
-const QUEUE_FILES = { applicator:'hl_queue_order.json', machine:'hl_queue_machine.json', setup:'hl_queue_setup.json' };
+const GIST_ID      = '934943f5c9d8ea126f30a27526c95771';
+const DATA_FILE    = 'hl_applicator_data.json';
+const MACH_FILE    = 'hl_machine_data.json';
+const SETUP_FILE   = 'hl_setup_data.json';
+const ISSUES_FILE  = 'hl_common_issues.json';
+const QUEUE_FILES  = { applicator:'hl_queue_order.json', machine:'hl_queue_machine.json', setup:'hl_queue_setup.json' };
+
+const DEFAULT_ISSUES = {
+  applicator: ['Damaged tooling','Feed position','Bell mouth','Twisting'],
+  machine:    ['Strip length','Overall length'],
+  setup:      ['Crimp specs','Pull test','Tooling']
+};
+let commonIssues = JSON.parse(JSON.stringify(DEFAULT_ISSUES));
+
+async function loadCommonIssues(){
+  try{
+    const g = await gistAPI('GET','gists/'+GIST_ID);
+    if(g.files && g.files[ISSUES_FILE]){
+      const loaded = JSON.parse(g.files[ISSUES_FILE].content);
+      if(loaded) commonIssues = loaded;
+    } else {
+      await gistAPI('PATCH','gists/'+GIST_ID,{ files:{ [ISSUES_FILE]:{ content: JSON.stringify(DEFAULT_ISSUES,null,2) } } });
+    }
+  }catch(e){ /* use defaults */ }
+  rebuildAllSelectors();
+}
+
+function rebuildAllSelectors(){
+  [['a','applicator'],['m','machine'],['s','setup']].forEach(([prefix,type])=>{
+    const sel = document.getElementById(prefix+'IssueSelect');
+    if(!sel) return;
+    const cur = sel.value;
+    const issues = commonIssues[type] || [];
+    sel.innerHTML = '<option value="">— Select a common issue —</option>' +
+      issues.map(i=>`<option value="${i}">${i}</option>`).join('') +
+      '<option value="__other__">Other — describe below</option>';
+    if(cur) sel.value = cur;
+  });
+}
 const _ta = 'ghp_socP3KgxO9ReG88';
 const _tb = 'LmIC4GCXujCWUrv4Mu4zp';
 const TOKEN = _ta + _tb;
 
 let currentType = 'applicator';
+
+function onIssueSelect(prefix){
+  const sel = document.getElementById(prefix+'IssueSelect');
+  const wrap = document.getElementById(prefix+'IssueWrap');
+  if(!sel||!wrap) return;
+  if(sel.value==='__other__'){
+    wrap.classList.add('show');
+    // Focus the textarea
+    const ta = wrap.querySelector('textarea');
+    if(ta) setTimeout(()=>ta.focus(),50);
+  } else {
+    wrap.classList.remove('show');
+    // Clear textarea when switching back to a preset
+    const ta = wrap.querySelector('textarea');
+    if(ta) ta.value='';
+  }
+}
+
+function getIssueValue(prefix){
+  const sel = document.getElementById(prefix+'IssueSelect');
+  if(!sel) return '';
+  if(sel.value==='__other__'||sel.value===''){
+    const wrap = document.getElementById(prefix+'IssueWrap');
+    const ta = wrap ? wrap.querySelector('textarea') : null;
+    return ta ? ta.value.trim() : '';
+  }
+  return sel.value;
+}
 
 function selectType(type){
   currentType = type;
@@ -420,7 +511,7 @@ function renderOpenTickets(data){
 }
 
 function quickLookup(tktNum){
-  document.getElementById('iTicket').value = tktNum.replace('TKT-','').replace('S-','');
+  document.getElementById('iTicket').value = tktNum.replace('TKT-','');
   switchTab('status');
   lookupTicket();
 }
@@ -468,21 +559,21 @@ async function submitTicket(){
   if(type==='applicator'){
     name=document.getElementById('aName').value.trim();
     const apn=document.getElementById('aApn').value.trim();
-    const issue=document.getElementById('aIssue').value.trim();
+    const issue=getIssueValue('a');
     if(!name){ document.getElementById('fa-name').classList.add('has-err'); valid=false; }
     if(!/^T-\d{4}$/.test(apn)){ document.getElementById('fa-apn').classList.add('has-err'); valid=false; }
     if(!issue){ document.getElementById('fa-issue').classList.add('has-err'); valid=false; }
   } else if(type==='machine'){
     name=document.getElementById('mName').value.trim();
     const machine=document.getElementById('mMachine').value.trim();
-    const desc=document.getElementById('mDesc').value.trim();
+    const desc=getIssueValue('m');
     if(!name){ document.getElementById('fm-name').classList.add('has-err'); valid=false; }
     if(!machine){ document.getElementById('fm-machine').classList.add('has-err'); valid=false; }
     if(!desc){ document.getElementById('fm-desc').classList.add('has-err'); valid=false; }
   } else {
     name=document.getElementById('sName').value.trim();
     const terminal=document.getElementById('sTerminal').value.trim();
-    const issue=document.getElementById('sIssue').value.trim();
+    const issue=getIssueValue('s');
     if(!name){ document.getElementById('fs-name').classList.add('has-err'); valid=false; }
     if(!terminal){ document.getElementById('fs-terminal').classList.add('has-err'); valid=false; }
     if(!issue){ document.getElementById('fs-issue').classList.add('has-err'); valid=false; }
@@ -503,19 +594,19 @@ async function submitTicket(){
     if(type==='applicator'){
       const priority=document.getElementById('aPriority').value;
       const priorityLabel={normal:'Normal priority',high:'HIGH priority — affecting production',urgent:'URGENT — line is down'}[priority];
-      entry={id:now,apn:document.getElementById('aApn').value.trim(),press:document.getElementById('aPress').value.trim(),terminal:'',wire:'',issue:document.getElementById('aIssue').value.trim(),notes:priorityLabel+' | Submitted by: '+name+' | Ref: '+tktNum,status:'open',by:name,date:now,ticketNum:tktNum,submittedBy:name,priority,issueType:'applicator'};
+      entry={id:now,apn:document.getElementById('aApn').value.trim(),press:document.getElementById('aPress').value.trim(),terminal:'',wire:'',issue:getIssueValue('a'),notes:priorityLabel+' | Submitted by: '+name+' | Ref: '+tktNum,status:'open',by:name,date:now,ticketNum:tktNum,submittedBy:name,priority,issueType:'applicator'};
       allData.applicator.issues.unshift(entry);
       await saveSection('applicator',allData.applicator);
     } else if(type==='machine'){
       const priority=document.getElementById('mPriority').value;
       const priorityLabel={normal:'Normal priority',high:'HIGH priority — affecting production',urgent:'URGENT — line is down'}[priority];
-      entry={id:now,machine:document.getElementById('mMachine').value.trim(),desc:document.getElementById('mDesc').value.trim(),result:priorityLabel+' | Submitted by: '+name,status:'open',by:name,date:now,ticketNum:tktNum,submittedBy:name,priority,issueType:'machine'};
+      entry={id:now,machine:document.getElementById('mMachine').value.trim(),desc:getIssueValue('m'),result:priorityLabel+' | Submitted by: '+name,status:'open',by:name,date:now,ticketNum:tktNum,submittedBy:name,priority,issueType:'machine'};
       allData.machine.issues.unshift(entry);
       await saveSection('machine',allData.machine);
     } else {
       const priority=document.getElementById('sPriority').value;
       const priorityLabel={normal:'Normal priority',high:'HIGH priority — blocking production',urgent:'URGENT'}[priority];
-      entry={id:now,terminal:document.getElementById('sTerminal').value.trim(),awg:document.getElementById('sAwg').value.trim(),issue:document.getElementById('sIssue').value.trim(),doc:document.getElementById('sDoc').value.trim(),notes:priorityLabel+' | Submitted by: '+name,status:'open',by:name,date:now,ticketNum:tktNum,submittedBy:name,priority,issueType:'setup'};
+      entry={id:now,terminal:document.getElementById('sTerminal').value.trim(),awg:document.getElementById('sAwg').value.trim(),issue:getIssueValue('s'),doc:document.getElementById('sDoc').value.trim(),notes:priorityLabel+' | Submitted by: '+name,status:'open',by:name,date:now,ticketNum:tktNum,submittedBy:name,priority,issueType:'setup'};
       allData.setup.issues.unshift(entry);
       await saveSection('setup',allData.setup);
     }
@@ -541,6 +632,8 @@ async function submitTicket(){
 function resetSubmit(){
   // Clear all fields
   ['aName','aApn','aPress','aIssue','mName','mMachine','mDesc','sName','sTerminal','sAwg','sIssue','sDoc'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  ['aIssueSelect','mIssueSelect','sIssueSelect'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  ['aIssueWrap','mIssueWrap','sIssueWrap'].forEach(id=>{ const el=document.getElementById(id); if(el) el.classList.remove('show'); });
   ['aPriority','mPriority','sPriority'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value='normal'; });
   document.getElementById('submitBtn').disabled=false;
   document.getElementById('submitBtn').innerHTML='<i class="ti ti-send"></i> Submit Ticket';
@@ -552,39 +645,47 @@ function resetSubmit(){
 
 async function lookupTicket(){
   const raw=document.getElementById('iTicket').value.trim().replace(/[^0-9]/g,'');
+  const tkt=raw?'TKT-'+raw:'';
   const result=document.getElementById('statusResult');
-  if(!raw||raw.length<4){ result.innerHTML='<div class="err-box">Please enter all 4 digits of your ticket number.</div>'; return; }
-  const tktVariants=['TKT-'+raw,'S-'+raw];
+  if(!tkt){ result.innerHTML='<div class="err-box">Please enter your 4-digit ticket number.</div>'; return; }
+  if(!/^TKT-\d{4}$/.test(tkt)){ result.innerHTML='<div class="err-box">Please enter all 4 digits of your ticket number.</div>'; return; }
   result.innerHTML='<div class="spinner"></div>';
   try{
     const allData=await loadAllData();
-    let entry=null,foundSec=null;
+    // Search all three sections
+    let entry=null, foundSec=null;
     for(const [sec,key] of [['applicator','applicator'],['machine','machine'],['setup','setup']]){
-      const found=allData[key].issues.find(e=>tktVariants.includes(e.ticketNum));
-      if(found){entry=found;foundSec=sec;break;}
+      const found=allData[key].issues.find(e=>e.ticketNum===tkt);
+      if(found){ entry=found; foundSec=sec; break; }
     }
-    if(!entry){result.innerHTML=`<div class="err-box"><i class="ti ti-ticket-off" style="font-size:16px;display:block;margin-bottom:6px"></i>Ticket <strong>TKT-${raw}</strong> not found.<br><span style="font-size:11px;opacity:.8">Double-check the number and try again.</span></div>`;return;}
+    if(!entry){ result.innerHTML=`<div class="err-box"><i class="ti ti-ticket-off" style="font-size:16px;display:block;margin-bottom:6px"></i>Ticket <strong>${tkt}</strong> not found.<br><span style="font-size:11px;opacity:.8">Double-check the number and try again.</span></div>`; return; }
+
+    // ETA calculation using queue order
     const queueOrder=allData.queues[foundSec]||[];
     const active=allData[foundSec].issues.filter(e=>e.status==='open'||e.status==='inprog');
     const orderedIds=[];
-    queueOrder.forEach(id=>{if(active.find(e=>e.id===id))orderedIds.push(id);});
-    active.forEach(e=>{if(!orderedIds.includes(e.id))orderedIds.push(e.id);});
+    queueOrder.forEach(id=>{ if(active.find(e=>e.id===id)) orderedIds.push(id); });
+    active.forEach(e=>{ if(!orderedIds.includes(e.id)) orderedIds.push(e.id); });
     const myPos=orderedIds.indexOf(entry.id);
     const ahead=myPos===-1?orderedIds.length:myPos;
     const pos=ahead+1;
-    const daysMin=Math.ceil(ahead/2)+1,daysMax=Math.ceil(ahead/2)+2;
+    const daysMin=Math.ceil(ahead/2)+1, daysMax=Math.ceil(ahead/2)+2;
     let rangeText=daysMin<=1&&daysMax<=1?'Today or tomorrow':daysMin===daysMax?'~'+daysMin+' day'+(daysMin!==1?'s':''):daysMin+'-'+daysMax+' days';
     const priorityLabel={urgent:'Urgent',high:'High',normal:'Normal'}[entry.priority||'normal'];
     const priorityColor={urgent:'#e07050',high:'#d4a030',normal:'#aaa'}[entry.priority||'normal'];
+
     const statusBadge={open:'<span class="badge badge-open">Open</span>',inprog:'<span class="badge badge-inprog">In Progress</span>',waiting:'<span class="badge badge-waiting">Waiting on Parts</span>',done:'<span class="badge badge-done">Resolved</span>'}[entry.status]||'<span class="badge badge-open">Open</span>';
-    const statusMsg={open:'Your ticket has been received and is queued.',inprog:'A technician is currently working on this.',waiting:'On hold \u2014 waiting on parts before repair can continue.',done:'This issue has been resolved.'}[entry.status]||'';
+    const statusMsg={open:'Your ticket has been received and is queued.',inprog:'A technician is currently working on this.',waiting:'On hold — waiting on parts before repair can continue.',done:'This issue has been resolved.'}[entry.status]||'';
+
+    // Primary label per type
     const primaryLabel={applicator:`Applicator ${entry.apn}`,machine:`Machine ${entry.machine}`,setup:`Terminal ${entry.terminal}`}[foundSec];
     const typeLabel={applicator:'Applicator Issue',machine:'Machine Issue',setup:'Setup Sheet Issue'}[foundSec];
     const descField={applicator:entry.issue,machine:entry.desc,setup:entry.issue}[foundSec];
     const submitted=new Date(entry.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
     const daysIn=Math.round((Date.now()-entry.date)/86400000);
+
     let etaHtml='';
-    if(entry.status==='done'){etaHtml='';}
+    if(entry.status==='done'){ etaHtml=''; }
     else if(entry.status==='inprog'){
       etaHtml='<div style="margin-top:10px;padding:12px 14px;background:rgba(160,120,20,.1);border:1px solid rgba(160,120,20,.3);border-radius:4px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#d4a030;margin-bottom:4px">Estimated Completion</div><div style="font-size:15px;font-weight:600">Currently being worked on</div><div style="font-size:11px;color:#aaa;margin-top:3px">A technician is actively working on this now.</div></div>';
     } else if(entry.status==='waiting'){
@@ -592,6 +693,7 @@ async function lookupTicket(){
     } else {
       etaHtml='<div style="margin-top:10px;padding:12px 14px;background:rgba(30,120,60,.1);border:1px solid rgba(30,120,60,.3);border-radius:4px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#50a870;margin-bottom:4px">Estimated Completion</div><div style="font-size:22px;font-weight:700;line-height:1">'+rangeText+'</div><div style="font-size:11px;color:#aaa;margin-top:6px;display:flex;gap:12px;flex-wrap:wrap"><span>Queue position: <strong style="color:#f0f0f0">#'+pos+'</strong></span><span>Priority: <strong style="color:'+priorityColor+'">'+priorityLabel+'</strong></span><span>'+ahead+' ahead in queue</span></div></div>';
     }
+
     result.innerHTML=`
       <div class="status-card">
         <div class="status-header">
@@ -599,12 +701,12 @@ async function lookupTicket(){
           <div class="status-type">${typeLabel}</div>
         </div>
         <div class="status-body">
-          <div class="status-row"><span class="status-key">Ticket</span><span class="status-val" style="font-family:monospace;font-weight:600">${entry.ticketNum}</span></div>
+          <div class="status-row"><span class="status-key">Ticket</span><span class="status-val" style="font-family:monospace;font-weight:600">${tkt}</span></div>
           <div class="status-row"><span class="status-key">Status</span><span class="status-val">${statusBadge}</span></div>
           <div class="status-row"><span class="status-key">Issue</span><span class="status-val">${descField}</span></div>
           ${entry.status==='done'&&(entry.notes||entry.result)?`<div class="status-row"><span class="status-key">Resolution</span><span class="status-val">${entry.notes||entry.result}</span></div>`:''}
           <div class="status-row"><span class="status-key">Submitted</span><span class="status-val">${submitted} (${daysIn}d ago)</span></div>
-          <div class="status-row"><span class="status-key">Submitted by</span><span class="status-val">${entry.submittedBy||entry.by||'\u2014'}</span></div>
+          <div class="status-row"><span class="status-key">Submitted by</span><span class="status-val">${entry.submittedBy||entry.by||'—'}</span></div>
         </div>
       </div>
       ${etaHtml}
@@ -612,7 +714,7 @@ async function lookupTicket(){
         <i class="ti ti-info-circle" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>${statusMsg}
       </div>`;
   }catch(e){
-    result.innerHTML=`<div class="err-box">Could not load ticket data \u2014 check your connection.<br><span style="font-size:11px;opacity:.8">${e.message}</span></div>`;
+    result.innerHTML=`<div class="err-box">Could not load ticket data — check your connection.<br><span style="font-size:11px;opacity:.8">${e.message}</span></div>`;
   }
 }
 
@@ -625,7 +727,7 @@ function showErr(msg){
 // Pre-fill from URL params
 const urlParams=new URLSearchParams(window.location.search);
 if(urlParams.get('ticket')){
-  document.getElementById('iTicket').value=urlParams.get('ticket').toUpperCase().replace('TKT-','').replace('S-','').replace(/[^0-9]/g,'');
+  document.getElementById('iTicket').value=urlParams.get('ticket').toUpperCase().replace('TKT-','');
   switchTab('status');
   lookupTicket();
 }
