@@ -292,7 +292,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
          oninput="this.value=this.value.toUpperCase().replace(/[^0-9S\-TKT]/g,'').slice(0,10)"
           onkeydown="if(event.key==='Enter') lookupTicket()">
       </div>
-      <div class="field-hint">Enter the 4-digit number from your ticket</div>
+      <div class="field-hint">Enter your ticket number (e.g. TKT-0042 or S-12)</div>
     </div>
     <button class="btn btn-red" onclick="lookupTicket()"><i class="ti ti-search"></i> Check Status</button>
     <div id="statusResult"></div>
