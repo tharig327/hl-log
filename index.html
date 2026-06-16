@@ -459,7 +459,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       </div>
     </div>
     <div class="field"><label>Logged By</label><input id="fBy" placeholder="Your name"></div>
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px 10px;background:var(--hl-surface2);border:1px solid var(--hl-border);border-radius:3px;cursor:pointer" onclick="this.querySelector('input').click()">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px 10px;background:var(--hl-surface2);border:1px solid var(--hl-border);border-radius:3px;cursor:pointer" onclick="event.target.tagName!=='INPUT'&&this.querySelector('input').click()">
       <input type="checkbox" id="fSuppress" style="width:15px;height:15px;accent-color:var(--hl-red);cursor:pointer;flex-shrink:0">
       <div>
         <div style="font-size:12px;font-weight:500;color:var(--hl-text)">Suppress notification</div>
@@ -491,7 +491,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         </div>
       </div>
     </div>
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px 10px;background:var(--hl-surface2);border:1px solid var(--hl-border);border-radius:3px;cursor:pointer" onclick="this.querySelector('input').click()">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px 10px;background:var(--hl-surface2);border:1px solid var(--hl-border);border-radius:3px;cursor:pointer" onclick="event.target.tagName!=='INPUT'&&this.querySelector('input').click()">
       <input type="checkbox" id="mSuppress" style="width:15px;height:15px;accent-color:var(--hl-red);cursor:pointer;flex-shrink:0">
       <div>
         <div style="font-size:12px;font-weight:500;color:var(--hl-text)">Suppress notification</div>
@@ -525,7 +525,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         </div>
       </div>
     </div>
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px 10px;background:var(--hl-surface2);border:1px solid var(--hl-border);border-radius:3px;cursor:pointer" onclick="this.querySelector('input').click()">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px 10px;background:var(--hl-surface2);border:1px solid var(--hl-border);border-radius:3px;cursor:pointer" onclick="event.target.tagName!=='INPUT'&&this.querySelector('input').click()">
       <input type="checkbox" id="sSuppress" style="width:15px;height:15px;accent-color:var(--hl-red);cursor:pointer;flex-shrink:0">
       <div>
         <div style="font-size:12px;font-weight:500;color:var(--hl-text)">Suppress notification</div>
