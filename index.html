@@ -558,13 +558,30 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <!-- PIN CHANGE MODAL -->
 <div class="modal-overlay" id="pinModal">
-  <div class="modal" style="max-width:340px">
-    <h2>Change PIN</h2>
-    <div class="field"><label>Current PIN</label><input id="pmCurrent" type="password" inputmode="numeric" maxlength="4" placeholder="Current 4-digit PIN" autocomplete="off"></div>
-    <div class="field"><label>New PIN</label><input id="pmNew" type="password" inputmode="numeric" maxlength="4" placeholder="New 4-digit PIN" autocomplete="off"></div>
-    <div class="field"><label>Confirm New PIN</label><input id="pmConfirm" type="password" inputmode="numeric" maxlength="4" placeholder="Repeat new PIN" autocomplete="off"></div>
-    <div style="font-size:11px;color:#cc4444;min-height:16px;margin-top:4px" id="pinModalErr"></div>
-    <div class="modal-actions"><button class="btn" onclick="closePINModal()">Cancel</button><button class="btn btn-red" onclick="savePIN()">Save PIN</button></div>
+  <div class="modal" style="max-width:420px">
+    <h2>Manage Users &amp; PINs</h2>
+    <div style="margin-bottom:1rem">
+      <div style="font-size:9px;color:var(--hl-text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Users</div>
+      <div id="userList" style="border:1px solid var(--hl-border2);border-radius:3px;overflow:hidden;background:var(--hl-bg)"></div>
+    </div>
+    <div style="border:1px solid var(--hl-border);border-radius:4px;padding:10px 12px;margin-bottom:1rem;background:var(--hl-surface2)">
+      <div style="font-size:9px;color:var(--hl-text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Add New User</div>
+      <div class="row2" style="margin-bottom:8px">
+        <div class="field" style="margin-bottom:0"><label>Name *</label><input id="nuName" placeholder="e.g. John Smith" autocomplete="off"></div>
+        <div class="field" style="margin-bottom:0"><label>PIN *</label><input id="nuPin" type="password" inputmode="numeric" maxlength="4" placeholder="4-digit PIN" autocomplete="off"></div>
+      </div>
+      <button class="btn btn-red" style="width:100%" onclick="addUser()"><i class="ti ti-user-plus"></i> Add User</button>
+    </div>
+    <div style="border:1px solid var(--hl-border);border-radius:4px;padding:10px 12px;background:var(--hl-surface2)">
+      <div style="font-size:9px;color:var(--hl-text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Change Your PIN</div>
+      <div class="row2">
+        <div class="field" style="margin-bottom:8px"><label>Current PIN</label><input id="pmCurrent" type="password" inputmode="numeric" maxlength="4" placeholder="Current PIN" autocomplete="off"></div>
+        <div class="field" style="margin-bottom:8px"><label>New PIN</label><input id="pmNew" type="password" inputmode="numeric" maxlength="4" placeholder="New PIN" autocomplete="off"></div>
+      </div>
+      <button class="btn" style="width:100%" onclick="savePIN()"><i class="ti ti-refresh"></i> Update My PIN</button>
+    </div>
+    <div style="font-size:11px;color:#cc4444;min-height:16px;margin-top:8px" id="pinModalErr"></div>
+    <div class="modal-actions"><button class="btn" onclick="closePINModal()">Done</button></div>
   </div>
 </div>
 
@@ -663,7 +680,7 @@ async function ensureGist(){
   gistId=created.id; lsSet('hl_gist_id',gistId); return gistId;
 }
 async function writeGist(files){ const id=await ensureGist(); await gistAPI('PATCH','gists/'+id,{files}); }
-async function pushMeta(h){ try{ await writeGist({[META_FILE]:{content:JSON.stringify({pinHash:h},null,2)}}); }catch(e){} }
+async function pushMeta(users){ try{ await writeGist({[META_FILE]:{content:JSON.stringify({users},null,2)}}); }catch(e){ console.error('pushMeta failed',e); } }
 async function pushAll(silent=true){
   setSyncStatus('syncing');
   try{
@@ -736,7 +753,7 @@ async function loadFromGist(){
     // Queues
     ['applicator','machine','setup'].forEach(sec=>{ const f=g.files[QUEUE_FILES[sec]]; if(f) state[sec].queue=JSON.parse(f.content)||[]; });
     // Meta
-    if(g.files[META_FILE]){ const m=JSON.parse(g.files[META_FILE].content); if(m.pinHash) lsSet('hl_pin_hash',m.pinHash); }
+    if(g.files[META_FILE]){ const m=JSON.parse(g.files[META_FILE].content); if(m.users) lsSet('hl_users',JSON.stringify(m.users)); else if(m.pinHash){ const users=[{name:'Tyler',pinHash:m.pinHash}]; lsSet('hl_users',JSON.stringify(users)); } }
     saveLocal();
   }catch(e){ loadLocal(); }
 }
@@ -751,39 +768,75 @@ async function handlePin(){
   if(pinMode==='setup1'){ pinSetupFirst=pinBuffer; pinBuffer=''; updateDots(); $('pinTitle').textContent='Confirm PIN'; $('pinSub').textContent='Re-enter your new PIN'; pinMode='setup2'; return; }
   if(pinMode==='setup2'){
     if(pinBuffer!==pinSetupFirst){ $('pinError').textContent='PINs do not match'; dotError(); pinBuffer=''; pinSetupFirst=''; pinMode='setup1'; setTimeout(()=>{ $('pinTitle').textContent='Set a PIN'; $('pinSub').textContent='Choose a 4-digit PIN'; },800); return; }
-    const h=await sha256(pinBuffer); lsSet('hl_pin_hash',h); await pushMeta(h); await loadFromGist(); doUnlock(); return;
+    const h=await sha256(pinBuffer);
+    const users=[{name:'Tyler',pinHash:h}];
+    lsSet('hl_users',JSON.stringify(users));
+    await pushMeta(users); await loadFromGist(); doUnlock('Tyler'); return;
   }
-  setPinLoading('Checking…');
   const h=await sha256(pinBuffer);
-  let storedHash=lsGet('hl_pin_hash');
-  try{ const r=await fetch('https://api.github.com/gists/'+(await ensureGist()),{headers:{'Authorization':'token '+getToken(),'Accept':'application/vnd.github.v3+json'}}); const g=await r.json(); if(g.files[META_FILE]){ const m=JSON.parse(g.files[META_FILE].content); if(m.pinHash){ storedHash=m.pinHash; lsSet('hl_pin_hash',m.pinHash); } } }catch(e){}
-  if(!storedHash){ pinSetupFirst=pinBuffer; pinBuffer=''; updateDots(); $('pinTitle').textContent='Confirm PIN'; $('pinSub').textContent='Re-enter your new PIN'; setPinLoading(''); pinMode='setup2'; return; }
-  if(h===storedHash){ setPinLoading('Loading…'); await loadFromGist(); setPinLoading(''); doUnlock(); }
+  // Check local cache first — instant, no network lag
+  let users=[];
+  try{ users=JSON.parse(lsGet('hl_users')||'[]'); }catch(e){}
+  const matchedLocal=users.find(u=>u.pinHash===h);
+  if(matchedLocal){
+    lsSet('hl_user_name',matchedLocal.name);
+    setPinLoading('Loading…'); await loadFromGist(); setPinLoading('');
+    doUnlock(matchedLocal.name);
+    ensureGist().then(id=>fetch('https://api.github.com/gists/'+id,{headers:{'Authorization':'token '+getToken(),'Accept':'application/vnd.github.v3+json'}}))
+      .then(r=>r.json()).then(g=>{ if(g.files&&g.files[META_FILE]){ const m=JSON.parse(g.files[META_FILE].content); if(m.users) lsSet('hl_users',JSON.stringify(m.users)); } }).catch(()=>{});
+    return;
+  }
+  // Not in local cache — fetch from Gist
+  setPinLoading('Checking…');
+  try{
+    const r=await fetch('https://api.github.com/gists/'+(await ensureGist()),{headers:{'Authorization':'token '+getToken(),'Accept':'application/vnd.github.v3+json'}});
+    const g=await r.json();
+    if(g.files[META_FILE]){
+      const m=JSON.parse(g.files[META_FILE].content);
+      if(m.users){ users=m.users; lsSet('hl_users',JSON.stringify(users)); }
+      else if(m.pinHash){ users=[{name:'Tyler',pinHash:m.pinHash}]; await pushMeta(users); lsSet('hl_users',JSON.stringify(users)); }
+    }
+  }catch(e){}
+  if(!users.length){ pinSetupFirst=pinBuffer; pinBuffer=''; updateDots(); $('pinTitle').textContent='Confirm PIN'; $('pinSub').textContent='Re-enter your new PIN'; setPinLoading(''); pinMode='setup2'; return; }
+  const matched=users.find(u=>u.pinHash===h);
+  if(matched){ lsSet('hl_user_name',matched.name); setPinLoading('Loading…'); await loadFromGist(); setPinLoading(''); doUnlock(matched.name); }
   else{ setPinLoading(''); $('pinError').textContent='Incorrect PIN'; dotError(); pinBuffer=''; }
 }
 async function resetPinCache(){
   setPinLoading('Syncing PIN…'); $('pinError').textContent=''; pinBuffer=''; updateDots();
-  try{ lsDel('hl_pin_hash'); const id=await ensureGist(); const r=await fetch('https://api.github.com/gists/'+id,{headers:{'Authorization':'token '+getToken(),'Accept':'application/vnd.github.v3+json'}}); const g=await r.json(); if(g.files[META_FILE]){ const m=JSON.parse(g.files[META_FILE].content); if(m.pinHash){ lsSet('hl_pin_hash',m.pinHash); setPinLoading('PIN synced — enter your PIN'); } else setPinLoading('No PIN set yet'); } }
+  try{ lsDel('hl_users'); const id=await ensureGist(); const r=await fetch('https://api.github.com/gists/'+id,{headers:{'Authorization':'token '+getToken(),'Accept':'application/vnd.github.v3+json'}}); const g=await r.json(); if(g.files[META_FILE]){ const m=JSON.parse(g.files[META_FILE].content); if(m.users&&m.users.length){ lsSet('hl_users',JSON.stringify(m.users)); setPinLoading('Synced — enter your PIN'); } else if(m.pinHash){ const users=[{name:'Tyler',pinHash:m.pinHash}]; lsSet('hl_users',JSON.stringify(users)); setPinLoading('Synced — enter your PIN'); } else setPinLoading('No users set yet'); } }
   catch(e){ setPinLoading('Could not reach Gist'); }
   setTimeout(()=>setPinLoading(''),3000);
 }
 async function initPinScreen(){
-  const h=lsGet('hl_pin_hash');
-  if(!h){ try{ setPinLoading('Connecting…'); const id=await ensureGist(); const r=await fetch('https://api.github.com/gists/'+id,{headers:{'Authorization':'token '+getToken(),'Accept':'application/vnd.github.v3+json'}}); const g=await r.json(); if(g.files[META_FILE]){ const m=JSON.parse(g.files[META_FILE].content); if(m.pinHash){ lsSet('hl_pin_hash',m.pinHash); setPinLoading(''); pinMode='unlock'; } else{ setPinLoading(''); $('pinTitle').textContent='Set a PIN'; $('pinSub').textContent='Choose a 4-digit PIN'; pinMode='setup1'; } } }catch(e){ setPinLoading('Offline — enter PIN'); pinMode='unlock'; } }
-  else{ pinMode='unlock'; }
+  const cached=lsGet('hl_users');
+  if(cached&&JSON.parse(cached).length){ pinMode='unlock'; return; }
+  try{
+    setPinLoading('Connecting…');
+    const id=await ensureGist();
+    const r=await fetch('https://api.github.com/gists/'+id,{headers:{'Authorization':'token '+getToken(),'Accept':'application/vnd.github.v3+json'}});
+    const g=await r.json();
+    if(g.files[META_FILE]){
+      const m=JSON.parse(g.files[META_FILE].content);
+      if(m.users&&m.users.length){ lsSet('hl_users',JSON.stringify(m.users)); setPinLoading(''); pinMode='unlock'; }
+      else if(m.pinHash){ const users=[{name:'Tyler',pinHash:m.pinHash}]; lsSet('hl_users',JSON.stringify(users)); await pushMeta(users); setPinLoading(''); pinMode='unlock'; }
+      else{ setPinLoading(''); $('pinTitle').textContent='Set a PIN'; $('pinSub').textContent='Choose a 4-digit PIN'; pinMode='setup1'; }
+    } else{ setPinLoading(''); $('pinTitle').textContent='Set a PIN'; $('pinSub').textContent='Choose a 4-digit PIN'; pinMode='setup1'; }
+  }catch(e){ setPinLoading('Offline — enter PIN'); pinMode='unlock'; }
 }
 function resetInactivity(){ clearTimeout(inactivityTimer); inactivityTimer=setTimeout(lockApp,INACTIVITY); }
-function doUnlock(){
+function doUnlock(userName){
   sessionStorage.setItem('hl_s','1');
   showScreen('app'); resetInactivity();
   ['mousemove','keydown','click','touchstart'].forEach(e=>document.addEventListener(e,resetInactivity,{passive:true}));
   renderAll(); setSyncStatus('ok'); startPolling();
+  if(userName){ toast('Welcome, '+userName+'!','#50a870'); }
 }
 function lockApp(silent=false){ clearTimeout(inactivityTimer); stopPolling(); sessionStorage.removeItem('hl_s'); showScreen('pinScreen'); pinBuffer=''; updateDots(); $('pinTitle').textContent='Enter PIN'; $('pinSub').textContent='H&L Issue Log'; $('pinError').textContent=''; setPinLoading(''); pinMode='unlock'; }
 async function initApp(){
   const token=getToken(); if(!token){ showScreen('setupScreen'); return; }
   showScreen('pinScreen');
-  if(sessionStorage.getItem('hl_s')==='1'){ loadLocal(); doUnlock(); loadFromGist().then(()=>{ renderAll(); setSyncStatus('ok'); }).catch(()=>{}); return; }
+  if(sessionStorage.getItem('hl_s')==='1'){ loadLocal(); doUnlock(lsGet('hl_user_name')||''); loadFromGist().then(()=>{ renderAll(); setSyncStatus('ok'); }).catch(()=>{}); return; }
   await initPinScreen();
 }
 
@@ -814,16 +867,64 @@ function importJSON(evt){
 }
 
 // ── PIN CHANGE ──
-function openChangePIN(){ $('pmCurrent').value=''; $('pmNew').value=''; $('pmConfirm').value=''; $('pinModalErr').textContent=''; $('pinModal').classList.add('open'); }
+function openChangePIN(){
+  $('pmCurrent').value=''; $('pmNew').value=''; $('nuName').value=''; $('nuPin').value='';
+  $('pinModalErr').textContent='';
+  renderUserList();
+  $('pinModal').classList.add('open');
+}
 function closePINModal(){ $('pinModal').classList.remove('open'); }
+
+function getUsers(){ try{ return JSON.parse(lsGet('hl_users')||'[]'); }catch(e){ return []; } }
+function saveUsersLocal(users){ lsSet('hl_users',JSON.stringify(users)); }
+
+function renderUserList(){
+  const users=getUsers();
+  const currentName=lsGet('hl_user_name')||'';
+  const ul=$('userList');
+  if(!users.length){ ul.innerHTML='<div style="padding:10px 12px;font-size:12px;color:var(--hl-text3)">No users set up yet.</div>'; return; }
+  ul.innerHTML=users.map((u,i)=>`
+    <div style="display:flex;align-items:center;padding:9px 12px;border-bottom:1px solid var(--hl-border);gap:8px">
+      <div style="width:30px;height:30px;border-radius:50%;background:var(--hl-red-dim);border:1px solid #551515;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:#cc4444;flex-shrink:0">${u.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)}</div>
+      <div style="flex:1;font-size:13px;font-weight:500">${u.name}${u.name===currentName?'<span style="font-size:10px;color:#50a870;margin-left:6px">(you)</span>':''}</div>
+      ${users.length>1?`<button class="btn-sm btn-del" onclick="removeUser(${i})"><i class="ti ti-trash"></i></button>`:''}
+    </div>`).join('');
+}
+
+async function addUser(){
+  const name=$('nuName').value.trim(), pin=$('nuPin').value.trim();
+  const err=$('pinModalErr'); err.textContent='';
+  if(!name){ err.textContent='Name is required'; return; }
+  if(!/^\d{4}$/.test(pin)){ err.textContent='PIN must be exactly 4 digits'; return; }
+  const users=getUsers();
+  if(users.find(u=>u.name.toLowerCase()===name.toLowerCase())){ err.textContent='A user with that name already exists'; return; }
+  users.push({name,pinHash:await sha256(pin)});
+  saveUsersLocal(users); await pushMeta(users);
+  $('nuName').value=''; $('nuPin').value='';
+  renderUserList(); toast('Added user: '+name);
+}
+
+async function removeUser(idx){
+  const users=getUsers();
+  const currentName=lsGet('hl_user_name')||'';
+  if(users[idx].name===currentName){ $('pinModalErr').textContent="You can't remove yourself"; return; }
+  if(!confirm('Remove user '+users[idx].name+'?')) return;
+  users.splice(idx,1); saveUsersLocal(users); await pushMeta(users);
+  renderUserList(); toast('User removed');
+}
+
 async function savePIN(){
-  const cur=$('pmCurrent').value.trim(), nw=$('pmNew').value.trim(), cf=$('pmConfirm').value.trim();
-  const err=$('pinModalErr');
-  if(!/^\d{4}$/.test(cur)||!/^\d{4}$/.test(nw)||!/^\d{4}$/.test(cf)){ err.textContent='All fields must be exactly 4 digits'; return; }
-  if(nw!==cf){ err.textContent='New PINs do not match'; return; }
-  if(await sha256(cur)!==lsGet('hl_pin_hash')){ err.textContent='Current PIN is incorrect'; return; }
-  const h=await sha256(nw); lsSet('hl_pin_hash',h); await pushMeta(h);
-  closePINModal(); toast('PIN updated on all devices');
+  const cur=$('pmCurrent').value.trim(), nw=$('pmNew').value.trim();
+  const err=$('pinModalErr'); err.textContent='';
+  if(!/^\d{4}$/.test(cur)||!/^\d{4}$/.test(nw)){ err.textContent='Both fields must be exactly 4 digits'; return; }
+  const users=getUsers();
+  const currentName=lsGet('hl_user_name')||'';
+  const curHash=await sha256(cur);
+  const idx=users.findIndex(u=>u.name===currentName&&u.pinHash===curHash);
+  if(idx===-1){ err.textContent='Current PIN is incorrect'; return; }
+  users[idx].pinHash=await sha256(nw);
+  saveUsersLocal(users); await pushMeta(users);
+  closePINModal(); toast('PIN updated');
 }
 
 // ── NAVIGATION ──
@@ -1131,19 +1232,19 @@ function openModal(sec,id=null){
     $('aModalTitle').textContent=e?'Edit Applicator Entry':'Log Applicator Issue';
     $('fApn').value=e?.apn||''; $('fPress').value=e?.press||''; $('fTerminal').value=e?.terminal||'';
     $('fWire').value=e?.wire||''; $('fIssue').value=e?.issue||''; $('fNotes').value=e?.notes||'';
-    $('fStatus').value=e?.status||'open'; $('fBy').value=e?.by||'';
+    $('fStatus').value=e?.status||'open'; $('fBy').value=e?.by||(id?'':lsGet('hl_user_name')||'');
     $('fTicket').value=e?.ticketNum?e.ticketNum.replace('TKT-','').replace('S-',''):''; $('fSuppress').checked=e?.ticketNum?.startsWith('S-')||false;
   } else if(sec==='machine'){
     $('mModalTitle').textContent=e?'Edit Machine Entry':'Log Machine Issue';
     $('mMachine').value=e?.machine||''; $('mDesc').value=e?.desc||'';
     $('mResult').value=e?.result||''; $('mStatus').value=e?.status||'open';
-    $('mBy').value=e?.by||''; $('mTicket').value=e?.ticketNum?e.ticketNum.replace('TKT-','').replace('S-',''):''; $('mSuppress').checked=e?.ticketNum?.startsWith('S-')||false;
+    $('mBy').value=e?.by||(id?'':lsGet('hl_user_name')||''); $('mTicket').value=e?.ticketNum?e.ticketNum.replace('TKT-','').replace('S-',''):''; $('mSuppress').checked=e?.ticketNum?.startsWith('S-')||false;
   } else {
     $('sModalTitle').textContent=e?'Edit Setup Sheet Entry':'Log Setup Sheet Issue';
     $('sTerminal').value=e?.terminal||''; $('sAwg').value=e?.awg||'';
     $('sIssue').value=e?.issue||''; $('sDoc').value=e?.doc||'';
     $('sNotes').value=e?.notes||''; $('sStatus').value=e?.status||'open';
-    $('sBy').value=e?.by||''; $('sTicket').value=e?.ticketNum?e.ticketNum.replace('TKT-','').replace('S-',''):''; $('sSuppress').checked=e?.ticketNum?.startsWith('S-')||false;
+    $('sBy').value=e?.by||(id?'':lsGet('hl_user_name')||''); $('sTicket').value=e?.ticketNum?e.ticketNum.replace('TKT-','').replace('S-',''):''; $('sSuppress').checked=e?.ticketNum?.startsWith('S-')||false;
   }
   // Reset suppress checkbox
   const chkMap = {applicator:'fSuppress',machine:'mSuppress',setup:'sSuppress'};
@@ -1176,6 +1277,7 @@ function saveEntry(sec){
     if(!terminal||!issue){ alert('Terminal # and issue description are required.'); return; }
     entry={id:editId||Date.now(),terminal,awg:$('sAwg').value.trim(),issue,doc:$('sDoc').value.trim(),notes:$('sNotes').value.trim(),status:$('sStatus').value,by:$('sBy').value.trim(),date:existing?.date||Date.now(),...(finalTkt&&{ticketNum:finalTkt})};
   }
+  const byVal={applicator:$('fBy'),machine:$('mBy'),setup:$('sBy')}[sec]?.value.trim(); if(byVal) lsSet('hl_user_name',byVal);
   if(editId){const i=state[sec].entries.findIndex(e=>e.id===editId);state[sec].entries[i]=entry;} else state[sec].entries.unshift(entry);
   closeModal(sec); renderSection(sec); renderHistory(sec); renderQueueTab(sec); pushSection(sec);
 }
