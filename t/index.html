@@ -734,6 +734,8 @@ if(urlParams.get('ticket')){
 if(urlParams.get('type')&&['applicator','machine','setup'].includes(urlParams.get('type'))){
   selectType(urlParams.get('type'));
 }
+    // Init
+loadCommonIssues();
 </script>
 <script>
 if ('serviceWorker' in navigator) {
