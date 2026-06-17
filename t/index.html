@@ -9,6 +9,54 @@
 <link rel="icon" href="icon-192.png">
 <meta name="theme-color" content="#cc2222">
 <style>
+  .pill-badge{
+  margin-left:6px;
+  min-width:14px;
+  height:14px;
+
+  font-size:8px;
+  font-weight:600;
+
+  border-radius:10px;
+  background:var(--hl-red);
+  color:#fff;
+
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+
+  padding:0 4px;
+}
+
+.pill-badge:empty{
+  display:none;
+}
+  .btn-badge{
+  position:absolute;
+  top:4px;
+  right:6px;
+
+  min-width:16px;
+  height:16px;
+  padding:0 5px;
+
+  font-size:9px;
+  font-weight:600;
+
+  border-radius:10px;
+  background:#ffffff;
+  color:#cc2222;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  box-shadow:0 0 0 2px var(--hl-red);
+}
+
+.btn-badge:empty{
+  display:none;
+}
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
   --hl-bg:#111111;--hl-surface:#1c1c1c;--hl-surface2:#252525;
@@ -113,7 +161,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="tabs">
   <button class="tab-btn active" onclick="switchTab('submit')"><i class="ti ti-clipboard-plus" style="font-size:15px"></i> Submit Ticket</button>
   <button class="tab-btn" onclick="switchTab('status')"><i class="ti ti-search" style="font-size:15px"></i> Check Status</button>
-  <button class="tab-btn" onclick="switchTab('open')"><i class="ti ti-list" style="font-size:15px"></i> Open Tickets</button>
+  <button class="tab-btn" onclick="switchTab('open')" style="position:relative">
+  <i class="ti ti-list" style="font-size:15px"></i>
+  Open Tickets
+  <span class="btn-badge" id="openTotalCount"></span>
+</button>
 </div>
 
 <div class="card">
@@ -303,9 +355,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div style="margin-bottom:12px">
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
         <button class="filter-btn active" onclick="filterOpen('all')" id="filt-all">All Types</button>
-        <button class="filter-btn" onclick="filterOpen('applicator')" id="filt-applicator"><i class="ti ti-tool" style="font-size:12px"></i> Applicator</button>
-        <button class="filter-btn" onclick="filterOpen('machine')" id="filt-machine"><i class="ti ti-settings-2" style="font-size:12px"></i> Machine</button>
-        <button class="filter-btn" onclick="filterOpen('setup')" id="filt-setup"><i class="ti ti-file-description" style="font-size:12px"></i> Setup Sheet</button>
+        <button class="filter-btn" onclick="filterOpen('applicator')" id="filt-applicator">
+  <i class="ti ti-tool" style="font-size:12px"></i> Applicator
+  <span class="pill-badge" id="count-app"></span>
+</button>
+        <button class="filter-btn" onclick="filterOpen('machine')" id="filt-machine"><i class="ti ti-settings-2" style="font-size:12px"></i> Machine<span class="pill-badge" id="count-mach"></span></button>
+        <button class="filter-btn" onclick="filterOpen('setup')" id="filt-setup"><i class="ti ti-file-description" style="font-size:12px"></i> Setup Sheet<span class="pill-badge" id="count-set"></span></button>
       </div>
     </div>
     <div id="openTicketsList"><div class="spinner"></div></div>
@@ -413,7 +468,40 @@ function filterOpen(type){
   document.getElementById('filt-'+type).classList.add('active');
   renderOpenTickets(window._openTicketsData);
 }
+function updateOpenTotal(){
+  if(!window._openTicketsData) return;
 
+  const {aItems, mItems, sItems} = window._openTicketsData;
+
+
+const total = [...aItems, ...mItems, ...sItems]
+  .filter(e => e.status !== 'waiting').length;
+
+
+  const el = document.getElementById('openTotalCount');
+  if(el){
+    el.textContent = total || '';
+  }
+}
+function updateSectionCounts(){
+  if(!window._openTicketsData) return;
+
+  const {aItems, mItems, sItems} = window._openTicketsData;
+
+
+const app = aItems.filter(e => e.status !== 'waiting').length;
+const mach = mItems.filter(e => e.status !== 'waiting').length;
+const set = sItems.filter(e => e.status !== 'waiting').length;
+
+
+  const aEl = document.getElementById('count-app');
+  const mEl = document.getElementById('count-mach');
+  const sEl = document.getElementById('count-set');
+
+  if(aEl) aEl.textContent = app || '';
+  if(mEl) mEl.textContent = mach || '';
+  if(sEl) sEl.textContent = set || '';
+}
 async function loadOpenTickets(){
   const el = document.getElementById('openTicketsList');
   el.innerHTML = '<div class="spinner"></div>';
@@ -508,7 +596,9 @@ function renderOpenTickets(data){
 
   el.innerHTML = active.map(cardHTML).join('') +
     (waiting.length ? '<div style="font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--hl-text3);padding:10px 4px 6px;margin-top:4px">Waiting on Parts</div>' + waiting.map(cardHTML).join('') : '');
-}
+    updateOpenTotal();
+    updateSectionCounts();
+  }
 
 function quickLookup(tktNum){
   document.getElementById('iTicket').value = tktNum.startsWith('S-') ? tktNum : tktNum.replace('TKT-','');
@@ -738,6 +828,7 @@ if(urlParams.get('type')&&['applicator','machine','setup'].includes(urlParams.ge
 }
     // Init
 loadCommonIssues();
+loadOpenTickets(); // 👈 ADD THIS
 </script>
 <script>
 if ('serviceWorker' in navigator) {
