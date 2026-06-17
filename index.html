@@ -282,6 +282,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="section-tab" onclick="switchSection('contacts')" id="stab-contacts">
       <i class="ti ti-address-book"></i><span class="tab-text">Contacts</span>
     </div>
+    <div class="section-tab" onclick="switchSection('customers')" id="stab-customers">
+      <i class="ti ti-building"></i>
+        <span class="tab-text">Customers</span>
+      </div>
   </div>
 
   <!-- APPLICATOR SECTION -->
@@ -437,6 +441,32 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div id="emptyContacts" class="empty" style="display:none"><i class="ti ti-users" style="font-size:26px;display:block;margin-bottom:6px"></i>No contacts yet</div>
     </div>
   </div>
+  <!-- CUSTOMERS SECTION -->
+<div id="section-customers" style="display:none">
+  <div class="contacts-pad" style="padding:1rem 1.25rem 1.5rem">
+    
+    <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:.75rem;border-bottom:1px solid var(--hl-border);margin-bottom:.75rem;gap:8px">
+      <p style="font-size:12px;color:var(--hl-text2)">
+        Shared customers — used in Setup Sheet logging.
+      </p>
+      <button class="btn" onclick="openCustomerModal()">
+        <i class="ti ti-plus"></i> Add Customer
+      </button>
+    </div>
+
+    <input type="search" id="customerSearch"
+      placeholder="Search customers…"
+      style="width:100%;margin-bottom:.75rem"
+      oninput="renderCustomers()">
+
+    <div id="customerList"></div>
+
+    <div id="emptyCustomers" class="empty" style="display:none">
+      <i class="ti ti-building" style="font-size:26px;display:block;margin-bottom:6px"></i>
+      No customers yet
+    </div>
+  </div>
+</div>
 </div>
 
 <!-- APPLICATOR MODAL -->
@@ -513,7 +543,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="modal">
     <h2 id="sModalTitle">Log Setup Sheet Issue</h2>
     <div class="row3">
-  <div class="field"><label>Customer</label><input id="sCustomer" placeholder="e.g. BraunAbility"></div>
+  <div class="field"><label>Customer</label><input list="customerOptions" id="sCustomer" placeholder="Select or type customer">
+<datalist id="customerOptions"></datalist></div>
   <div class="field"><label>Terminal # *</label><input id="sTerminal"></div>
   <div class="field"><label>AWG</label><input id="sAwg"></div>
 </div>
@@ -591,7 +622,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="modal-actions"><button class="btn" onclick="closeContactModal()">Cancel</button><button class="btn btn-red" onclick="saveContact()">Save Contact</button></div>
   </div>
 </div>
+<!-- CUSTOMER MODAL -->
+<div class="modal-overlay" id="customerModal">
+  <div class="modal" style="max-width:360px">
+    <h2 id="customerModalTitle">Add Customer</h2>
 
+    <div class="field">
+      <label>Customer Name *</label>
+      <input id="custName" placeholder="e.g. BraunAbility">
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn" onclick="closeCustomerModal()">Cancel</button>
+      <button class="btn btn-red" onclick="saveCustomer()">Save</button>
+    </div>
+  </div>
+</div>
 <!-- PIN CHANGE MODAL -->
 <div class="modal-overlay" id="pinModal">
   <div class="modal" style="max-width:420px">
@@ -665,7 +711,7 @@ const state = {
   machine:    { entries:[], queue:[] },
   setup:      { entries:[], queue:[] }
 };
-let contacts = [], gistId = null;
+let contacts = [], customersList = [], gistId = null;
 let editId = null, editSection = null, editCId = null;
 let notifyId = null, notifySection = null;
 let selectedRecipients = new Set();
@@ -742,7 +788,11 @@ async function pushAll(silent=true){
   setSyncStatus('syncing');
   try{
     await writeGist({
-      [DATA_FILE]:{content:JSON.stringify({issues:state.applicator.entries,contacts:contacts},null,2)},
+[DATA_FILE]:{content:JSON.stringify({
+  issues:state.applicator.entries,
+  contacts:contacts,
+  customers:customersList
+},null,2)},
       [MACH_FILE]:{content:JSON.stringify({issues:state.machine.entries},null,2)},
       [SETUP_FILE]:{content:JSON.stringify({issues:state.setup.entries},null,2)},
       [QUEUE_FILES.applicator]:{content:JSON.stringify(state.applicator.queue,null,2)},
@@ -760,7 +810,11 @@ async function pushSection(sec){
     setup: SETUP_FILE
   };
   const files = {};
-  if(sec==='applicator') files[DATA_FILE]={content:JSON.stringify({issues:state.applicator.entries,contacts:contacts},null,2)};
+  if(sec==='applicator') files[DATA_FILE]={content:JSON.stringify({
+  issues:state.applicator.entries,
+  contacts:contacts,
+  customers:customersList
+},null,2)};
   else files[fileMap[sec]]={content:JSON.stringify({issues:state[sec].entries},null,2)};
   files[QUEUE_FILES[sec]]={content:JSON.stringify(state[sec].queue,null,2)};
   setSyncStatus('syncing');
@@ -779,7 +833,8 @@ function saveLocal(){
     applicator: state.applicator,
     machine: state.machine,
     setup: state.setup,
-    contacts
+    contacts,
+    customers: customersList
   }));
 }
 function loadLocal(){
@@ -792,6 +847,7 @@ function loadLocal(){
     if(Array.isArray(d.contacts)) contacts=d.contacts;
     // Legacy: if old format with top-level issues array
     if(d.issues){ state.applicator.entries=d.issues; }
+    if(Array.isArray(d.customers)) customersList = d.customers;
   }catch(e){}
 }
 async function loadFromGist(){
@@ -802,7 +858,12 @@ async function loadFromGist(){
     const g=await r.json();
     lastGistUpdatedAt=g.updated_at;
     // Applicator
-    if(g.files[DATA_FILE]){ const d=JSON.parse(g.files[DATA_FILE].content); state.applicator.entries=d.issues||[]; if(d.contacts) contacts=d.contacts; }
+    if(g.files[DATA_FILE]){
+  const d=JSON.parse(g.files[DATA_FILE].content);
+  state.applicator.entries=d.issues||[];
+  if(d.contacts) contacts=d.contacts;
+  if(d.customers) customersList=d.customers;
+}
     // Machine
     if(g.files[MACH_FILE]){ const d=JSON.parse(g.files[MACH_FILE].content); state.machine.entries=d.issues||[]; }
     // Setup
@@ -1014,13 +1075,14 @@ async function savePIN(){
 // ── NAVIGATION ──
 function switchSection(sec){
   activeSection=sec;
-  ['applicator','machine','setup','contacts'].forEach(s=>{
+  ['applicator','machine','setup','contacts','customers'].forEach(s=>{
     $('stab-'+s).classList.toggle('active',s===sec);
     const el=$('section-'+s); if(el) el.style.display=s===sec?'block':'none';
   });
   if(sec==='applicator') renderSection('applicator');
   else if(sec==='machine') renderSection('machine');
   else if(sec==='setup') renderSection('setup');
+  else if(sec==='customers') renderCustomers();
   else renderContacts();
 }
 function switchSubTab(sec,tab){
@@ -1034,6 +1096,15 @@ function switchSubTab(sec,tab){
 
 
 // ── HELPERS ──
+function renderCustomerDropdown(){
+  const dl = document.getElementById('customerOptions');
+  if(!dl) return;
+
+  dl.innerHTML = customersList
+    .sort((a,b)=>a.name.localeCompare(b.name))
+    .map(c => `<option value="${c.name}"></option>`)
+    .join('');
+}
 function formatApn(input){
   let v = input.value.toUpperCase().replace(/[^T0-9\-]/g,'');
   if(v && !v.startsWith('T')){ v = 'T-' + v.replace(/[^0-9]/g,''); }
@@ -1346,8 +1417,9 @@ function openModal(sec,id=null){
     $('mBy').value=e?.by||(id?'':lsGet('hl_user_name')||''); $('mTicket').value=e?.ticketNum?e.ticketNum.replace('TKT-','').replace('S-',''):''; $('mSuppress').checked=e?.ticketNum?.startsWith('S-')||false;
   } else {
     $('sModalTitle').textContent=e?'Edit Setup Sheet Entry':'Log Setup Sheet Issue';
-    $('sTerminal').value=e?.terminal||''; $('sAwg').value=e?.awg||'';
-    $('sCustomer').value = e?.customer || '';
+    $('sTerminal').value=e?.terminal||''; $('sAwg').value=e?.awg||'';   
+renderCustomerDropdown();
+$('sCustomer').value = e?.customer || '';
     $('sIssue').value=e?.issue||''; $('sDoc').value=e?.doc||'';
     $('sNotes').value=e?.notes||''; $('sStatus').value=e?.status||'open';
     $('sBy').value=e?.by||(id?'':lsGet('hl_user_name')||''); $('sTicket').value=e?.ticketNum?e.ticketNum.replace('TKT-','').replace('S-',''):''; $('sSuppress').checked=e?.ticketNum?.startsWith('S-')||false;
@@ -1381,7 +1453,20 @@ function saveEntry(sec){
   } else {
     const terminal=$('sTerminal').value.trim(), issue=$('sIssue').value.trim();
     if(!terminal||!issue){ alert('Terminal # and issue description are required.'); return; }
-    entry={id:editId||Date.now(),customer: $('sCustomer').value.trim(),terminal,awg:$('sAwg').value.trim(),issue,doc:$('sDoc').value.trim(),notes:$('sNotes').value.trim(),status:$('sStatus').value,by:$('sBy').value.trim(),date:existing?.date||Date.now(),...(finalTkt&&{ticketNum:finalTkt})};
+    const customerVal = $('sCustomer').value.trim();
+
+// Auto-add customer if new
+if (customerVal && !customersList.some(c =>
+  c.name.toLowerCase() === customerVal.toLowerCase()
+)) {
+  customersList.push({
+    id: Date.now(),
+    name: customerVal
+  });
+}
+
+entry={id:editId||Date.now(),
+  customer: customerVal,terminal,awg:$('sAwg').value.trim(),issue,doc:$('sDoc').value.trim(),notes:$('sNotes').value.trim(),status:$('sStatus').value,by:$('sBy').value.trim(),date:existing?.date||Date.now(),...(finalTkt&&{ticketNum:finalTkt})};
   }
   const byVal={applicator:$('fBy'),machine:$('mBy'),setup:$('sBy')}[sec]?.value.trim(); if(byVal) lsSet('hl_user_name',byVal);
   if(editId){const i=state[sec].entries.findIndex(e=>e.id===editId);state[sec].entries[i]=entry;} else state[sec].entries.unshift(entry);
@@ -1518,7 +1603,22 @@ function saveContact(){
   closeContactModal(); renderContacts(); pushSection('applicator'); // contacts stored in applicator file
 }
 function delContact(id){ if(!confirm('Remove this contact?')) return; contacts=contacts.filter(c=>c.id!==id); renderContacts(); pushSection('applicator'); }
+let editCustId = null;
 
+function openCustomerModal(id=null){
+  editCustId = id;
+  const c = id ? customersList.find(x=>x.id===id) : null;
+
+  $('customerModalTitle').textContent = c ? 'Edit Customer' : 'Add Customer';
+  $('custName').value = c?.name || '';
+
+  $('customerModal').classList.add('open');
+}
+
+function closeCustomerModal(){
+  $('customerModal').classList.remove('open');
+  editCustId = null;
+}
 // ── POLLING ──
 const POLL_INTERVAL=30000;
 let pollTimer=null, lastGistUpdatedAt=null, isEditing=false;
@@ -1530,7 +1630,12 @@ async function pollForChanges(){
     if(!r.ok) return;
     const g=await r.json();
     if(lastGistUpdatedAt&&g.updated_at!==lastGistUpdatedAt){
-      if(g.files[DATA_FILE]){ const d=JSON.parse(g.files[DATA_FILE].content); state.applicator.entries=d.issues||[]; if(d.contacts) contacts=d.contacts; }
+      if(g.files[DATA_FILE]){
+  const d=JSON.parse(g.files[DATA_FILE].content);
+  state.applicator.entries=d.issues||[];
+  if(d.contacts) contacts=d.contacts;
+  if(d.customers) customersList=d.customers;
+}
       if(g.files[MACH_FILE]){ const d=JSON.parse(g.files[MACH_FILE].content); state.machine.entries=d.issues||[]; }
       if(g.files[SETUP_FILE]){ const d=JSON.parse(g.files[SETUP_FILE].content); state.setup.entries=d.issues||[]; }
       ['applicator','machine','setup'].forEach(sec=>{ const f=g.files[QUEUE_FILES[sec]]; if(f) state[sec].queue=JSON.parse(f.content)||[]; });
@@ -1669,6 +1774,92 @@ function handleSetupFile(input){
   // OPTIONAL: show more info if you want
   // docField.value = file.name + " (" + Math.round(file.size/1024) + " KB)";
 }
+function renderCustomers(){
+  const list = $('customerList');
+  const empty = $('emptyCustomers');
+  const q = ($('customerSearch')?.value || '').toLowerCase();
+
+  let arr = [...customersList];
+
+  if(q){
+    arr = arr.filter(c => c.name.toLowerCase().includes(q));
+  }
+
+  if(!arr.length){
+    list.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+
+  empty.style.display = 'none';
+
+  arr.sort((a,b)=>a.name.localeCompare(b.name));
+
+  list.innerHTML = arr.map(c => `
+    <div class="contact-row">
+      <div class="contact-avatar">${ini(c.name)}</div>
+      
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:500">
+          ${c.name}
+        </div>
+      </div>
+
+      <div style="display:flex;gap:4px">
+        <button class="btn-sm"
+          style="border-color:var(--hl-border);color:var(--hl-text2)"
+          onclick="openCustomerModal(${c.id})">
+          <i class="ti ti-edit"></i> Edit
+        </button>
+
+        <button class="btn-sm btn-del"
+          onclick="deleteCustomer(${c.id})">
+          <i class="ti ti-trash"></i> Delete
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+function saveCustomer(){
+  const name = $('custName').value.trim();
+  if(!name){
+    alert('Customer name is required');
+    return;
+  }
+
+  const exists = customersList.find(c =>
+    c.name.toLowerCase() === name.toLowerCase() &&
+    c.id !== editCustId
+  );
+
+  if(exists){
+    alert('Customer already exists');
+    return;
+  }
+
+  if(editCustId){
+    const i = customersList.findIndex(c => c.id === editCustId);
+    customersList[i].name = name;
+  } else {
+    customersList.push({
+      id: Date.now(),
+      name
+    });
+  }
+
+  closeCustomerModal();
+  renderCustomers();
+  pushSection('applicator');
+}
+function deleteCustomer(id){
+  if(!confirm('Delete this customer?')) return;
+
+  customersList = customersList.filter(c => c.id !== id);
+
+  renderCustomers();
+  pushSection('applicator');
+}
+
 </script>
 </body>
 </html>
