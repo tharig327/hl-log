@@ -397,7 +397,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div id="sEmptyM" class="empty" style="display:none"><i class="ti ti-inbox" style="font-size:26px;display:block;margin-bottom:6px"></i>No entries match</div>
       <div class="desktop-table"><table>
         <thead><tr>
-          <th style="width:110px">Terminal #</th><th style="width:80px">AWG</th>
+<th style="width:140px">Customer</th>
+<th style="width:110px">Terminal #</th>
+<th style="width:80px">AWG</th>
           <th>Issue / Notes</th><th style="width:150px">Document</th>
           <th style="width:90px">By</th><th style="width:108px">Status</th>
           <th style="width:52px">Days</th><th style="width:180px;text-align:right;padding-right:14px">Actions</th>
@@ -413,7 +415,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="card-list" id="sHistCards"></div>
       <div class="desktop-table"><table>
         <thead><tr>
-          <th style="width:110px">Terminal #</th><th style="width:80px">AWG</th>
+        <th style="width:140px">Customer</th>
+        <th style="width:110px">Terminal #</th>
+        <th style="width:80px">AWG</th>
           <th>Issue / Notes</th><th style="width:150px">Document</th>
           <th style="width:90px">By</th><th style="width:108px">Status</th>
           <th style="width:52px">Days</th><th style="width:130px;text-align:right;padding-right:14px">Actions</th>
@@ -509,12 +513,29 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="modal">
     <h2 id="sModalTitle">Log Setup Sheet Issue</h2>
     <div class="row3">
-      <div class="field"><label>Terminal # *</label><input id="sTerminal" placeholder="e.g. 794956-1" autocomplete="off"></div>
-      <div class="field"><label>AWG</label><input id="sAwg" placeholder="e.g. 18 AWG"></div>
-      <div class="field"><label>Logged By</label><input id="sBy" placeholder="Your name"></div>
-    </div>
+  <div class="field"><label>Customer</label><input id="sCustomer" placeholder="e.g. BraunAbility"></div>
+  <div class="field"><label>Terminal # *</label><input id="sTerminal"></div>
+  <div class="field"><label>AWG</label><input id="sAwg"></div>
+</div>
+
+<div class="row2">
+  <div class="field"><label>Logged By</label><input id="sBy"></div>
+</div>
     <div class="field"><label>Issue Description *</label><textarea id="sIssue" placeholder="What's wrong with the setup sheet…"></textarea></div>
-    <div class="field"><label>Document / File Reference</label><input id="sDoc" placeholder="e.g. SS-2024-0042, rev B"></div>
+    <div class="field">
+  <label>Document / File Reference</label>
+
+  <div style="display:flex; gap:6px;">
+    <input id="sDoc" placeholder="e.g. SS-2024-0042, rev B">
+
+    <button class="btn" type="button" onclick="pickSetupFile()">
+      <i class="ti ti-folder-open"></i>
+    </button>
+  </div>
+
+  <input type="file" id="sDocFile" style="display:none"
+         onchange="handleSetupFile(this)">
+</div>
     <div class="field"><label>Notes / Resolution</label><textarea id="sNotes" style="height:52px" placeholder="What was done or what's needed…"></textarea></div>
     <div class="row2">
       <div class="field"><label>Status</label>
@@ -1160,8 +1181,8 @@ function renderSetup(){
   const q=($('sSearch')?.value||'').toLowerCase(), fs=$('sFilter')?.value||'';
   const active=state.setup.entries.filter(e=>e.status!=='done');
   const f=active.filter(e=>{
-    const mq=!q||[e.terminal,e.awg,e.issue,e.doc].some(v=>(v||'').toLowerCase().includes(q));
-    return mq&&(!fs||e.status===fs);
+  const mq=!q||[e.customer,e.terminal,e.awg,e.issue,e.doc].some(v=>(v||'').toLowerCase().includes(q));
+  return mq&&(!fs||e.status===fs);
   });
   renderStats('setup','s');
   const cl=$('sCards'),em=$('sEmptyM');
@@ -1170,7 +1191,11 @@ function renderSetup(){
     const d=days(e.date),ac=(e.status!=='done'&&e.status!=='waiting'&&d>=overdueDays)?'age-warn':'age-ok';
     return`<div class="entry-card status-${e.status}">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;gap:8px">
-        <div><div class="entry-apn">${e.terminal}</div>${e.awg?`<div class="entry-press">${e.awg}</div>`:''}</div>
+        <div>
+  ${e.customer ? `<div class="entry-press">${e.customer}</div>` : ''}
+  <div class="entry-apn">${e.terminal}</div>
+  ${e.awg ? `<div class="entry-press">${e.awg}</div>` : ''}
+</div>
         <div style="display:flex;align-items:center;gap:6px;flex-shrink:0"><span class="${ac}" style="font-size:11px">${daysLabel(e.date)}</span>${badge(e.status)}</div>
       </div>
       ${e.doc?`<div style="margin-bottom:4px"><span class="chip">${e.doc}</span></div>`:''}
@@ -1183,8 +1208,9 @@ function renderSetup(){
   else{ ed.style.display='none'; tb.innerHTML=f.map(e=>{
     const d=days(e.date),ac=(e.status!=='done'&&e.status!=='waiting'&&d>=overdueDays)?'age-warn':'age-ok';
     return`<tr>
+      <td style="font-size:12px;color:var(--hl-text2)">${e.customer || '—'}</td>
       <td style="font-weight:500;font-family:monospace;font-size:12px">${e.terminal}</td>
-      <td style="font-size:12px;color:var(--hl-text2)">${e.awg||'—'}</td>
+      <td style="font-size:12px;color:var(--hl-text2)">${e.awg || '—'}</td>
       <td><div style="font-size:12px">${e.issue}</div>${e.notes?`<div class="sub-text">${e.notes}</div>`:''}</td>
       <td style="font-size:12px;color:var(--hl-text2)">${e.doc||'—'}</td>
       <td style="font-size:12px">${tktBadge(e)}${e.by||'—'}</td>
@@ -1213,8 +1239,22 @@ function renderHistory(sec){
   } else {
     const cl=$('sHistCards'),em=$('sHistEmpty'),tb=$('sHistBody');
     if(!f.length){cl.innerHTML='';tb.innerHTML='';em.style.display='block';return;} em.style.display='none';
-    cl.innerHTML=f.map(e=>`<div class="entry-card status-done"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><div><div class="entry-apn">${e.terminal}</div>${e.awg?`<div class="entry-press">${e.awg}</div>`:''}</div>${badge('done')}</div><div class="entry-issue">${e.issue}</div>${e.notes?`<div class="sub-text">${e.notes}</div>`:''}<div class="entry-card-footer"><div style="font-size:11px;color:var(--hl-text3)">${e.by||''}</div>${actionBtns(e,'setup',true)}</div></div>`).join('');
-    tb.innerHTML=f.map(e=>`<tr><td style="font-family:monospace;font-size:12px">${e.terminal}</td><td style="font-size:12px;color:var(--hl-text2)">${e.awg||'—'}</td><td><div style="font-size:12px">${e.issue}</div></td><td style="font-size:12px;color:var(--hl-text2)">${e.doc||'—'}</td><td style="font-size:12px;color:var(--hl-text2)">${e.by||'—'}</td><td>${badge('done')}</td><td style="font-size:12px;color:var(--hl-text3)">${daysLabel(e.date)}</td><td style="text-align:right;padding-right:4px">${actionBtns(e,'setup',true)}</td></tr>`).join('');
+    
+cl.innerHTML=f.map(e=>`<div class="entry-card status-done">
+  <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+    <div>
+      ${e.customer ? `<div class="entry-press">${e.customer}</div>` : ''}
+      <div class="entry-apn">${e.terminal}</div>
+      ${e.awg ? `<div class="entry-press">${e.awg}</div>` : ''}
+    </div>
+    ${badge('done')}
+  </div>
+<div class="entry-issue">${e.issue}</div>${e.notes?`<div class="sub-text">${e.notes}</div>`:''}<div class="entry-card-footer"><div style="font-size:11px;color:var(--hl-text3)">${e.by||''}</div>${actionBtns(e,'setup',true)}</div></div>`).join('');
+    tb.innerHTML=f.map(e=>`<tr>
+<td style="font-size:12px;color:var(--hl-text2)">${e.customer || '—'}</td>
+<td style="font-family:monospace;font-size:12px">${e.terminal}</td>
+<td style="font-size:12px;color:var(--hl-text2)">${e.awg || '—'}</td>
+<td><div style="font-size:12px">${e.issue}</div></td><td style="font-size:12px;color:var(--hl-text2)">${e.doc||'—'}</td><td style="font-size:12px;color:var(--hl-text2)">${e.by||'—'}</td><td>${badge('done')}</td><td style="font-size:12px;color:var(--hl-text3)">${daysLabel(e.date)}</td><td style="text-align:right;padding-right:4px">${actionBtns(e,'setup',true)}</td></tr>`).join('');
   }
 }
 
@@ -1307,6 +1347,7 @@ function openModal(sec,id=null){
   } else {
     $('sModalTitle').textContent=e?'Edit Setup Sheet Entry':'Log Setup Sheet Issue';
     $('sTerminal').value=e?.terminal||''; $('sAwg').value=e?.awg||'';
+    $('sCustomer').value = e?.customer || '';
     $('sIssue').value=e?.issue||''; $('sDoc').value=e?.doc||'';
     $('sNotes').value=e?.notes||''; $('sStatus').value=e?.status||'open';
     $('sBy').value=e?.by||(id?'':lsGet('hl_user_name')||''); $('sTicket').value=e?.ticketNum?e.ticketNum.replace('TKT-','').replace('S-',''):''; $('sSuppress').checked=e?.ticketNum?.startsWith('S-')||false;
@@ -1340,7 +1381,7 @@ function saveEntry(sec){
   } else {
     const terminal=$('sTerminal').value.trim(), issue=$('sIssue').value.trim();
     if(!terminal||!issue){ alert('Terminal # and issue description are required.'); return; }
-    entry={id:editId||Date.now(),terminal,awg:$('sAwg').value.trim(),issue,doc:$('sDoc').value.trim(),notes:$('sNotes').value.trim(),status:$('sStatus').value,by:$('sBy').value.trim(),date:existing?.date||Date.now(),...(finalTkt&&{ticketNum:finalTkt})};
+    entry={id:editId||Date.now(),customer: $('sCustomer').value.trim(),terminal,awg:$('sAwg').value.trim(),issue,doc:$('sDoc').value.trim(),notes:$('sNotes').value.trim(),status:$('sStatus').value,by:$('sBy').value.trim(),date:existing?.date||Date.now(),...(finalTkt&&{ticketNum:finalTkt})};
   }
   const byVal={applicator:$('fBy'),machine:$('mBy'),setup:$('sBy')}[sec]?.value.trim(); if(byVal) lsSet('hl_user_name',byVal);
   if(editId){const i=state[sec].entries.findIndex(e=>e.id===editId);state[sec].entries[i]=entry;} else state[sec].entries.unshift(entry);
@@ -1612,6 +1653,21 @@ function exportToExcel(sec) {
   const sectionName = {applicator:'Applicator', machine:'Machine', setup:'Setup', all:'All'}[sec] || sec;
   const dateStr = new Date().toISOString().slice(0,10);
   XLSX.writeFile(wb, 'HL-IssueLog-' + sectionName + '-' + dateStr + '.xlsx');
+}
+function pickSetupFile(){
+  document.getElementById('sDocFile').click();
+}
+
+function handleSetupFile(input){
+  const file = input.files[0];
+  if(!file) return;
+
+  // Put filename into text box
+  const docField = document.getElementById('sDoc');
+  docField.value = file.name;
+
+  // OPTIONAL: show more info if you want
+  // docField.value = file.name + " (" + Math.round(file.size/1024) + " KB)";
 }
 </script>
 </body>
