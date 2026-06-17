@@ -12,6 +12,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -201,6 +202,31 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 }
 .logged-in-badge{font-size:10px;color:var(--hl-text3);display:flex;align-items:center;gap:4px;padding:0 2px;white-space:nowrap}
 .logged-in-badge i{font-size:12px;color:#50a870}
+
+/* ── RECEIPT ── */
+.receipt-modal{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;display:flex;align-items:center;justify-content:center;padding:1rem}
+.receipt-modal.hidden{display:none}
+.receipt-wrap{background:#fff;color:#000;width:216px;padding:12px 10px;font-family:'Courier New',Courier,monospace;font-size:11px;line-height:1.4;border-radius:3px;max-height:90vh;overflow-y:auto}
+.receipt-header{text-align:center;border-bottom:1px dashed #000;padding-bottom:8px;margin-bottom:8px}
+.receipt-co{font-size:13px;font-weight:700;letter-spacing:.05em}
+.receipt-title{font-size:10px;letter-spacing:.15em;margin-top:2px}
+.receipt-tkt{text-align:center;font-size:22px;font-weight:700;letter-spacing:.1em;margin:8px 0;border:2px solid #000;padding:6px}
+.receipt-row{display:flex;justify-content:space-between;gap:4px;margin-bottom:3px;font-size:10px}
+.receipt-row-label{color:#444;flex-shrink:0}
+.receipt-row-val{text-align:right;font-weight:500;word-break:break-word}
+.receipt-divider{border:none;border-top:1px dashed #000;margin:8px 0}
+.receipt-qr{text-align:center;margin:8px 0}
+.receipt-footer{text-align:center;font-size:9px;color:#555;margin-top:8px;border-top:1px dashed #000;padding-top:8px}
+.receipt-actions{display:flex;gap:8px;margin-top:12px;justify-content:center}
+.receipt-btn{height:36px;padding:0 16px;font-size:12px;border-radius:4px;cursor:pointer;border:1px solid var(--hl-border2);background:var(--hl-surface2);color:var(--hl-text);display:flex;align-items:center;gap:5px}
+.receipt-btn-print{background:var(--hl-red);color:#fff;border-color:var(--hl-red)}
+@media print{
+  body > *:not(#receiptModal){display:none !important}
+  #receiptModal{position:static !important;background:none !important;padding:0 !important}
+  .receipt-actions{display:none !important}
+  .receipt-wrap{box-shadow:none;border-radius:0;max-height:none;overflow:visible}
+  @page{size:57mm auto;margin:0}
+}
 </style>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </head>
@@ -696,6 +722,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 
 <div class="toast" id="toast"></div>
+<!-- RECEIPT PREVIEW MODAL -->
+<div class="receipt-modal hidden" id="receiptModal">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:0">
+    <div class="receipt-wrap" id="receiptContent"></div>
+    <div class="receipt-actions">
+      <button class="receipt-btn" onclick="closeReceipt()"><i class="ti ti-x"></i> Close</button>
+      <button class="receipt-btn receipt-btn-print" onclick="window.print()"><i class="ti ti-printer"></i> Print</button>
+    </div>
+  </div>
+</div>
 
 <script>
 // ── FILES ──
@@ -1145,6 +1181,7 @@ function actionBtns(e,sec,hist=false){
     <button class="btn-sm" style="border-color:var(--hl-border);color:var(--hl-text2)" onclick="openModal('${sec}',${e.id})"><i class="ti ti-edit"></i> Edit</button>
     <button class="btn-sm btn-del" onclick="delEntry('${sec}',${e.id})"><i class="ti ti-trash"></i> Delete</button>
     ${e.ticketNum?`<button class="btn-sm" style="border-color:#1a5a1a;color:#50a870;background:rgba(26,90,26,.2)" onclick="shareTicket('${sec}',${e.id})"><i class="ti ti-link"></i> Link</button>`:''}
+    ${!hist?`<button class="btn-sm" style="border-color:#4a3a7a;color:#a080d0;background:rgba(74,58,122,.2)" onclick="showReceipt('${sec}',${e.id})"><i class="ti ti-receipt"></i> Receipt</button>`:''}
   </div>`;
 }
 
@@ -1684,6 +1721,80 @@ document.addEventListener('keydown',function(e){
 });
 
 initApp();
+// ── RECEIPT ──
+function buildReceiptHTML(entry, sec){
+  const typeLabel = {applicator:'Applicator Issue',machine:'Machine Issue',setup:'Setup Sheet Issue'}[sec];
+  const primaryId = {applicator:entry.apn,machine:entry.machine,setup:entry.terminal}[sec]||'--';
+  const desc = {applicator:entry.issue,machine:entry.desc,setup:entry.issue}[sec]||'--';
+  const statusText = {done:'Resolved',inprog:'In Progress',waiting:'Waiting on Parts',open:'Open'}[entry.status]||'Open';
+  const date = new Date(entry.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  const time = new Date(entry.date).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});
+  const base = 'https://tharig327.github.io/hl-log';
+  const tktClean = (entry.ticketNum||'').replace('TKT-','').replace('S-','');
+  const ticketUrl = tktClean ? base+'/t/?ticket='+tktClean : null;
+  const tkt = entry.ticketNum || '--';
+  const qrId = 'receipt-qr-'+Date.now();
+
+  const extras = [];
+  if(sec==='applicator'){
+    if(entry.press)    extras.push(['Press', entry.press]);
+    if(entry.terminal) extras.push(['Terminal', entry.terminal]);
+    if(entry.wire)     extras.push(['Wire', entry.wire]);
+  } else if(sec==='setup'){
+    if(entry.customer) extras.push(['Customer', entry.customer]);
+    if(entry.awg)      extras.push(['AWG', entry.awg]);
+    if(entry.doc)      extras.push(['Document', entry.doc]);
+  }
+  if(entry.notes||entry.result){
+    const n = entry.notes||entry.result;
+    extras.push(['Notes', n.slice(0,50)+(n.length>50?'...':'')]);
+  }
+
+  const extraRows = extras.map(([k,v])=>
+    `<div class="receipt-row"><span class="receipt-row-label">${k}</span><span class="receipt-row-val">${v}</span></div>`
+  ).join('');
+
+  const html = `
+    <div class="receipt-header">
+      <div class="receipt-co">H&amp;L MFG</div>
+      <div class="receipt-title">REPAIR TICKET</div>
+    </div>
+    <div class="receipt-tkt">${tkt}</div>
+    <div class="receipt-row"><span class="receipt-row-label">Type</span><span class="receipt-row-val">${typeLabel}</span></div>
+    <div class="receipt-row"><span class="receipt-row-label">${sec==='applicator'?'Applicator':sec==='machine'?'Machine':'Terminal'}</span><span class="receipt-row-val" style="font-weight:700">${primaryId}</span></div>
+    <hr class="receipt-divider">
+    <div class="receipt-row"><span class="receipt-row-label">Issue</span><span class="receipt-row-val">${desc.slice(0,50)+(desc.length>50?'...':'')}</span></div>
+    ${extraRows}
+    <hr class="receipt-divider">
+    <div class="receipt-row"><span class="receipt-row-label">Status</span><span class="receipt-row-val">${statusText}</span></div>
+    <div class="receipt-row"><span class="receipt-row-label">By</span><span class="receipt-row-val">${entry.by||'--'}</span></div>
+    <div class="receipt-row"><span class="receipt-row-label">Date</span><span class="receipt-row-val">${date}</span></div>
+    <div class="receipt-row"><span class="receipt-row-label">Time</span><span class="receipt-row-val">${time}</span></div>
+    <hr class="receipt-divider">
+    ${ticketUrl ? `<div class="receipt-qr" id="${qrId}"></div><div class="receipt-footer">Scan to check status<br>tharig327.github.io/hl-log/t/</div>` : `<div class="receipt-footer">tharig327.github.io/hl-log/t/</div>`}`;
+
+  return { html, qrId, ticketUrl };
+}
+
+function showReceipt(sec, id){
+  const entry = state[sec].entries.find(e=>e.id===id);
+  if(!entry){ toast('Entry not found','#cc4444'); return; }
+  const { html, qrId, ticketUrl } = buildReceiptHTML(entry, sec);
+  document.getElementById('receiptContent').innerHTML = html;
+  document.getElementById('receiptModal').classList.remove('hidden');
+  if(ticketUrl){
+    setTimeout(()=>{
+      const el = document.getElementById(qrId);
+      if(el && window.QRCode){
+        new QRCode(el,{text:ticketUrl,width:140,height:140,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});
+      }
+    }, 60);
+  }
+}
+
+function closeReceipt(){
+  document.getElementById('receiptModal').classList.add('hidden');
+}
 async function bulkAddCustomers(){
   const input = document.getElementById('bulkCustomers').value.trim();
   if(!input) return;
