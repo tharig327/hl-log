@@ -10,6 +10,54 @@
 <link rel="icon" href="icon-192.png">
 <meta name="theme-color" content="#cc2222">
 <style>
+  .pill-badge{
+  margin-left:6px;
+  min-width:14px;
+  height:14px;
+
+  font-size:8px;
+  font-weight:600;
+
+  border-radius:10px;
+  background:var(--hl-red);
+  color:#fff;
+
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+
+  padding:0 4px;
+}
+
+.pill-badge:empty{
+  display:none;
+}
+  .btn-badge{
+  position:absolute;
+  top:4px;
+  right:6px;
+
+  min-width:16px;
+  height:16px;
+  padding:0 5px;
+
+  font-size:9px;
+  font-weight:600;
+
+  border-radius:10px;
+  background:#ffffff;
+  color:#cc2222;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  box-shadow:0 0 0 2px var(--hl-red);
+}
+
+.btn-badge:empty{
+  display:none;
+}
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
   --hl-bg:#111111;--hl-surface:#1c1c1c;--hl-surface2:#252525;
@@ -83,29 +131,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 @keyframes spin{to{transform:rotate(360deg)}}
 .err-box{background:rgba(58,16,16,.3);border:1px solid #552020;border-radius:4px;padding:12px 14px;font-size:13px;color:#e07070;text-align:center;margin-top:1rem}
 .footer{margin-top:2rem;font-size:11px;color:var(--hl-text3);text-align:center}
-.receipt-modal{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;display:flex;align-items:center;justify-content:center;padding:1rem}
-.receipt-modal.hidden{display:none}
-.receipt-wrap{background:#fff;color:#000;width:216px;padding:12px 10px;font-family:'Courier New',Courier,monospace;font-size:11px;line-height:1.4;border-radius:3px}
-.receipt-header{text-align:center;border-bottom:1px dashed #000;padding-bottom:8px;margin-bottom:8px}
-.receipt-co{font-size:13px;font-weight:700;letter-spacing:.05em}
-.receipt-title{font-size:10px;letter-spacing:.15em;margin-top:2px}
-.receipt-tkt{text-align:center;font-size:22px;font-weight:700;letter-spacing:.1em;margin:8px 0;border:2px solid #000;padding:6px}
-.receipt-row{display:flex;justify-content:space-between;gap:4px;margin-bottom:3px;font-size:10px}
-.receipt-row-label{color:#444;flex-shrink:0}
-.receipt-row-val{text-align:right;font-weight:500;word-break:break-word}
-.receipt-divider{border:none;border-top:1px dashed #000;margin:8px 0}
-.receipt-qr{text-align:center;margin:8px 0}
-.receipt-footer{text-align:center;font-size:9px;color:#555;margin-top:8px;border-top:1px dashed #000;padding-top:8px}
-.receipt-actions{display:flex;gap:8px;margin-top:12px;justify-content:center}
-.receipt-btn{height:36px;padding:0 16px;font-size:12px;border-radius:4px;cursor:pointer;border:1px solid var(--hl-border2);background:var(--hl-surface2);color:var(--hl-text);display:flex;align-items:center;gap:5px}
-.receipt-btn-print{background:var(--hl-red);color:#fff;border-color:var(--hl-red)}
-@media print{
-  body > *:not(#receiptModal){ display:none !important; }
-  #receiptModal{ position:static !important; background:none !important; padding:0 !important; }
-  .receipt-actions{ display:none !important; }
-  .receipt-wrap{ box-shadow:none; border-radius:0; }
-  @page{ size:57mm auto; margin:0; }
-}
 .filter-btn{height:30px;padding:0 12px;font-size:11px;border:1px solid var(--hl-border2);border-radius:20px;background:var(--hl-surface2);color:var(--hl-text2);cursor:pointer;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;touch-action:manipulation}
 .filter-btn:hover{border-color:var(--hl-border);color:var(--hl-text)}
 .filter-btn.active{background:var(--hl-red);border-color:var(--hl-red);color:#fff}
@@ -122,6 +147,31 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .open-empty{text-align:center;padding:2rem 1rem;color:var(--hl-text3);font-size:13px}
 .issue-other{display:none;margin-top:8px}
 .issue-other.show{display:block}
+
+/* ── RECEIPT ── */
+.receipt-modal{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;display:flex;align-items:center;justify-content:center;padding:1rem}
+.receipt-modal.hidden{display:none}
+.receipt-wrap{background:#fff;color:#000;width:216px;padding:12px 10px;font-family:'Courier New',Courier,monospace;font-size:11px;line-height:1.4;border-radius:3px;max-height:90vh;overflow-y:auto}
+.receipt-header{text-align:center;border-bottom:1px dashed #000;padding-bottom:8px;margin-bottom:8px}
+.receipt-co{font-size:13px;font-weight:700;letter-spacing:.05em}
+.receipt-title{font-size:10px;letter-spacing:.15em;margin-top:2px}
+.receipt-tkt{text-align:center;font-size:22px;font-weight:700;letter-spacing:.1em;margin:8px 0;border:2px solid #000;padding:6px}
+.receipt-row{display:flex;justify-content:space-between;gap:4px;margin-bottom:3px;font-size:10px}
+.receipt-row-label{color:#444;flex-shrink:0}
+.receipt-row-val{text-align:right;font-weight:500;word-break:break-word}
+.receipt-divider{border:none;border-top:1px dashed #000;margin:8px 0}
+.receipt-qr{text-align:center;margin:8px 0}
+.receipt-footer{text-align:center;font-size:9px;color:#555;margin-top:8px;border-top:1px dashed #000;padding-top:8px}
+.receipt-actions{display:flex;gap:8px;margin-top:12px;justify-content:center}
+.receipt-btn{height:36px;padding:0 16px;font-size:12px;border-radius:4px;cursor:pointer;border:1px solid var(--hl-border2);background:var(--hl-surface2);color:var(--hl-text);display:flex;align-items:center;gap:5px}
+.receipt-btn-print{background:var(--hl-red);color:#fff;border-color:var(--hl-red)}
+@media print{
+  body > *:not(#receiptModal){display:none !important}
+  #receiptModal{position:static !important;background:none !important;padding:0 !important}
+  .receipt-actions{display:none !important}
+  .receipt-wrap{box-shadow:none;border-radius:0;max-height:none;overflow:visible}
+  @page{size:57mm auto;margin:0}
+}
 </style>
 </head>
 <body>
@@ -137,7 +187,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="tabs">
   <button class="tab-btn active" onclick="switchTab('submit')"><i class="ti ti-clipboard-plus" style="font-size:15px"></i> Submit Ticket</button>
   <button class="tab-btn" onclick="switchTab('status')"><i class="ti ti-search" style="font-size:15px"></i> Check Status</button>
-  <button class="tab-btn" onclick="switchTab('open')"><i class="ti ti-list" style="font-size:15px"></i> Open Tickets</button>
+  <button class="tab-btn" onclick="switchTab('open')" style="position:relative">
+  <i class="ti ti-list" style="font-size:15px"></i>
+  Open Tickets
+  <span class="btn-badge" id="openTotalCount"></span>
+</button>
 </div>
 
 <div class="card">
@@ -313,13 +367,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="field">
       <label>Ticket Number</label>
       <div style="display:flex;align-items:center;gap:0">
-        <span style="height:44px;padding:0 12px;background:var(--hl-surface2);border:1px solid var(--hl-border2);border-right:none;border-radius:4px 0 0 4px;display:flex;align-items:center;font-size:14px;color:var(--hl-text3);font-family:monospace;white-space:nowrap">TKT-</span>
-        <input type="text" id="iTicket" placeholder="4821" autocomplete="off" inputmode="numeric" maxlength="4"
-          style="border-radius:0 4px 4px 0"
-          oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,4)"
+        <span style="height:44px;padding:0 12px;background:var(--hl-surface2);border:1px solid var(--hl-border2);border-right:none;border-radius:4px 0 0 4px;display:flex;align-items:center;font-size:14px;color:var(--hl-text3)"><i class="ti ti-ticket" style="font-size:18px"></i></span>
+        <input type="text" id="iTicket" placeholder="TKT-0042 or S-12" autocomplete="off" maxlength="10"
+         style="border-radius:0 4px 4px 0"
+         oninput="this.value=this.value.toUpperCase().replace(/[^0-9S\-TKT]/g,'').slice(0,10)"
           onkeydown="if(event.key==='Enter') lookupTicket()">
       </div>
-      <div class="field-hint">Enter the 4-digit number from your ticket</div>
+      <div class="field-hint">Enter your ticket number (e.g. TKT-0042 or S-12)</div>
     </div>
     <button class="btn btn-red" onclick="lookupTicket()"><i class="ti ti-search"></i> Check Status</button>
     <div id="statusResult"></div>
@@ -330,9 +384,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div style="margin-bottom:12px">
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
         <button class="filter-btn active" onclick="filterOpen('all')" id="filt-all">All Types</button>
-        <button class="filter-btn" onclick="filterOpen('applicator')" id="filt-applicator"><i class="ti ti-tool" style="font-size:12px"></i> Applicator</button>
-        <button class="filter-btn" onclick="filterOpen('machine')" id="filt-machine"><i class="ti ti-settings-2" style="font-size:12px"></i> Machine</button>
-        <button class="filter-btn" onclick="filterOpen('setup')" id="filt-setup"><i class="ti ti-file-description" style="font-size:12px"></i> Setup Sheet</button>
+        <button class="filter-btn" onclick="filterOpen('applicator')" id="filt-applicator">
+  <i class="ti ti-tool" style="font-size:12px"></i> Applicator
+  <span class="pill-badge" id="count-app"></span>
+</button>
+        <button class="filter-btn" onclick="filterOpen('machine')" id="filt-machine"><i class="ti ti-settings-2" style="font-size:12px"></i> Machine<span class="pill-badge" id="count-mach"></span></button>
+        <button class="filter-btn" onclick="filterOpen('setup')" id="filt-setup"><i class="ti ti-file-description" style="font-size:12px"></i> Setup Sheet<span class="pill-badge" id="count-set"></span></button>
       </div>
     </div>
     <div id="openTicketsList"><div class="spinner"></div></div>
@@ -341,16 +398,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 
 <div class="footer">H&L Manufacturing · Issue Tracking System</div>
-
-<div class="receipt-modal hidden" id="receiptModal">
-  <div style="display:flex;flex-direction:column;align-items:center;gap:0">
-    <div class="receipt-wrap" id="receiptContent"></div>
-    <div class="receipt-actions">
-      <button class="receipt-btn" onclick="document.getElementById('receiptModal').classList.add('hidden')"><i class="ti ti-x"></i> Close</button>
-      <button class="receipt-btn receipt-btn-print" onclick="window.print()"><i class="ti ti-printer"></i> Print</button>
-    </div>
-  </div>
-</div>
 
 <script>
 const GIST_ID      = '934943f5c9d8ea126f30a27526c95771';
@@ -450,7 +497,40 @@ function filterOpen(type){
   document.getElementById('filt-'+type).classList.add('active');
   renderOpenTickets(window._openTicketsData);
 }
+function updateOpenTotal(){
+  if(!window._openTicketsData) return;
 
+  const {aItems, mItems, sItems} = window._openTicketsData;
+
+
+const total = [...aItems, ...mItems, ...sItems]
+  .filter(e => e.status !== 'waiting').length;
+
+
+  const el = document.getElementById('openTotalCount');
+  if(el){
+    el.textContent = total || '';
+  }
+}
+function updateSectionCounts(){
+  if(!window._openTicketsData) return;
+
+  const {aItems, mItems, sItems} = window._openTicketsData;
+
+
+const app = aItems.filter(e => e.status !== 'waiting').length;
+const mach = mItems.filter(e => e.status !== 'waiting').length;
+const set = sItems.filter(e => e.status !== 'waiting').length;
+
+
+  const aEl = document.getElementById('count-app');
+  const mEl = document.getElementById('count-mach');
+  const sEl = document.getElementById('count-set');
+
+  if(aEl) aEl.textContent = app || '';
+  if(mEl) mEl.textContent = mach || '';
+  if(sEl) sEl.textContent = set || '';
+}
 async function loadOpenTickets(){
   const el = document.getElementById('openTicketsList');
   el.innerHTML = '<div class="spinner"></div>';
@@ -545,10 +625,12 @@ function renderOpenTickets(data){
 
   el.innerHTML = active.map(cardHTML).join('') +
     (waiting.length ? '<div style="font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--hl-text3);padding:10px 4px 6px;margin-top:4px">Waiting on Parts</div>' + waiting.map(cardHTML).join('') : '');
-}
+    updateOpenTotal();
+    updateSectionCounts();
+  }
 
 function quickLookup(tktNum){
-  document.getElementById('iTicket').value = tktNum.replace('TKT-','');
+  document.getElementById('iTicket').value = tktNum.startsWith('S-') ? tktNum : tktNum.replace('TKT-','');
   switchTab('status');
   lookupTicket();
 }
@@ -682,11 +764,12 @@ function resetSubmit(){
 }
 
 async function lookupTicket(){
-  const raw=document.getElementById('iTicket').value.trim().replace(/[^0-9]/g,'');
-  const tkt=raw?'TKT-'+raw:'';
-  const result=document.getElementById('statusResult');
-  if(!tkt){ result.innerHTML='<div class="err-box">Please enter your 4-digit ticket number.</div>'; return; }
-  if(!/^TKT-\d{4}$/.test(tkt)){ result.innerHTML='<div class="err-box">Please enter all 4 digits of your ticket number.</div>'; return; }
+const input=document.getElementById('iTicket').value.trim().toUpperCase();
+const digits=input.replace(/[^0-9]/g,'');
+const tkt=input.startsWith('S-')?'S-'+digits:digits?'TKT-'+digits:'';
+const result=document.getElementById('statusResult');
+if(!tkt){ result.innerHTML='<div class="err-box">Please enter your ticket number.</div>'; return; }
+if(!/^(TKT-\d{4}|S-\d+)$/.test(tkt)){ result.innerHTML='<div class="err-box">Please enter a valid ticket number (e.g. TKT-0042 or S-12).</div>'; return; }
   result.innerHTML='<div class="spinner"></div>';
   try{
     const allData=await loadAllData();
@@ -765,18 +848,93 @@ function showErr(msg){
 // Pre-fill from URL params
 const urlParams=new URLSearchParams(window.location.search);
 if(urlParams.get('ticket')){
-  document.getElementById('iTicket').value=urlParams.get('ticket').toUpperCase().replace('TKT-','');
+  const tv=urlParams.get('ticket').toUpperCase();
+  document.getElementById('iTicket').value=tv.startsWith('S-')?tv:tv.replace('TKT-','');
   switchTab('status');
   lookupTicket();
 }
 if(urlParams.get('type')&&['applicator','machine','setup'].includes(urlParams.get('type'))){
   selectType(urlParams.get('type'));
 }
+    // Init
+loadCommonIssues();
+loadOpenTickets(); // 👈 ADD THIS
 </script>
 <script>
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
+
+// ── RECEIPT ──
+let lastSubmittedEntry = null;
+
+function printTicketReceipt(){
+  if(!lastSubmittedEntry){ alert('No ticket data available. Please submit a ticket first.'); return; }
+  const e = lastSubmittedEntry;
+  const type = e.type || e.issueType || 'applicator';
+  const typeLabel = {applicator:'Applicator Issue',machine:'Machine Issue',setup:'Setup Sheet Issue'}[type]||'Issue';
+  const primaryId = e.apn || e.machine || e.terminal || '--';
+  const desc = e.issue || e.desc || '--';
+  const date = new Date(e.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  const time = new Date(e.date).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});
+  const tkt = e.ticketNum || '--';
+  const tktClean = tkt.replace('TKT-','').replace('S-','');
+  const ticketUrl = 'https://tharig327.github.io/hl-log/t/?ticket=' + tktClean;
+  const qrId = 'tkt-receipt-qr';
+
+  const extras = [];
+  if(type==='applicator'){
+    if(e.press)    extras.push(['Press', e.press]);
+    if(e.terminal) extras.push(['Terminal', e.terminal]);
+  } else if(type==='setup'){
+    if(e.awg) extras.push(['AWG', e.awg]);
+    if(e.doc) extras.push(['Document', e.doc]);
+  }
+
+  const extraRows = extras.map(([k,v])=>
+    `<div class="receipt-row"><span class="receipt-row-label">${k}</span><span class="receipt-row-val">${v}</span></div>`
+  ).join('');
+
+  document.getElementById('receiptContent').innerHTML = `
+    <div class="receipt-header">
+      <div class="receipt-co">H&amp;L MFG</div>
+      <div class="receipt-title">REPAIR TICKET</div>
+    </div>
+    <div class="receipt-tkt">${tkt}</div>
+    <div class="receipt-row"><span class="receipt-row-label">Type</span><span class="receipt-row-val">${typeLabel}</span></div>
+    <div class="receipt-row"><span class="receipt-row-label">ID</span><span class="receipt-row-val" style="font-weight:700">${primaryId}</span></div>
+    <hr class="receipt-divider">
+    <div class="receipt-row"><span class="receipt-row-label">Issue</span><span class="receipt-row-val">${desc.slice(0,50)}</span></div>
+    ${extraRows}
+    <hr class="receipt-divider">
+    <div class="receipt-row"><span class="receipt-row-label">By</span><span class="receipt-row-val">${e.by||'--'}</span></div>
+    <div class="receipt-row"><span class="receipt-row-label">Date</span><span class="receipt-row-val">${date}</span></div>
+    <div class="receipt-row"><span class="receipt-row-label">Time</span><span class="receipt-row-val">${time}</span></div>
+    <hr class="receipt-divider">
+    <div class="receipt-qr" id="${qrId}"></div>
+    <div class="receipt-footer">Scan to check status<br>tharig327.github.io/hl-log/t/</div>`;
+
+  document.getElementById('receiptModal').classList.remove('hidden');
+  setTimeout(()=>{
+    const el = document.getElementById(qrId);
+    if(el && window.QRCode){
+      new QRCode(el,{text:ticketUrl,width:140,height:140,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});
+    }
+  }, 60);
+}
+
 </script>
+
+<!-- RECEIPT MODAL -->
+<div class="receipt-modal hidden" id="receiptModal">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:0">
+    <div class="receipt-wrap" id="receiptContent"></div>
+    <div class="receipt-actions">
+      <button class="receipt-btn" onclick="document.getElementById('receiptModal').classList.add('hidden')"><i class="ti ti-x"></i> Close</button>
+      <button class="receipt-btn receipt-btn-print" onclick="window.print()"><i class="ti ti-printer"></i> Print</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
