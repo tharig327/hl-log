@@ -202,6 +202,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .logged-in-badge{font-size:10px;color:var(--hl-text3);display:flex;align-items:center;gap:4px;padding:0 2px;white-space:nowrap}
 .logged-in-badge i{font-size:12px;color:#50a870}
 </style>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -314,7 +315,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="sub-section" id="applicator-history">
       <div class="toolbar">
         <input type="search" id="aHSearch" placeholder="Search resolved…" oninput="renderHistory('applicator')">
-        <button class="btn btn-red" style="margin-left:auto;opacity:.6;cursor:default" disabled><i class="ti ti-history"></i> Resolved Items</button>
+        <button class="btn" style="margin-left:auto;background:#1d6f42;color:#fff" onclick="exportToExcel('applicator')"><i class="ti ti-file-spreadsheet"></i> Export Excel</button>
       </div>
       <div class="card-list" id="aHistCards"></div>
       <div class="desktop-table"><table>
@@ -360,7 +361,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="sub-section" id="machine-history">
       <div class="toolbar">
         <input type="search" id="mHSearch" placeholder="Search resolved…" oninput="renderHistory('machine')">
-        <button class="btn btn-red" style="margin-left:auto;opacity:.6;cursor:default" disabled><i class="ti ti-history"></i> Resolved Items</button>
+        <button class="btn" style="margin-left:auto;background:#1d6f42;color:#fff" onclick="exportToExcel('machine')"><i class="ti ti-file-spreadsheet"></i> Export Excel</button>
       </div>
       <div class="card-list" id="mHistCards"></div>
       <div class="desktop-table"><table>
@@ -406,7 +407,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="sub-section" id="setup-history">
       <div class="toolbar">
         <input type="search" id="sHSearch" placeholder="Search resolved…" oninput="renderHistory('setup')">
-        <button class="btn btn-red" style="margin-left:auto;opacity:.6;cursor:default" disabled><i class="ti ti-history"></i> Resolved Items</button>
+        <button class="btn" style="margin-left:auto;background:#1d6f42;color:#fff" onclick="exportToExcel('setup')"><i class="ti ti-file-spreadsheet"></i> Export Excel</button>
       </div>
       <div class="card-list" id="sHistCards"></div>
       <div class="desktop-table"><table>
@@ -1484,6 +1485,82 @@ if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
     navigator.serviceWorker.register('sw.js').then(r=>console.log('SW:',r.scope)).catch(e=>console.log('SW fail:',e));
   });
+}
+
+function exportToExcel(sec) {
+  const wb = XLSX.utils.book_new();
+
+  function fmtDate(ts) {
+    if (!ts) return '';
+    const d = new Date(ts);
+    return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  }
+
+  function daysSince(ts) {
+    if (!ts) return '';
+    return Math.floor((Date.now() - ts) / 86400000);
+  }
+
+  function statusLabel(s) {
+    return {open:'Open', inprog:'In Progress', waiting:'Waiting', done:'Resolved'}[s] || s;
+  }
+
+  if (sec === 'applicator' || sec === 'all') {
+    const rows = (state.applicator.entries || []).map(e => ({
+      'Ticket #': e.ticketNum || '',
+      'Applicator #': e.apn || '',
+      'Press': e.press || '',
+      'Terminal': e.terminal || '',
+      'Wire': e.wire || '',
+      'Issue': e.issue || '',
+      'Notes': e.notes || '',
+      'Status': statusLabel(e.status),
+      'Logged By': e.by || '',
+      'Date Logged': fmtDate(e.date),
+      'Days Open': daysSince(e.date)
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = [{wch:12},{wch:14},{wch:14},{wch:16},{wch:12},{wch:40},{wch:40},{wch:12},{wch:14},{wch:18},{wch:10}];
+    XLSX.utils.book_append_sheet(wb, ws, 'Applicator Log');
+  }
+
+  if (sec === 'machine' || sec === 'all') {
+    const rows = (state.machine.entries || []).map(e => ({
+      'Ticket #': e.ticketNum || '',
+      'Machine #': e.machine || '',
+      'Description': e.desc || '',
+      'Result / Notes': e.result || '',
+      'Status': statusLabel(e.status),
+      'Logged By': e.by || '',
+      'Date Logged': fmtDate(e.date),
+      'Days Open': daysSince(e.date)
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = [{wch:12},{wch:14},{wch:40},{wch:40},{wch:12},{wch:14},{wch:18},{wch:10}];
+    XLSX.utils.book_append_sheet(wb, ws, 'Machine Log');
+  }
+
+  if (sec === 'setup' || sec === 'all') {
+    const rows = (state.setup.entries || []).map(e => ({
+      'Ticket #': e.ticketNum || '',
+      'Terminal #': e.terminal || '',
+      'AWG': e.awg || '',
+      'Issue': e.issue || '',
+      'Document': e.doc || '',
+      'Notes': e.notes || '',
+      'Status': statusLabel(e.status),
+      'Logged By': e.by || '',
+      'Date Logged': fmtDate(e.date),
+      'Days Open': daysSince(e.date)
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = [{wch:12},{wch:14},{wch:8},{wch:40},{wch:16},{wch:40},{wch:12},{wch:14},{wch:18},{wch:10}];
+    XLSX.utils.book_append_sheet(wb, ws, 'Setup Log');
+  }
+
+  const sectionName = {applicator:'Applicator', machine:'Machine', setup:'Setup', all:'All'}[sec] || sec;
+  const dateStr = new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, 'HL-IssueLog-' + sectionName + '-' + dateStr + '.xlsx');
 }
 </script>
 </body>
