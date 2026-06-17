@@ -624,17 +624,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 <!-- CUSTOMER MODAL -->
 <div class="modal-overlay" id="customerModal">
-  <div class="modal" style="max-width:360px">
+  <div class="modal" style="max-width:400px">
     <h2 id="customerModalTitle">Add Customer</h2>
 
+    <!-- Single add -->
     <div class="field">
       <label>Customer Name *</label>
-      <input id="custName" placeholder="e.g. BraunAbility">
+      <input id="custName" placeholder="e.g. BraunAbility" onkeydown="if(event.key==='Enter') saveCustomer()">
+    </div>
+    <div class="modal-actions" style="margin-top:.75rem;padding-top:.75rem">
+      <button class="btn" onclick="closeCustomerModal()">Cancel</button>
+      <button class="btn btn-red" onclick="saveCustomer()"><i class="ti ti-plus"></i> Add</button>
     </div>
 
-    <div class="modal-actions">
-      <button class="btn" onclick="closeCustomerModal()">Cancel</button>
-      <button class="btn btn-red" onclick="saveCustomer()">Save</button>
+    <!-- Bulk add -->
+    <div style="border-top:1px solid var(--hl-border);margin-top:1rem;padding-top:1rem">
+      <div style="font-size:9px;color:var(--hl-text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Bulk Add</div>
+      <div style="font-size:11px;color:var(--hl-text3);margin-bottom:6px">One customer per line</div>
+      <textarea id="bulkCustomers" placeholder="BraunAbility&#10;Sunrise Medical&#10;Permobil" style="height:100px;resize:vertical;width:100%;font-size:13px;padding:8px 10px;border:1px solid var(--hl-border2);border-radius:3px;background:var(--hl-bg);color:var(--hl-text)" spellcheck="false"></textarea>
+      <button class="btn btn-red" style="width:100%;margin-top:8px" onclick="bulkAddCustomers()"><i class="ti ti-list-plus"></i> Bulk Add</button>
     </div>
   </div>
 </div>
@@ -1431,7 +1439,7 @@ $('sCustomer').value = e?.customer || '';
 }
 function closeModal(sec){ $('modal-'+sec).classList.remove('open'); editId=null; editSection=null; }
 
-function saveEntry(sec){
+async function saveEntry(sec){
   let entry;
   const existing=editId?state[sec].entries.find(e=>e.id===editId):null;
   const suppressMap={applicator:'fSuppress',machine:'mSuppress',setup:'sSuppress'};
@@ -1440,7 +1448,7 @@ function saveEntry(sec){
   const makeTkt=()=>'TKT-'+Math.floor(1000+Math.random()*9000);
   const tkt=tktRaw?'TKT-'+tktRaw:(existing?.ticketNum||makeTkt());
   // If suppressed, prefix ticket with S- so notifier knows to skip it
-  const finalTkt = suppress ? 'S-'+tkt.replace('TKT-','') : tkt;
+  const finalTkt = suppress ? 'S-' + tkt : tkt;
 
   if(sec==='applicator'){
     const apn=$('fApn').value.trim(), issue=$('fIssue').value.trim();
@@ -1453,16 +1461,23 @@ function saveEntry(sec){
   } else {
     const terminal=$('sTerminal').value.trim(), issue=$('sIssue').value.trim();
     if(!terminal||!issue){ alert('Terminal # and issue description are required.'); return; }
-    const customerVal = $('sCustomer').value.trim();
+    const customerInput = $('sCustomer');
+    const customerVal = customerInput ? customerInput.value.trim() : '';
 
 // Auto-add customer if new
-if (customerVal && !customersList.some(c =>
-  c.name.toLowerCase() === customerVal.toLowerCase()
-)) {
-  customersList.push({
-    id: Date.now(),
-    name: customerVal
-  });
+if (
+  customerVal &&
+  Array.isArray(customersList) &&
+  !customersList.some(c =>
+    c.name && c.name.toLowerCase() === customerVal.toLowerCase()
+  )
+) {
+customersList.push({
+  id: Date.now(),
+  name: customerVal
+});
+await pushCustomers();
+
 }
 
 entry={id:editId||Date.now(),
@@ -1669,6 +1684,70 @@ document.addEventListener('keydown',function(e){
 });
 
 initApp();
+async function bulkAddCustomers(){
+  const input = document.getElementById('bulkCustomers').value.trim();
+  if(!input) return;
+
+  const names = input
+    .split('\n')
+    .map(n => n.trim())
+    .filter(n => n.length);
+
+  if(!names.length) return;
+try{
+const existing = new Set(
+  customersList.map(c => c.name.toLowerCase())
+);
+
+let added = 0;
+let skipped = 0;
+
+names.forEach(n=>{
+  const clean = n.replace(/\s+/g,' ').trim().toLowerCase();
+
+  if(!existing.has(clean)){
+    customersList.push({
+      id: Date.now() + Math.random(),
+      name: clean.replace(/\b\w/g, c => c.toUpperCase())
+    });
+    existing.add(clean);
+    added++;
+  } else {
+    skipped++;
+  }
+});
+
+  renderCustomers();
+  renderCustomerDropdown();
+
+  await pushCustomers();// ✅ saves to GitHub correctly
+
+  document.getElementById('bulkCustomers').value = '';
+
+  toast(`${added} added • ${skipped} skipped`, '#50a870');
+
+}catch(e){
+  toast('Error adding customers', '#cc4444');
+}
+}
+async function pushCustomers(){
+  const id = await ensureGist();
+  const g = await gistAPI('GET','gists/'+id);
+
+  let current = {issues:[], contacts:[], customers:[]};
+
+  if(g.files[DATA_FILE]){
+    current = JSON.parse(g.files[DATA_FILE].content);
+  }
+
+  current.customers = customersList;
+
+  await writeGist({
+    [DATA_FILE]: {
+      content: JSON.stringify(current, null, 2)
+    }
+  });
+}
 </script>
 <script>
 if('serviceWorker' in navigator){
@@ -1820,7 +1899,7 @@ function renderCustomers(){
     </div>
   `).join('');
 }
-function saveCustomer(){
+async function saveCustomer(){
   const name = $('custName').value.trim();
   if(!name){
     alert('Customer name is required');
@@ -1841,23 +1920,26 @@ function saveCustomer(){
     const i = customersList.findIndex(c => c.id === editCustId);
     customersList[i].name = name;
   } else {
-    customersList.push({
-      id: Date.now(),
-      name
-    });
-  }
+  customersList.push({
+    id: Date.now(),
+    name: name   // ✅ FIX
+  });
+  await pushCustomers();
+}
 
   closeCustomerModal();
   renderCustomers();
-  pushSection('applicator');
+  renderCustomerDropdown();
 }
-function deleteCustomer(id){
+
+async function deleteCustomer(id){
   if(!confirm('Delete this customer?')) return;
 
   customersList = customersList.filter(c => c.id !== id);
 
   renderCustomers();
-  pushSection('applicator');
+  renderCustomerDropdown();
+  await pushCustomers();
 }
 
 </script>
