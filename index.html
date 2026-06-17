@@ -1,1 +1,1567 @@
-PLACEHOLDER_REPLACED_BY_SCRIPT
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>H&L Issue Log</title>
+<meta name="theme-color" content="#cc2222">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="H&L Log">
+<meta name="application-name" content="H&L Log">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --hl-bg:#111111;--hl-surface:#1c1c1c;--hl-surface2:#252525;
+  --hl-border:#333333;--hl-border2:#444444;--hl-red:#cc2222;
+  --hl-red-hover:#e02828;--hl-red-dim:#3a0a0a;
+  --hl-text:#f0f0f0;--hl-text2:#aaaaaa;--hl-text3:#666666;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--hl-bg);color:var(--hl-text);min-height:100vh}
+.screen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem}
+.screen.active{display:flex}
+.card{background:var(--hl-surface);border:1px solid var(--hl-border2);border-top:2px solid var(--hl-red);border-radius:6px;padding:2rem;width:100%;max-width:360px}
+.card-logo{width:44px;height:44px;background:var(--hl-red);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;color:#fff;margin:0 auto 1.25rem}
+.card-title{font-size:15px;font-weight:500;color:var(--hl-text);text-align:center;margin-bottom:4px}
+.card-sub{font-size:12px;color:var(--hl-text3);text-align:center;margin-bottom:1.5rem;line-height:1.5}
+.setup-field{margin-bottom:12px}
+.setup-field label{display:block;font-size:9px;color:var(--hl-text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px}
+.setup-field input{width:100%;font-size:13px;padding:9px 10px;border:1px solid var(--hl-border2);border-radius:3px;background:var(--hl-bg);color:var(--hl-text);font-family:monospace}
+.setup-field input:focus{outline:none;border-color:var(--hl-red)}
+.setup-field input::placeholder{color:var(--hl-text3);font-family:-apple-system,sans-serif}
+.setup-err{font-size:11px;color:#cc4444;min-height:16px;margin-bottom:8px}
+.setup-hint{font-size:10px;color:var(--hl-text3);margin-top:6px;line-height:1.5}
+.btn-full{width:100%;height:40px;font-size:13px;border:none;border-radius:4px;background:var(--hl-red);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:500;letter-spacing:.03em;margin-top:4px}
+.btn-full:hover{background:var(--hl-red-hover)}
+.btn-full:disabled{opacity:.5;cursor:not-allowed}
+.pin-dots{display:flex;justify-content:center;gap:10px;margin-bottom:1rem}
+.pin-dot{width:13px;height:13px;border-radius:50%;border:2px solid var(--hl-border2);transition:all .15s}
+.pin-dot.filled{background:var(--hl-red);border-color:var(--hl-red)}
+.pin-dot.error{background:#cc4444;border-color:#cc4444}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1rem}
+.pin-key{height:54px;border:1px solid var(--hl-border2);border-radius:4px;background:var(--hl-surface2);color:var(--hl-text);font-size:20px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;user-select:none;touch-action:manipulation;transition:background .1s}
+.pin-key:hover{background:var(--hl-border)}
+.pin-key:active{opacity:.7}
+.pin-key.pin-blank{visibility:hidden}
+.pin-error{font-size:12px;color:#cc4444;min-height:18px;margin-bottom:.5rem;text-align:center}
+.pin-loading{font-size:11px;color:var(--hl-text3);text-align:center;min-height:18px;margin-top:.5rem}
+#app{display:none}
+.header{padding:1rem 1.25rem .9rem;border-bottom:1px solid var(--hl-border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.header-left{display:flex;align-items:center;gap:12px}
+.hl-logo{width:32px;height:32px;background:var(--hl-red);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff;flex-shrink:0}
+.header h1{font-size:15px;font-weight:500;letter-spacing:.03em}
+.header p{font-size:11px;color:var(--hl-text3);margin-top:1px}
+.header-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.sync-status{font-size:10px;color:var(--hl-text3);display:flex;align-items:center;gap:4px;padding:0 2px}
+
+/* ── TOP SECTION TABS (Applicator / Machine / Setup) ── */
+.section-tabs{display:flex;border-bottom:2px solid var(--hl-border);background:var(--hl-surface)}
+.section-tab{flex:1;min-width:0;padding:8px 2px;font-size:10px;cursor:pointer;color:var(--hl-text3);border-bottom:3px solid transparent;margin-bottom:-2px;text-align:center;user-select:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;transition:color .1s;touch-action:manipulation}
+.section-tab.active{color:var(--hl-text);border-bottom-color:var(--hl-red);font-weight:500}
+.section-tab:hover:not(.active){color:var(--hl-text2)}
+.section-tab i{font-size:18px}
+.section-tab .tab-text{display:block;font-size:10px;line-height:1.2}
+@media(min-width:520px){.section-tab{flex-direction:row;padding:11px 8px;font-size:12px;gap:5px;white-space:nowrap} .section-tab i{font-size:14px}}
+
+/* ── SUB TABS (Log / Queue / History) ── */
+.tab-bar{display:flex;border-bottom:1px solid var(--hl-border);padding:0 .75rem;background:var(--hl-bg)}
+.tab{flex:1;text-align:center;padding:8px 4px;font-size:10px;cursor:pointer;color:var(--hl-text3);border-bottom:2px solid transparent;margin-bottom:-1px;letter-spacing:.04em;text-transform:uppercase;user-select:none;white-space:nowrap;touch-action:manipulation}
+@media(min-width:520px){.tab{flex:0 0 auto;padding:8px 14px;font-size:11px}}
+.tab.active{color:var(--hl-text);border-bottom-color:var(--hl-red)}
+.tab:hover:not(.active){color:var(--hl-text2)}
+.sub-section{display:none}.sub-section.active{display:block}
+
+.toolbar{display:flex;gap:8px;padding:.75rem 1.25rem;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--hl-border);background:var(--hl-surface)}
+.toolbar input,.toolbar select{font-size:12px;height:34px;padding:0 10px;border:1px solid var(--hl-border2);border-radius:4px;background:var(--hl-surface2);color:var(--hl-text);min-width:0;-webkit-appearance:none}
+.toolbar input::placeholder{color:var(--hl-text3)}
+.toolbar input:focus,.toolbar select:focus{outline:none;border-color:var(--hl-red)}
+.toolbar select option{background:var(--hl-surface2)}
+.btn{height:34px;padding:0 13px;font-size:12px;border:1px solid var(--hl-border2);border-radius:4px;background:var(--hl-surface2);color:var(--hl-text);cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;letter-spacing:.03em;touch-action:manipulation;user-select:none}
+.btn:hover{background:var(--hl-surface)}
+.btn-red{background:var(--hl-red);color:#fff;border-color:var(--hl-red)}
+.btn-red:hover{background:var(--hl-red-hover)}
+.btn-sm{height:28px;padding:0 9px;font-size:11px;border:1px solid var(--hl-border2);border-radius:3px;background:var(--hl-surface2);color:var(--hl-text2);cursor:pointer;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;touch-action:manipulation}
+.btn-sm:hover{color:var(--hl-text);border-color:var(--hl-border2)}
+.btn-notify{border-color:#1a4a7a;color:#5b9bd5;background:rgba(26,74,122,.2)}
+.btn-notify:hover{background:rgba(26,74,122,.4)}
+.btn-del{border-color:#3a1010;color:#cc4444;background:rgba(58,16,16,.3)}
+.btn-del:hover{background:rgba(80,20,20,.5);color:#e05555;border-color:#552020}
+.btn-export{border-color:#1a5a1a;color:#50a870;background:rgba(26,90,26,.2)}
+.btn-export:hover{background:rgba(26,90,26,.4)}
+.btn-import{border-color:#4a3a0a;color:#c89030;background:rgba(74,58,10,.2)}
+.btn-import:hover{background:rgba(74,58,10,.4)}
+.btn-sync{border-color:#1a4a7a;color:#5b9bd5;background:rgba(26,74,122,.2)}
+.btn-sync:hover{background:rgba(26,74,122,.4)}
+.stats{display:flex;border-bottom:1px solid var(--hl-border);background:var(--hl-surface)}
+.stat{padding:10px 20px;flex:0 0 auto;border-right:1px solid var(--hl-border)}
+.stat-label{font-size:9px;color:var(--hl-text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px}
+.stat-val{font-size:22px;font-weight:500;line-height:1}
+.stat-over .stat-label{color:#cc4444}.stat-over .stat-val{color:#cc4444}
+.desktop-table{display:none;overflow-x:auto}
+.desktop-table table{width:100%;border-collapse:collapse;font-size:12px}
+.desktop-table th{text-align:left;padding:8px 12px;font-size:9px;font-weight:500;color:var(--hl-text3);text-transform:uppercase;letter-spacing:.1em;border-bottom:1px solid var(--hl-border);background:var(--hl-surface);white-space:nowrap}
+.desktop-table td{padding:10px 12px;border-bottom:1px solid var(--hl-border);vertical-align:middle}
+.desktop-table tbody tr:hover td{background:var(--hl-surface)}
+.desktop-table tbody tr:last-child td{border-bottom:none}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:500;white-space:nowrap;letter-spacing:.04em;text-transform:uppercase}
+.badge-open{background:rgba(180,60,20,.25);color:#e07050;border:1px solid rgba(180,60,20,.4)}
+.badge-inprog{background:rgba(160,120,20,.25);color:#d4a030;border:1px solid rgba(160,120,20,.4)}
+.badge-waiting{background:rgba(20,80,160,.25);color:#5090d0;border:1px solid rgba(20,80,160,.4)}
+.badge-done{background:rgba(30,120,60,.25);color:#50a870;border:1px solid rgba(30,120,60,.4)}
+.chip{display:inline-block;background:var(--hl-surface2);border:1px solid var(--hl-border);border-radius:3px;padding:1px 6px;font-size:10px;color:var(--hl-text2);margin-right:3px;margin-bottom:2px;white-space:nowrap;font-family:monospace}
+.sub-text{font-size:11px;color:var(--hl-text3);margin-top:2px}
+.age-warn{color:#cc4444;font-weight:500}.age-ok{color:var(--hl-text3)}
+.card-list{padding:.75rem 1.25rem 1.5rem;display:flex;flex-direction:column;gap:8px}
+.entry-card{background:var(--hl-surface);border:1px solid var(--hl-border);border-radius:4px;padding:12px 14px;border-left:3px solid var(--hl-border)}
+.entry-card.status-open{border-left-color:#cc4444}
+.entry-card.status-inprog{border-left-color:#cc8800}
+.entry-card.status-waiting{border-left-color:#1a5fa0}
+.entry-card.status-done{border-left-color:#207840}
+.entry-apn{font-size:14px;font-weight:500;font-family:monospace}
+.entry-press{font-size:11px;color:var(--hl-text3);margin-top:1px}
+.entry-issue{font-size:13px;margin-bottom:2px}
+.entry-card-footer{display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:8px;border-top:1px solid var(--hl-border);gap:8px;flex-wrap:wrap}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);align-items:flex-start;justify-content:center;padding:24px 16px;z-index:50;overflow-y:auto}
+.modal-overlay.open{display:flex}
+.modal{background:var(--hl-surface);border:1px solid var(--hl-border2);border-radius:4px;padding:1.25rem 1.5rem;width:100%;max-width:480px;border-top:2px solid var(--hl-red);margin:auto}
+.modal h2{font-size:13px;font-weight:500;margin-bottom:1rem;padding-bottom:.75rem;border-bottom:1px solid var(--hl-border);text-transform:uppercase;letter-spacing:.06em}
+.field{margin-bottom:10px}
+.field label{display:block;font-size:9px;color:var(--hl-text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.1em}
+.field input,.field select,.field textarea{width:100%;font-size:13px;padding:8px 10px;border:1px solid var(--hl-border2);border-radius:3px;background:var(--hl-bg);color:var(--hl-text);-webkit-appearance:none}
+.field input::placeholder,.field textarea::placeholder{color:var(--hl-text3)}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--hl-red)}
+.field textarea{height:66px;resize:vertical}
+.field select option{background:var(--hl-surface)}
+.parse-hint{font-size:10px;margin-top:4px;min-height:14px;display:flex;align-items:center;gap:4px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:1.25rem;padding-top:.75rem;border-top:1px solid var(--hl-border)}
+.recipient-list{border:1px solid var(--hl-border2);border-radius:3px;background:var(--hl-bg);overflow:hidden}
+.recipient-row{display:flex;align-items:center;cursor:pointer;border-bottom:1px solid var(--hl-border);transition:background .1s}
+.recipient-row:last-child{border-bottom:none}
+.recipient-row:hover{background:var(--hl-surface2)}
+.recipient-row.checked{background:rgba(204,34,34,.08)}
+.recipient-check{width:44px;height:52px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border-right:1px solid var(--hl-border)}
+.check-box{width:18px;height:18px;border:2px solid var(--hl-border2);border-radius:3px;display:flex;align-items:center;justify-content:center;transition:all .1s;background:var(--hl-surface2)}
+.recipient-row.checked .check-box{background:var(--hl-red);border-color:var(--hl-red)}
+.check-icon{display:none;color:#fff;font-size:12px}
+.recipient-row.checked .check-icon{display:block}
+.recipient-info{flex:1;padding:10px 12px;min-width:0}
+.recipient-name{font-size:13px;font-weight:500}
+.recipient-email{font-size:11px;color:var(--hl-text3);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.contact-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--hl-border)}
+.contact-row:last-child{border-bottom:none}
+.contact-avatar{width:32px;height:32px;border-radius:3px;background:var(--hl-red-dim);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:#cc4444;flex-shrink:0;border:1px solid #551515}
+.empty{text-align:center;padding:2.5rem 1rem;color:var(--hl-text3);font-size:13px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--hl-surface);border:1px solid var(--hl-border2);border-left:3px solid #50a870;color:var(--hl-text);font-size:12px;padding:10px 16px;border-radius:4px;z-index:999;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap;max-width:90vw}
+.toast.show{opacity:1}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.spin{animation:spin 1s linear infinite;display:inline-block}
+
+/* Queue tab */
+.queue-pad{padding:1rem 1.25rem 1.5rem}
+.queue-info{font-size:12px;color:var(--hl-text2);margin-bottom:1rem;padding:10px 14px;background:var(--hl-surface);border:1px solid var(--hl-border);border-radius:4px;line-height:1.6}
+.queue-list-drag{display:flex;flex-direction:column;gap:6px}
+.queue-drag-item{display:flex;align-items:center;gap:10px;background:var(--hl-surface);border:1px solid var(--hl-border);border-radius:4px;padding:10px 12px;cursor:grab;user-select:none;transition:background .1s,border-color .1s,opacity .1s}
+.queue-drag-item:active{cursor:grabbing}
+.queue-drag-item.dragging{opacity:.4;border-color:var(--hl-red)}
+.queue-drag-item.drag-over{border-color:var(--hl-red);background:rgba(204,34,34,.07)}
+.queue-drag-item.status-waiting{opacity:.55;cursor:default}
+.queue-position{width:26px;height:26px;border-radius:50%;background:var(--hl-red);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.queue-position.waiting-pos{background:var(--hl-border2);color:var(--hl-text3)}
+.queue-drag-handle{color:var(--hl-text3);font-size:16px;flex-shrink:0;display:flex;align-items:center}
+.queue-item-apn{font-size:13px;font-weight:600;font-family:monospace;color:var(--hl-text)}
+.queue-item-detail{font-size:11px;color:var(--hl-text3);margin-top:1px}
+.queue-item-right{margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.queue-arrows{display:flex;flex-direction:column;gap:2px}
+.queue-arrow{width:24px;height:20px;border:1px solid var(--hl-border2);border-radius:3px;background:var(--hl-surface2);color:var(--hl-text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px}
+.queue-arrow:hover{background:var(--hl-border);color:var(--hl-text)}
+.queue-arrow:disabled{opacity:.3;cursor:not-allowed}
+.queue-save-bar{display:flex;align-items:center;justify-content:space-between;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--hl-border);gap:8px;flex-wrap:wrap}
+.queue-empty{text-align:center;padding:2rem 1rem;color:var(--hl-text3);font-size:13px}
+
+/* Contacts pad */
+.contacts-pad{padding:0 1.25rem 1.5rem}
+
+@media(max-width:599px){
+  .btn-label{display:none}
+  .btn{padding:0 9px;height:32px;font-size:11px}
+  .sync-status{font-size:9px}
+  .header h1{font-size:13px}
+  .header p{display:none}
+}
+@media(min-width:600px){
+  .card-list{display:none}
+  .desktop-table{display:block}
+  .toolbar input[type=search]{width:200px}
+  .toolbar select{width:148px}
+}
+.logged-in-badge{font-size:10px;color:var(--hl-text3);display:flex;align-items:center;gap:4px;padding:0 2px;white-space:nowrap}
+.logged-in-badge i{font-size:12px;color:#50a870}
+</style>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<!-- SETUP -->
+<div class="screen" id="setupScreen">
+  <div class="card">
+    <div class="card-logo">H&L</div>
+    <div class="card-title">Setup</div>
+    <div class="card-sub">Paste your GitHub token to connect this device.<br>It stays on this device only — never uploaded.</div>
+    <div class="setup-field">
+      <label>GitHub Personal Access Token (gist scope)</label>
+      <input type="password" id="setupToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" spellcheck="false">
+      <div class="setup-hint">Generate at github.com → Settings → Developer settings → Personal access tokens → Tokens (classic). Check the <strong style="color:var(--hl-text2)">gist</strong> scope only.</div>
+    </div>
+    <div class="setup-err" id="setupErr"></div>
+    <button class="btn-full" onclick="doSetup()"><i class="ti ti-plug-connected"></i> Connect</button>
+  </div>
+</div>
+
+<!-- PIN -->
+<div class="screen" id="pinScreen">
+  <div class="card" style="max-width:320px;text-align:center">
+    <div class="card-logo">H&L</div>
+    <div class="card-title" id="pinTitle">Enter PIN</div>
+    <div class="card-sub" id="pinSub" style="margin-bottom:1.25rem">H&L Issue Log</div>
+    <div class="pin-dots" id="pinDots">
+      <div class="pin-dot" id="d0"></div><div class="pin-dot" id="d1"></div>
+      <div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div>
+    </div>
+    <div class="pin-error" id="pinError"></div>
+    <div class="pin-pad">
+      <div class="pin-key" onclick="pinKey('1')">1</div><div class="pin-key" onclick="pinKey('2')">2</div><div class="pin-key" onclick="pinKey('3')">3</div>
+      <div class="pin-key" onclick="pinKey('4')">4</div><div class="pin-key" onclick="pinKey('5')">5</div><div class="pin-key" onclick="pinKey('6')">6</div>
+      <div class="pin-key" onclick="pinKey('7')">7</div><div class="pin-key" onclick="pinKey('8')">8</div><div class="pin-key" onclick="pinKey('9')">9</div>
+      <div class="pin-key pin-blank"></div><div class="pin-key" onclick="pinKey('0')">0</div>
+      <div class="pin-key" onclick="pinDel()"><i class="ti ti-backspace"></i></div>
+    </div>
+    <div class="pin-loading" id="pinLoading"></div>
+    <div style="margin-top:1rem;display:flex;flex-direction:column;gap:6px">
+      <button class="btn" style="width:100%;justify-content:center;font-size:11px;color:var(--hl-text2)" onclick="resetPinCache()"><i class="ti ti-refresh" style="font-size:12px"></i> Sync PIN from Gist</button>
+      <button class="btn" style="width:100%;justify-content:center;font-size:11px;color:var(--hl-text3)" onclick="showSetup()"><i class="ti ti-settings" style="font-size:12px"></i> Change token / reset</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="header">
+    <div class="header-left">
+      <div class="hl-logo">H&L</div>
+      <div><h1>H&L Issue Log</h1><p>Applicator · Machine · Setup Sheet</p></div>
+    </div>
+    <div class="header-actions">
+      <span class="logged-in-badge" id="loggedInBadge" style="display:none"><i class="ti ti-user-circle"></i><span id="loggedInName"></span></span>
+      <span class="sync-status" id="syncStatus"></span>
+      <button class="btn btn-sync" onclick="pushAll(false)" title="Sync"><i class="ti ti-cloud-upload"></i> <span class="btn-label">Sync</span></button>
+      <button class="btn btn-import" onclick="triggerImport()" title="Import"><i class="ti ti-upload"></i> <span class="btn-label">Import</span></button>
+      <button class="btn btn-export" onclick="exportJSON()" title="Export"><i class="ti ti-download"></i> <span class="btn-label">Export</span></button>
+      <button class="btn" onclick="openChangePIN()" title="Manage PINs"><i class="ti ti-lock"></i> <span class="btn-label">PIN</span></button>
+      <button class="btn" onclick="lockApp()" title="Lock"><i class="ti ti-logout"></i> <span class="btn-label">Lock</span></button>
+    </div>
+  </div>
+  <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(event)">
+
+  <!-- SECTION TABS -->
+  <div class="section-tabs">
+    <div class="section-tab active" onclick="switchSection('applicator')" id="stab-applicator">
+      <i class="ti ti-tool"></i><span class="tab-text">Applicator</span>
+    </div>
+    <div class="section-tab" onclick="switchSection('machine')" id="stab-machine">
+      <i class="ti ti-settings-2"></i><span class="tab-text">Machine</span>
+    </div>
+    <div class="section-tab" onclick="switchSection('setup')" id="stab-setup">
+      <i class="ti ti-file-description"></i><span class="tab-text">Setup Sheet</span>
+    </div>
+    <div class="section-tab" onclick="switchSection('contacts')" id="stab-contacts">
+      <i class="ti ti-address-book"></i><span class="tab-text">Contacts</span>
+    </div>
+  </div>
+
+  <!-- APPLICATOR SECTION -->
+  <div id="section-applicator">
+    <div class="tab-bar">
+      <div class="tab active" onclick="switchSubTab('applicator','log')">Issue Log</div>
+      <div class="tab" onclick="switchSubTab('applicator','queue')"><i class="ti ti-list-numbers" style="font-size:11px;margin-right:3px;vertical-align:-1px"></i>Queue</div>
+      <div class="tab" onclick="switchSubTab('applicator','history')"><i class="ti ti-history" style="font-size:11px;margin-right:3px;vertical-align:-1px"></i>History</div>
+    </div>
+    <div class="sub-section active" id="applicator-log">
+      <div class="toolbar">
+        <input type="search" id="aSearch" placeholder="Search applicator, terminal, issue…" oninput="renderSection('applicator')">
+        <select id="aFilter" onchange="renderSection('applicator')">
+          <option value="">All statuses</option><option value="open">Open</option>
+          <option value="inprog">In progress</option><option value="waiting">Waiting on parts</option>
+        </select>
+        <button class="btn btn-red" onclick="openModal('applicator')" style="margin-left:auto"><i class="ti ti-plus"></i> Log Issue</button>
+      </div>
+      <div class="stats" id="aStats"></div>
+      <div class="card-list" id="aCards"></div>
+      <div id="aEmptyM" class="empty" style="display:none"><i class="ti ti-inbox" style="font-size:26px;display:block;margin-bottom:6px"></i>No entries match</div>
+      <div class="desktop-table"><table>
+        <thead><tr>
+          <th style="width:95px">Applicator #</th><th style="width:90px">Press</th>
+          <th style="width:150px">Terminal / Wire</th><th>Issue / Notes</th>
+          <th style="width:120px">Ticket / By</th><th style="width:108px">Status</th>
+          <th style="width:52px">Days</th><th style="width:200px;text-align:right;padding-right:14px">Actions</th>
+        </tr></thead><tbody id="aBody"></tbody>
+      </table><div id="aEmptyD" class="empty" style="display:none"><i class="ti ti-inbox" style="font-size:26px;display:block;margin-bottom:6px"></i>No entries match</div></div>
+    </div>
+    <div class="sub-section" id="applicator-queue"><div class="queue-pad" id="aQueuePad"></div></div>
+    <div class="sub-section" id="applicator-history">
+      <div class="toolbar">
+        <input type="search" id="aHSearch" placeholder="Search resolved…" oninput="renderHistory('applicator')">
+        <button class="btn" style="margin-left:auto;background:#1d6f42;color:#fff" onclick="exportToExcel('applicator')"><i class="ti ti-file-spreadsheet"></i> Export Excel</button>
+      </div>
+      <div class="card-list" id="aHistCards"></div>
+      <div class="desktop-table"><table>
+        <thead><tr>
+          <th style="width:95px">Applicator #</th><th style="width:90px">Press</th>
+          <th style="width:150px">Terminal / Wire</th><th>Issue / Notes</th>
+          <th style="width:120px">By</th><th style="width:108px">Status</th>
+          <th style="width:52px">Days</th><th style="width:130px;text-align:right;padding-right:14px">Actions</th>
+        </tr></thead><tbody id="aHistBody"></tbody>
+      </table><div id="aHistEmpty" class="empty" style="display:none"><i class="ti ti-history" style="font-size:26px;display:block;margin-bottom:6px"></i>No resolved items yet</div></div>
+    </div>
+  </div>
+
+  <!-- MACHINE SECTION -->
+  <div id="section-machine" style="display:none">
+    <div class="tab-bar">
+      <div class="tab active" onclick="switchSubTab('machine','log')">Issue Log</div>
+      <div class="tab" onclick="switchSubTab('machine','queue')"><i class="ti ti-list-numbers" style="font-size:11px;margin-right:3px;vertical-align:-1px"></i>Queue</div>
+      <div class="tab" onclick="switchSubTab('machine','history')"><i class="ti ti-history" style="font-size:11px;margin-right:3px;vertical-align:-1px"></i>History</div>
+    </div>
+    <div class="sub-section active" id="machine-log">
+      <div class="toolbar">
+        <input type="search" id="mSearch" placeholder="Search machine, description…" oninput="renderSection('machine')">
+        <select id="mFilter" onchange="renderSection('machine')">
+          <option value="">All statuses</option><option value="open">Open</option>
+          <option value="inprog">In progress</option><option value="waiting">Waiting on parts</option>
+        </select>
+        <button class="btn btn-red" onclick="openModal('machine')" style="margin-left:auto"><i class="ti ti-plus"></i> Log Issue</button>
+      </div>
+      <div class="stats" id="mStats"></div>
+      <div class="card-list" id="mCards"></div>
+      <div id="mEmptyM" class="empty" style="display:none"><i class="ti ti-inbox" style="font-size:26px;display:block;margin-bottom:6px"></i>No entries match</div>
+      <div class="desktop-table"><table>
+        <thead><tr>
+          <th style="width:110px">Machine #</th><th>Description</th>
+          <th style="width:200px">Result / Notes</th>
+          <th style="width:90px">By</th><th style="width:108px">Status</th>
+          <th style="width:52px">Days</th><th style="width:180px;text-align:right;padding-right:14px">Actions</th>
+        </tr></thead><tbody id="mBody"></tbody>
+      </table><div id="mEmptyD" class="empty" style="display:none"><i class="ti ti-inbox" style="font-size:26px;display:block;margin-bottom:6px"></i>No entries match</div></div>
+    </div>
+    <div class="sub-section" id="machine-queue"><div class="queue-pad" id="mQueuePad"></div></div>
+    <div class="sub-section" id="machine-history">
+      <div class="toolbar">
+        <input type="search" id="mHSearch" placeholder="Search resolved…" oninput="renderHistory('machine')">
+        <button class="btn" style="margin-left:auto;background:#1d6f42;color:#fff" onclick="exportToExcel('machine')"><i class="ti ti-file-spreadsheet"></i> Export Excel</button>
+      </div>
+      <div class="card-list" id="mHistCards"></div>
+      <div class="desktop-table"><table>
+        <thead><tr>
+          <th style="width:110px">Machine #</th><th>Description</th>
+          <th style="width:200px">Result / Notes</th>
+          <th style="width:90px">By</th><th style="width:108px">Status</th>
+          <th style="width:52px">Days</th><th style="width:130px;text-align:right;padding-right:14px">Actions</th>
+        </tr></thead><tbody id="mHistBody"></tbody>
+      </table><div id="mHistEmpty" class="empty" style="display:none"><i class="ti ti-history" style="font-size:26px;display:block;margin-bottom:6px"></i>No resolved items yet</div></div>
+    </div>
+  </div>
+
+  <!-- SETUP SECTION -->
+  <div id="section-setup" style="display:none">
+    <div class="tab-bar">
+      <div class="tab active" onclick="switchSubTab('setup','log')">Issue Log</div>
+      <div class="tab" onclick="switchSubTab('setup','queue')"><i class="ti ti-list-numbers" style="font-size:11px;margin-right:3px;vertical-align:-1px"></i>Queue</div>
+      <div class="tab" onclick="switchSubTab('setup','history')"><i class="ti ti-history" style="font-size:11px;margin-right:3px;vertical-align:-1px"></i>History</div>
+    </div>
+    <div class="sub-section active" id="setup-log">
+      <div class="toolbar">
+        <input type="search" id="sSearch" placeholder="Search terminal, AWG, document…" oninput="renderSection('setup')">
+        <select id="sFilter" onchange="renderSection('setup')">
+          <option value="">All statuses</option><option value="open">Open</option>
+          <option value="inprog">In progress</option><option value="waiting">Waiting on parts</option>
+        </select>
+        <button class="btn btn-red" onclick="openModal('setup')" style="margin-left:auto"><i class="ti ti-plus"></i> Log Issue</button>
+      </div>
+      <div class="stats" id="sStats"></div>
+      <div class="card-list" id="sCards"></div>
+      <div id="sEmptyM" class="empty" style="display:none"><i class="ti ti-inbox" style="font-size:26px;display:block;margin-bottom:6px"></i>No entries match</div>
+      <div class="desktop-table"><table>
+        <thead><tr>
+          <th style="width:110px">Terminal #</th><th style="width:80px">AWG</th>
+          <th>Issue / Notes</th><th style="width:150px">Document</th>
+          <th style="width:90px">By</th><th style="width:108px">Status</th>
+          <th style="width:52px">Days</th><th style="width:180px;text-align:right;padding-right:14px">Actions</th>
+        </tr></thead><tbody id="sBody"></tbody>
+      </table><div id="sEmptyD" class="empty" style="display:none"><i class="ti ti-inbox" style="font-size:26px;display:block;margin-bottom:6px"></i>No entries match</div></div>
+    </div>
+    <div class="sub-section" id="setup-queue"><div class="queue-pad" id="sQueuePad"></div></div>
+    <div class="sub-section" id="setup-history">
+      <div class="toolbar">
+        <input type="search" id="sHSearch" placeholder="Search resolved…" oninput="renderHistory('setup')">
+        <button class="btn" style="margin-left:auto;background:#1d6f42;color:#fff" onclick="exportToExcel('setup')"><i class="ti ti-file-spreadsheet"></i> Export Excel</button>
+      </div>
+      <div class="card-list" id="sHistCards"></div>
+      <div class="desktop-table"><table>
+        <thead><tr>
+          <th style="width:110px">Terminal #</th><th style="width:80px">AWG</th>
+          <th>Issue / Notes</th><th style="width:150px">Document</th>
+          <th style="width:90px">By</th><th style="width:108px">Status</th>
+          <th style="width:52px">Days</th><th style="width:130px;text-align:right;padding-right:14px">Actions</th>
+        </tr></thead><tbody id="sHistBody"></tbody>
+      </table><div id="sHistEmpty" class="empty" style="display:none"><i class="ti ti-history" style="font-size:26px;display:block;margin-bottom:6px"></i>No resolved items yet</div></div>
+    </div>
+  </div>
+
+  <!-- CONTACTS SECTION -->
+  <div id="section-contacts" style="display:none">
+    <div class="contacts-pad" style="padding:1rem 1.25rem 1.5rem">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:.75rem;border-bottom:1px solid var(--hl-border);margin-bottom:.75rem;gap:8px">
+        <p style="font-size:12px;color:var(--hl-text2)">Shared contacts — used for notifications across all issue types.</p>
+        <button class="btn" onclick="openContactModal()"><i class="ti ti-plus"></i> Add Contact</button>
+      </div>
+      <div id="contactList"></div>
+      <div id="emptyContacts" class="empty" style="display:none"><i class="ti ti-users" style="font-size:26px;display:block;margin-bottom:6px"></i>No contacts yet</div>
+    </div>
+  </div>
+</div>
+
+<!-- APPLICATOR MODAL -->
+<div class="modal-overlay" id="modal-applicator">
+  <div class="modal">
+    <h2 id="aModalTitle">Log Applicator Issue</h2>
+    <div class="row2">
+      <div class="field"><label>Applicator # *</label><input id="fApn" placeholder="e.g. T-2430" autocomplete="off" oninput="formatApn(this)"></div>
+      <div class="field"><label>Press / Machine</label><input id="fPress" placeholder="e.g. KM-4T #3"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Terminal P/N</label><input id="fTerminal" placeholder="e.g. 794956-1"></div>
+      <div class="field"><label>Wire Gauge / Type</label><input id="fWire" placeholder="e.g. 0.5mm² TXL"></div>
+    </div>
+    <div class="field"><label>Issue Description *</label><textarea id="fIssue" placeholder="Crimp height off, blade worn, carrier jammed…"></textarea></div>
+    <div class="field"><label>Notes / Resolution Steps</label><textarea id="fNotes" style="height:52px" placeholder="What's been done or what's pending…"></textarea></div>
+    <div class="row2">
+      <div class="field"><label>Ticket # <span style="font-weight:400;color:var(--hl-text3)">(optional)</span></label>
+        <div style="display:flex;align-items:center">
+          <span style="height:38px;padding:0 8px;background:var(--hl-surface2);border:1px solid var(--hl-border2);border-right:none;border-radius:3px 0 0 3px;display:flex;align-items:center;font-size:11px;color:var(--hl-text3);font-family:monospace">TKT-</span>
+          <input id="fTicket" placeholder="4821" inputmode="numeric" maxlength="4" style="border-radius:0 3px 3px 0" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,4)">
+        </div>
+      </div>
+      <div class="field"><label>Status</label>
+        <select id="fStatus"><option value="open">Open</option><option value="inprog">In progress</option><option value="waiting">Waiting on parts</option><option value="done">Resolved</option></select>
+      </div>
+    </div>
+    <div class="field"><label>Logged By</label><input id="fBy" placeholder="Your name"></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px 10px;background:var(--hl-surface2);border:1px solid var(--hl-border);border-radius:3px;cursor:pointer" onclick="event.target.tagName!=='INPUT'&&this.querySelector('input').click()">
+      <input type="checkbox" id="fSuppress" style="width:15px;height:15px;accent-color:var(--hl-red);cursor:pointer;flex-shrink:0">
+      <div>
+        <div style="font-size:12px;font-weight:500;color:var(--hl-text)">Suppress notification</div>
+        <div style="font-size:10px;color:var(--hl-text3);margin-top:1px">Log this entry without triggering an email notification</div>
+      </div>
+    </div>
+    <div class="modal-actions"><button class="btn" onclick="closeModal('applicator')">Cancel</button><button class="btn btn-red" onclick="saveEntry('applicator')">Save Entry</button></div>
+  </div>
+</div>
+
+<!-- MACHINE MODAL -->
+<div class="modal-overlay" id="modal-machine">
+  <div class="modal">
+    <h2 id="mModalTitle">Log Machine Issue</h2>
+    <div class="row2">
+      <div class="field"><label>Machine # *</label><input id="mMachine" placeholder="e.g. KM-4T #2" autocomplete="off"></div>
+      <div class="field"><label>Logged By</label><input id="mBy" placeholder="Your name"></div>
+    </div>
+    <div class="field"><label>Description *</label><textarea id="mDesc" placeholder="Describe the machine problem…"></textarea></div>
+    <div class="field"><label>Result / Notes</label><textarea id="mResult" style="height:52px" placeholder="What was found, what was done…"></textarea></div>
+    <div class="row2">
+      <div class="field"><label>Status</label>
+        <select id="mStatus"><option value="open">Open</option><option value="inprog">In progress</option><option value="waiting">Waiting on parts</option><option value="done">Resolved</option></select>
+      </div>
+      <div class="field"><label>Ticket # <span style="font-weight:400;color:var(--hl-text3)">(optional)</span></label>
+        <div style="display:flex;align-items:center">
+          <span style="height:38px;padding:0 8px;background:var(--hl-surface2);border:1px solid var(--hl-border2);border-right:none;border-radius:3px 0 0 3px;display:flex;align-items:center;font-size:11px;color:var(--hl-text3);font-family:monospace">TKT-</span>
+          <input id="mTicket" placeholder="4821" inputmode="numeric" maxlength="4" style="border-radius:0 3px 3px 0" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,4)">
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px 10px;background:var(--hl-surface2);border:1px solid var(--hl-border);border-radius:3px;cursor:pointer" onclick="event.target.tagName!=='INPUT'&&this.querySelector('input').click()">
+      <input type="checkbox" id="mSuppress" style="width:15px;height:15px;accent-color:var(--hl-red);cursor:pointer;flex-shrink:0">
+      <div>
+        <div style="font-size:12px;font-weight:500;color:var(--hl-text)">Suppress notification</div>
+        <div style="font-size:10px;color:var(--hl-text3);margin-top:1px">Log this entry without triggering an email notification</div>
+      </div>
+    </div>
+    <div class="modal-actions"><button class="btn" onclick="closeModal('machine')">Cancel</button><button class="btn btn-red" onclick="saveEntry('machine')">Save Entry</button></div>
+  </div>
+</div>
+
+<!-- SETUP SHEET MODAL -->
+<div class="modal-overlay" id="modal-setup">
+  <div class="modal">
+    <h2 id="sModalTitle">Log Setup Sheet Issue</h2>
+    <div class="row3">
+      <div class="field"><label>Terminal # *</label><input id="sTerminal" placeholder="e.g. 794956-1" autocomplete="off"></div>
+      <div class="field"><label>AWG</label><input id="sAwg" placeholder="e.g. 18 AWG"></div>
+      <div class="field"><label>Logged By</label><input id="sBy" placeholder="Your name"></div>
+    </div>
+    <div class="field"><label>Issue Description *</label><textarea id="sIssue" placeholder="What's wrong with the setup sheet…"></textarea></div>
+    <div class="field"><label>Document / File Reference</label><input id="sDoc" placeholder="e.g. SS-2024-0042, rev B"></div>
+    <div class="field"><label>Notes / Resolution</label><textarea id="sNotes" style="height:52px" placeholder="What was done or what's needed…"></textarea></div>
+    <div class="row2">
+      <div class="field"><label>Status</label>
+        <select id="sStatus"><option value="open">Open</option><option value="inprog">In progress</option><option value="waiting">Waiting on parts</option><option value="done">Resolved</option></select>
+      </div>
+      <div class="field"><label>Ticket # <span style="font-weight:400;color:var(--hl-text3)">(optional)</span></label>
+        <div style="display:flex;align-items:center">
+          <span style="height:38px;padding:0 8px;background:var(--hl-surface2);border:1px solid var(--hl-border2);border-right:none;border-radius:3px 0 0 3px;display:flex;align-items:center;font-size:11px;color:var(--hl-text3);font-family:monospace">TKT-</span>
+          <input id="sTicket" placeholder="4821" inputmode="numeric" maxlength="4" style="border-radius:0 3px 3px 0" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,4)">
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px 10px;background:var(--hl-surface2);border:1px solid var(--hl-border);border-radius:3px;cursor:pointer" onclick="event.target.tagName!=='INPUT'&&this.querySelector('input').click()">
+      <input type="checkbox" id="sSuppress" style="width:15px;height:15px;accent-color:var(--hl-red);cursor:pointer;flex-shrink:0">
+      <div>
+        <div style="font-size:12px;font-weight:500;color:var(--hl-text)">Suppress notification</div>
+        <div style="font-size:10px;color:var(--hl-text3);margin-top:1px">Log this entry without triggering an email notification</div>
+      </div>
+    </div>
+    <div class="modal-actions"><button class="btn" onclick="closeModal('setup')">Cancel</button><button class="btn btn-red" onclick="saveEntry('setup')">Save Entry</button></div>
+  </div>
+</div>
+
+<!-- NOTIFY MODAL -->
+<div class="modal-overlay" id="notifyModal">
+  <div class="modal">
+    <h2>Notify — Issue Update</h2>
+    <div style="background:var(--hl-bg);border:1px solid var(--hl-border);border-radius:3px;padding:10px 12px;margin-bottom:12px">
+      <div style="font-size:13px;font-weight:500;font-family:monospace" id="notifyLabel"></div>
+      <div style="font-size:11px;color:var(--hl-text3);margin-top:3px" id="notifyDetail"></div>
+    </div>
+    <div class="field">
+      <label>Recipients — click to select</label>
+      <div class="recipient-list" id="notifyContactList"></div>
+      <div style="font-size:10px;color:var(--hl-text3);margin-top:5px">Add contacts under the Contacts tab.</div>
+    </div>
+    <div class="field"><label>Additional Note (optional)</label><textarea id="notifyNote" style="height:54px" placeholder="e.g. Ready to return to production."></textarea></div>
+    <div class="modal-actions"><button class="btn" onclick="closeNotifyModal()">Cancel</button><button class="btn btn-red" onclick="sendNotify()"><i class="ti ti-send"></i> Send Notification</button></div>
+  </div>
+</div>
+
+<!-- CONTACT MODAL -->
+<div class="modal-overlay" id="contactModal">
+  <div class="modal">
+    <h2 id="contactModalTitle">Add Contact</h2>
+    <div class="field"><label>Name *</label><input id="cName" placeholder="e.g. John Smith"></div>
+    <div class="field">
+      <label>Email Address *</label>
+      <input id="cEmail" type="text" placeholder='e.g. jsmith@hlmfg.com  or  "John Smith" <jsmith@hlmfg.com>' oninput="parseEmailField()" onpaste="setTimeout(parseEmailField,10)">
+      <div class="parse-hint" id="parseHint"></div>
+    </div>
+    <div class="field"><label>Role / Department</label><input id="cRole" placeholder="e.g. Production Supervisor"></div>
+    <div class="modal-actions"><button class="btn" onclick="closeContactModal()">Cancel</button><button class="btn btn-red" onclick="saveContact()">Save Contact</button></div>
+  </div>
+</div>
+
+<!-- PIN CHANGE MODAL -->
+<div class="modal-overlay" id="pinModal">
+  <div class="modal" style="max-width:420px">
+    <h2>Manage Users &amp; PINs</h2>
+    <div style="margin-bottom:1rem">
+      <div style="font-size:9px;color:var(--hl-text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Users</div>
+      <div id="userList" style="border:1px solid var(--hl-border2);border-radius:3px;overflow:hidden;background:var(--hl-bg)"></div>
+    </div>
+    <div style="border:1px solid var(--hl-border);border-radius:4px;padding:10px 12px;margin-bottom:1rem;background:var(--hl-surface2)">
+      <div style="font-size:9px;color:var(--hl-text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Add New User</div>
+      <div class="row2" style="margin-bottom:8px">
+        <div class="field" style="margin-bottom:0"><label>Name *</label><input id="nuName" placeholder="e.g. John Smith" autocomplete="off"></div>
+        <div class="field" style="margin-bottom:0"><label>PIN *</label><input id="nuPin" type="password" inputmode="numeric" maxlength="4" placeholder="4-digit PIN" autocomplete="off"></div>
+      </div>
+      <button class="btn btn-red" style="width:100%" onclick="addUser()"><i class="ti ti-user-plus"></i> Add User</button>
+    </div>
+    <div style="border:1px solid var(--hl-border);border-radius:4px;padding:10px 12px;background:var(--hl-surface2)">
+      <div style="font-size:9px;color:var(--hl-text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Change Your PIN</div>
+      <div class="row2">
+        <div class="field" style="margin-bottom:8px"><label>Current PIN</label><input id="pmCurrent" type="password" inputmode="numeric" maxlength="4" placeholder="Current PIN" autocomplete="off"></div>
+        <div class="field" style="margin-bottom:8px"><label>New PIN</label><input id="pmNew" type="password" inputmode="numeric" maxlength="4" placeholder="New PIN" autocomplete="off"></div>
+      </div>
+      <button class="btn" style="width:100%" onclick="savePIN()"><i class="ti ti-refresh"></i> Update My PIN</button>
+    </div>
+    <div style="font-size:11px;color:#cc4444;min-height:16px;margin-top:8px" id="pinModalErr"></div>
+    <div class="modal-actions"><button class="btn" onclick="closePINModal()">Done</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── FILES ──
+const DATA_FILE  = 'hl_applicator_data.json';   // legacy applicator (issues+contacts)
+const MACH_FILE  = 'hl_machine_data.json';
+const SETUP_FILE = 'hl_setup_data.json';
+const META_FILE  = 'hl_applicator_meta.json';
+const QUEUE_FILES = {
+  applicator: 'hl_queue_order.json',
+  machine:    'hl_queue_machine.json',
+  setup:      'hl_queue_setup.json'
+};
+const NOTIFY_FILE = 'hl_notify_queue.json';
+const INACTIVITY = 30 * 60 * 1000;
+
+// ── STATE ──
+// Each section has its own entries array and queue order
+const state = {
+  applicator: { entries:[], queue:[] },
+  machine:    { entries:[], queue:[] },
+  setup:      { entries:[], queue:[] }
+};
+let contacts = [], gistId = null;
+let editId = null, editSection = null, editCId = null;
+let notifyId = null, notifySection = null;
+let selectedRecipients = new Set();
+let pinBuffer = '', pinMode = 'unlock', pinSetupFirst = '';
+let inactivityTimer = null;
+let dragSrcIndex = null;
+let activeSection = 'applicator';
+
+const $ = id => document.getElementById(id);
+function toast(msg, color='#50a870'){
+  const t=$('toast'); t.textContent=msg; t.style.borderLeftColor=color;
+  t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000);
+}
+async function sha256(str){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('hl2024:'+str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; }}
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){}}
+function lsDel(k){ try{ localStorage.removeItem(k); }catch(e){}}
+function getToken(){ return lsGet('hl_token'); }
+
+// ── SCREENS ──
+function showScreen(id){
+  ['setupScreen','pinScreen'].forEach(s=>$(s).classList.remove('active'));
+  $('app').style.display='none';
+  if(id==='app') $('app').style.display='block';
+  else $(id).classList.add('active');
+}
+function showSetup(){ lockApp(true); $('setupToken').value=''; $('setupErr').textContent=''; showScreen('setupScreen'); }
+
+async function doSetup(){
+  const token=$('setupToken').value.trim(); $('setupErr').textContent='';
+  if(!token.startsWith('ghp_')&&!token.startsWith('github_pat_')){ $('setupErr').textContent='Paste a valid GitHub token starting with ghp_'; return; }
+  const btn=document.querySelector('#setupScreen .btn-full');
+  btn.disabled=true; btn.innerHTML='<i class="ti ti-loader spin"></i> Connecting…';
+  try{
+    const r=await fetch('https://api.github.com/gists?per_page=1',{headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}});
+    if(!r.ok) throw new Error('Token invalid ('+r.status+')');
+    lsSet('hl_token',token);
+    btn.disabled=false; btn.innerHTML='<i class="ti ti-plug-connected"></i> Connect';
+    showScreen('pinScreen'); await initPinScreen();
+  }catch(e){ btn.disabled=false; btn.innerHTML='<i class="ti ti-plug-connected"></i> Connect'; $('setupErr').textContent=e.message||'Could not connect'; }
+}
+
+// ── GIST ──
+async function gistAPI(method,path,body){
+  const token=getToken(); if(!token) throw new Error('No token');
+  const r=await fetch('https://api.github.com/'+path,{method,headers:{'Authorization':'token '+token,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},body:body?JSON.stringify(body):undefined});
+  if(!r.ok) throw new Error('GitHub '+r.status);
+  return r.json();
+}
+async function ensureGist(){
+  if(gistId) return gistId;
+  const cached=lsGet('hl_gist_id');
+  if(cached){ try{ await gistAPI('GET','gists/'+cached); gistId=cached; return gistId; }catch(e){ lsDel('hl_gist_id'); } }
+  const list=await gistAPI('GET','gists?per_page=100');
+  const found=list.find(g=>g.files&&(g.files[DATA_FILE]||g.files[META_FILE]));
+  if(found){ gistId=found.id; lsSet('hl_gist_id',gistId); return gistId; }
+  const created=await gistAPI('POST','gists',{description:'H&L Issue Log',public:false,files:{
+    [DATA_FILE]:{content:JSON.stringify({issues:[],contacts:[]},null,2)},
+    [MACH_FILE]:{content:JSON.stringify({issues:[]},null,2)},
+    [SETUP_FILE]:{content:JSON.stringify({issues:[]},null,2)},
+    [META_FILE]:{content:JSON.stringify({pinHash:null},null,2)},
+    [QUEUE_FILES.applicator]:{content:'[]'},
+    [QUEUE_FILES.machine]:{content:'[]'},
+    [QUEUE_FILES.setup]:{content:'[]'}
+  }});
+  gistId=created.id; lsSet('hl_gist_id',gistId); return gistId;
+}
+async function writeGist(files){ const id=await ensureGist(); await gistAPI('PATCH','gists/'+id,{files}); }
+async function pushMeta(users){ try{ await writeGist({[META_FILE]:{content:JSON.stringify({users},null,2)}}); }catch(e){ console.error('pushMeta failed',e); } }
+async function pushAll(silent=true){
+  setSyncStatus('syncing');
+  try{
+    await writeGist({
+      [DATA_FILE]:{content:JSON.stringify({issues:state.applicator.entries,contacts:contacts},null,2)},
+      [MACH_FILE]:{content:JSON.stringify({issues:state.machine.entries},null,2)},
+      [SETUP_FILE]:{content:JSON.stringify({issues:state.setup.entries},null,2)},
+      [QUEUE_FILES.applicator]:{content:JSON.stringify(state.applicator.queue,null,2)},
+      [QUEUE_FILES.machine]:{content:JSON.stringify(state.machine.queue,null,2)},
+      [QUEUE_FILES.setup]:{content:JSON.stringify(state.setup.queue,null,2)}
+    });
+    saveLocal(); setSyncStatus('ok');
+    if(!silent) toast('Synced to GitHub');
+  }catch(e){ setSyncStatus('error'); if(!silent) toast('Sync failed','#cc4444'); }
+}
+async function pushSection(sec){
+  const fileMap = {
+    applicator: DATA_FILE,
+    machine: MACH_FILE,
+    setup: SETUP_FILE
+  };
+  const files = {};
+  if(sec==='applicator') files[DATA_FILE]={content:JSON.stringify({issues:state.applicator.entries,contacts:contacts},null,2)};
+  else files[fileMap[sec]]={content:JSON.stringify({issues:state[sec].entries},null,2)};
+  files[QUEUE_FILES[sec]]={content:JSON.stringify(state[sec].queue,null,2)};
+  setSyncStatus('syncing');
+  try{ await writeGist(files); saveLocal(); setSyncStatus('ok'); }
+  catch(e){ setSyncStatus('error'); }
+}
+function setSyncStatus(s){
+  const el=$('syncStatus');
+  if(s==='syncing') el.innerHTML='<i class="ti ti-loader spin"></i> Syncing…';
+  else if(s==='ok')  el.innerHTML='<i class="ti ti-cloud-check" style="color:#50a870"></i> Synced';
+  else if(s==='error') el.innerHTML='<i class="ti ti-cloud-x" style="color:#cc4444"></i> Error';
+  else el.innerHTML='';
+}
+function saveLocal(){
+  lsSet('hl_data',JSON.stringify({
+    applicator: state.applicator,
+    machine: state.machine,
+    setup: state.setup,
+    contacts
+  }));
+}
+function loadLocal(){
+  try{
+    const r=lsGet('hl_data'); if(!r) return;
+    const d=JSON.parse(r);
+    if(d.applicator){ state.applicator.entries=d.applicator.entries||[]; state.applicator.queue=d.applicator.queue||[]; }
+    if(d.machine){ state.machine.entries=d.machine.entries||[]; state.machine.queue=d.machine.queue||[]; }
+    if(d.setup){ state.setup.entries=d.setup.entries||[]; state.setup.queue=d.setup.queue||[]; }
+    if(Array.isArray(d.contacts)) contacts=d.contacts;
+    // Legacy: if old format with top-level issues array
+    if(d.issues){ state.applicator.entries=d.issues; }
+  }catch(e){}
+}
+async function loadFromGist(){
+  try{
+    const id=await ensureGist();
+    const token=getToken();
+    const r=await fetch('https://api.github.com/gists/'+id,{headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}});
+    const g=await r.json();
+    lastGistUpdatedAt=g.updated_at;
+    // Applicator
+    if(g.files[DATA_FILE]){ const d=JSON.parse(g.files[DATA_FILE].content); state.applicator.entries=d.issues||[]; if(d.contacts) contacts=d.contacts; }
+    // Machine
+    if(g.files[MACH_FILE]){ const d=JSON.parse(g.files[MACH_FILE].content); state.machine.entries=d.issues||[]; }
+    // Setup
+    if(g.files[SETUP_FILE]){ const d=JSON.parse(g.files[SETUP_FILE].content); state.setup.entries=d.issues||[]; }
+    // Queues
+    ['applicator','machine','setup'].forEach(sec=>{ const f=g.files[QUEUE_FILES[sec]]; if(f) state[sec].queue=JSON.parse(f.content)||[]; });
+    // Meta
+    if(g.files[META_FILE]){ const m=JSON.parse(g.files[META_FILE].content); if(m.users) lsSet('hl_users',JSON.stringify(m.users)); else if(m.pinHash){ const users=[{name:'Tyler',pinHash:m.pinHash}]; lsSet('hl_users',JSON.stringify(users)); } }
+    saveLocal();
+  }catch(e){ loadLocal(); }
+}
+
+// ── PIN ──
+function setPinLoading(msg){ $('pinLoading').textContent=msg||''; }
+function updateDots(){ for(let i=0;i<4;i++){ const d=$('d'+i); d.classList.remove('filled','error'); if(i<pinBuffer.length) d.classList.add('filled'); } }
+function dotError(){ for(let i=0;i<4;i++) $('d'+i).classList.add('error'); setTimeout(updateDots,700); }
+async function pinKey(k){ if(pinBuffer.length>=4) return; pinBuffer+=k; updateDots(); $('pinError').textContent=''; if(pinBuffer.length===4) await handlePin(); }
+function pinDel(){ pinBuffer=pinBuffer.slice(0,-1); updateDots(); }
+async function handlePin(){
+  if(pinMode==='setup1'){ pinSetupFirst=pinBuffer; pinBuffer=''; updateDots(); $('pinTitle').textContent='Confirm PIN'; $('pinSub').textContent='Re-enter your new PIN'; pinMode='setup2'; return; }
+  if(pinMode==='setup2'){
+    if(pinBuffer!==pinSetupFirst){ $('pinError').textContent='PINs do not match'; dotError(); pinBuffer=''; pinSetupFirst=''; pinMode='setup1'; setTimeout(()=>{ $('pinTitle').textContent='Set a PIN'; $('pinSub').textContent='Choose a 4-digit PIN'; },800); return; }
+    const h=await sha256(pinBuffer);
+    const users=[{name:'Tyler',pinHash:h}];
+    lsSet('hl_users',JSON.stringify(users));
+    await pushMeta(users); await loadFromGist(); doUnlock('Tyler'); return;
+  }
+  const h=await sha256(pinBuffer);
+  // Check local cache first — instant, no network lag
+  let users=[];
+  try{ users=JSON.parse(lsGet('hl_users')||'[]'); }catch(e){}
+  const matchedLocal=users.find(u=>u.pinHash===h);
+  if(matchedLocal){
+    lsSet('hl_user_name',matchedLocal.name);
+    setPinLoading('Loading…'); await loadFromGist(); setPinLoading('');
+    doUnlock(matchedLocal.name);
+    ensureGist().then(id=>fetch('https://api.github.com/gists/'+id,{headers:{'Authorization':'token '+getToken(),'Accept':'application/vnd.github.v3+json'}}))
+      .then(r=>r.json()).then(g=>{ if(g.files&&g.files[META_FILE]){ const m=JSON.parse(g.files[META_FILE].content); if(m.users) lsSet('hl_users',JSON.stringify(m.users)); } }).catch(()=>{});
+    return;
+  }
+  // Not in local cache — fetch from Gist
+  setPinLoading('Checking…');
+  try{
+    const r=await fetch('https://api.github.com/gists/'+(await ensureGist()),{headers:{'Authorization':'token '+getToken(),'Accept':'application/vnd.github.v3+json'}});
+    const g=await r.json();
+    if(g.files[META_FILE]){
+      const m=JSON.parse(g.files[META_FILE].content);
+      if(m.users){ users=m.users; lsSet('hl_users',JSON.stringify(users)); }
+      else if(m.pinHash){ users=[{name:'Tyler',pinHash:m.pinHash}]; await pushMeta(users); lsSet('hl_users',JSON.stringify(users)); }
+    }
+  }catch(e){}
+  if(!users.length){ pinSetupFirst=pinBuffer; pinBuffer=''; updateDots(); $('pinTitle').textContent='Confirm PIN'; $('pinSub').textContent='Re-enter your new PIN'; setPinLoading(''); pinMode='setup2'; return; }
+  const matched=users.find(u=>u.pinHash===h);
+  if(matched){ lsSet('hl_user_name',matched.name); setPinLoading('Loading…'); await loadFromGist(); setPinLoading(''); doUnlock(matched.name); }
+  else{ setPinLoading(''); $('pinError').textContent='Incorrect PIN'; dotError(); pinBuffer=''; }
+}
+async function resetPinCache(){
+  setPinLoading('Syncing PIN…'); $('pinError').textContent=''; pinBuffer=''; updateDots();
+  try{ lsDel('hl_users'); const id=await ensureGist(); const r=await fetch('https://api.github.com/gists/'+id,{headers:{'Authorization':'token '+getToken(),'Accept':'application/vnd.github.v3+json'}}); const g=await r.json(); if(g.files[META_FILE]){ const m=JSON.parse(g.files[META_FILE].content); if(m.users&&m.users.length){ lsSet('hl_users',JSON.stringify(m.users)); setPinLoading('Synced — enter your PIN'); } else if(m.pinHash){ const users=[{name:'Tyler',pinHash:m.pinHash}]; lsSet('hl_users',JSON.stringify(users)); setPinLoading('Synced — enter your PIN'); } else setPinLoading('No users set yet'); } }
+  catch(e){ setPinLoading('Could not reach Gist'); }
+  setTimeout(()=>setPinLoading(''),3000);
+}
+async function initPinScreen(){
+  const cached=lsGet('hl_users');
+  if(cached&&JSON.parse(cached).length){ pinMode='unlock'; return; }
+  try{
+    setPinLoading('Connecting…');
+    const id=await ensureGist();
+    const r=await fetch('https://api.github.com/gists/'+id,{headers:{'Authorization':'token '+getToken(),'Accept':'application/vnd.github.v3+json'}});
+    const g=await r.json();
+    if(g.files[META_FILE]){
+      const m=JSON.parse(g.files[META_FILE].content);
+      if(m.users&&m.users.length){ lsSet('hl_users',JSON.stringify(m.users)); setPinLoading(''); pinMode='unlock'; }
+      else if(m.pinHash){ const users=[{name:'Tyler',pinHash:m.pinHash}]; lsSet('hl_users',JSON.stringify(users)); await pushMeta(users); setPinLoading(''); pinMode='unlock'; }
+      else{ setPinLoading(''); $('pinTitle').textContent='Set a PIN'; $('pinSub').textContent='Choose a 4-digit PIN'; pinMode='setup1'; }
+    } else{ setPinLoading(''); $('pinTitle').textContent='Set a PIN'; $('pinSub').textContent='Choose a 4-digit PIN'; pinMode='setup1'; }
+  }catch(e){ setPinLoading('Offline — enter PIN'); pinMode='unlock'; }
+}
+function resetInactivity(){ clearTimeout(inactivityTimer); inactivityTimer=setTimeout(lockApp,INACTIVITY); }
+function doUnlock(userName){
+  sessionStorage.setItem('hl_s','1');
+  showScreen('app'); resetInactivity();
+  ['mousemove','keydown','click','touchstart'].forEach(e=>document.addEventListener(e,resetInactivity,{passive:true}));
+  renderAll(); setSyncStatus('ok'); startPolling();
+  if(userName){
+    toast('Welcome, '+userName+'!','#50a870');
+    const badge=$('loggedInBadge'), name=$('loggedInName');
+    if(badge&&name){ name.textContent=userName; badge.style.display='flex'; }
+  } else {
+    const n=lsGet('hl_user_name');
+    if(n){ const badge=$('loggedInBadge'),name=$('loggedInName'); if(badge&&name){ name.textContent=n; badge.style.display='flex'; } }
+  }
+}
+function lockApp(silent=false){ clearTimeout(inactivityTimer); stopPolling(); sessionStorage.removeItem('hl_s'); const b=$('loggedInBadge'); if(b) b.style.display='none'; showScreen('pinScreen'); pinBuffer=''; updateDots(); $('pinTitle').textContent='Enter PIN'; $('pinSub').textContent='H&L Issue Log'; $('pinError').textContent=''; setPinLoading(''); pinMode='unlock'; }
+async function initApp(){
+  const token=getToken(); if(!token){ showScreen('setupScreen'); return; }
+  showScreen('pinScreen');
+  if(sessionStorage.getItem('hl_s')==='1'){ loadLocal(); doUnlock(lsGet('hl_user_name')||''); loadFromGist().then(()=>{ renderAll(); setSyncStatus('ok'); }).catch(()=>{}); return; }
+  await initPinScreen();
+}
+
+// ── EXPORT / IMPORT ──
+function exportJSON(){
+  const data={exported:new Date().toISOString(),version:2,applicator:state.applicator.entries,machine:state.machine.entries,setup:state.setup.entries,contacts};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`hl_log_${new Date().toISOString().slice(0,10)}.json`; a.click();
+  toast(`Exported ${state.applicator.entries.length} applicator, ${state.machine.entries.length} machine, ${state.setup.entries.length} setup issues`);
+}
+function triggerImport(){ $('importFile').value=''; $('importFile').click(); }
+function importJSON(evt){
+  const f=evt.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=function(e){
+    try{
+      const d=JSON.parse(e.target.result);
+      const na=Array.isArray(d.applicator)?d.applicator:(Array.isArray(d.issues)?d.issues:[]);
+      const nm=Array.isArray(d.machine)?d.machine:[];
+      const ns=Array.isArray(d.setup)?d.setup:[];
+      const nc=Array.isArray(d.contacts)?d.contacts:[];
+      if(!confirm(`Import ${na.length} applicator, ${nm.length} machine, ${ns.length} setup issues?\nThis replaces current data.`)) return;
+      state.applicator.entries=na; state.machine.entries=nm; state.setup.entries=ns; contacts=nc;
+      saveLocal(); renderAll(); pushAll(false);
+    }catch(e){ alert('Not a valid H&L Log JSON file.'); }
+  };
+  r.readAsText(f);
+}
+
+// ── PIN CHANGE ──
+function openChangePIN(){
+  $('pmCurrent').value=''; $('pmNew').value=''; $('nuName').value=''; $('nuPin').value='';
+  $('pinModalErr').textContent='';
+  renderUserList();
+  $('pinModal').classList.add('open');
+}
+function closePINModal(){ $('pinModal').classList.remove('open'); }
+
+function getUsers(){ try{ return JSON.parse(lsGet('hl_users')||'[]'); }catch(e){ return []; } }
+function saveUsersLocal(users){ lsSet('hl_users',JSON.stringify(users)); }
+
+function renderUserList(){
+  const users=getUsers();
+  const currentName=lsGet('hl_user_name')||'';
+  const ul=$('userList');
+  if(!users.length){ ul.innerHTML='<div style="padding:10px 12px;font-size:12px;color:var(--hl-text3)">No users set up yet.</div>'; return; }
+  ul.innerHTML=users.map((u,i)=>`
+    <div style="display:flex;align-items:center;padding:9px 12px;border-bottom:1px solid var(--hl-border);gap:8px">
+      <div style="width:30px;height:30px;border-radius:50%;background:var(--hl-red-dim);border:1px solid #551515;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:#cc4444;flex-shrink:0">${u.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)}</div>
+      <div style="flex:1;font-size:13px;font-weight:500">${u.name}${u.name===currentName?'<span style="font-size:10px;color:#50a870;margin-left:6px">(you)</span>':''}</div>
+      ${users.length>1?`<button class="btn-sm btn-del" onclick="removeUser(${i})"><i class="ti ti-trash"></i></button>`:''}
+    </div>`).join('');
+}
+
+async function addUser(){
+  const name=$('nuName').value.trim(), pin=$('nuPin').value.trim();
+  const err=$('pinModalErr'); err.textContent='';
+  if(!name){ err.textContent='Name is required'; return; }
+  if(!/^\d{4}$/.test(pin)){ err.textContent='PIN must be exactly 4 digits'; return; }
+  const users=getUsers();
+  if(users.find(u=>u.name.toLowerCase()===name.toLowerCase())){ err.textContent='A user with that name already exists'; return; }
+  users.push({name,pinHash:await sha256(pin)});
+  saveUsersLocal(users); await pushMeta(users);
+  $('nuName').value=''; $('nuPin').value='';
+  renderUserList(); toast('Added user: '+name);
+}
+
+async function removeUser(idx){
+  const users=getUsers();
+  const currentName=lsGet('hl_user_name')||'';
+  if(users[idx].name===currentName){ $('pinModalErr').textContent="You can't remove yourself"; return; }
+  if(!confirm('Remove user '+users[idx].name+'?')) return;
+  users.splice(idx,1); saveUsersLocal(users); await pushMeta(users);
+  renderUserList(); toast('User removed');
+}
+
+async function savePIN(){
+  const cur=$('pmCurrent').value.trim(), nw=$('pmNew').value.trim();
+  const err=$('pinModalErr'); err.textContent='';
+  if(!/^\d{4}$/.test(cur)||!/^\d{4}$/.test(nw)){ err.textContent='Both fields must be exactly 4 digits'; return; }
+  const users=getUsers();
+  const currentName=lsGet('hl_user_name')||'';
+  const curHash=await sha256(cur);
+  const idx=users.findIndex(u=>u.name===currentName&&u.pinHash===curHash);
+  if(idx===-1){ err.textContent='Current PIN is incorrect'; return; }
+  users[idx].pinHash=await sha256(nw);
+  saveUsersLocal(users); await pushMeta(users);
+  closePINModal(); toast('PIN updated');
+}
+
+// ── NAVIGATION ──
+function switchSection(sec){
+  activeSection=sec;
+  ['applicator','machine','setup','contacts'].forEach(s=>{
+    $('stab-'+s).classList.toggle('active',s===sec);
+    const el=$('section-'+s); if(el) el.style.display=s===sec?'block':'none';
+  });
+  if(sec==='applicator') renderSection('applicator');
+  else if(sec==='machine') renderSection('machine');
+  else if(sec==='setup') renderSection('setup');
+  else renderContacts();
+}
+function switchSubTab(sec,tab){
+  const tabs=['log','queue','history'];
+  const bar=$('section-'+sec).querySelector('.tab-bar');
+  bar.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',tabs[i]===tab));
+  tabs.forEach(t=>{ const el=$(sec+'-'+t); if(el) el.classList.toggle('active',t===tab); });
+  if(tab==='queue') renderQueueTab(sec);
+  else if(tab==='history') renderHistory(sec);
+}
+
+
+// ── HELPERS ──
+function formatApn(input){
+  let v = input.value.toUpperCase().replace(/[^T0-9\-]/g,'');
+  if(v && !v.startsWith('T')){ v = 'T-' + v.replace(/[^0-9]/g,''); }
+  else if(v === 'T'){ v = 'T-'; }
+  else if(v.startsWith('T') && !v.startsWith('T-')){ v = 'T-' + v.slice(1).replace(/[^0-9]/g,''); }
+  const parts = v.split('-');
+  if(parts.length >= 2) v = 'T-' + parts.slice(1).join('').replace(/[^0-9]/g,'').slice(0,4);
+  input.value = v;
+}
+function days(ts){ return Math.round((Date.now()-ts)/86400000); }
+function daysLabel(ts){
+  const ms=Date.now()-ts;
+  const hrs=Math.floor(ms/3600000);
+  const d=Math.floor(ms/86400000);
+  if(hrs<1) return '<1hr';
+  if(hrs<24) return hrs+'hr'+(hrs!==1?'s':'');
+  return d+'d';
+}
+function badge(s){
+  const m={open:['badge-open','Open'],inprog:['badge-inprog','In Progress'],waiting:['badge-waiting','Waiting Parts'],done:['badge-done','Resolved']};
+  const[c,l]=m[s]||m.open; return`<span class="badge ${c}">${l}</span>`;
+}
+function ini(n){ return n.split(' ').map(w=>w[0]||'').join('').toUpperCase().slice(0,2); }
+function tktBadge(e){ return e.ticketNum?`<span style="font-size:10px;background:rgba(20,80,160,.2);border:1px solid rgba(20,80,160,.4);color:#5090d0;border-radius:3px;padding:2px 6px;font-family:monospace;white-space:nowrap;display:inline-block;margin-bottom:3px">${e.ticketNum}</span><br>`:''; }
+function actionBtns(e,sec,hist=false){
+  return `<div style="display:flex;align-items:center;justify-content:flex-end;gap:4px;flex-wrap:wrap">
+    ${!hist?`<button class="btn-sm btn-notify" onclick="openNotify(${e.id},'${sec}')"><i class="ti ti-mail"></i> Notify</button>`:''}
+    <button class="btn-sm" style="border-color:var(--hl-border);color:var(--hl-text2)" onclick="openModal('${sec}',${e.id})"><i class="ti ti-edit"></i> Edit</button>
+    <button class="btn-sm btn-del" onclick="delEntry('${sec}',${e.id})"><i class="ti ti-trash"></i> Delete</button>
+    ${e.ticketNum?`<button class="btn-sm" style="border-color:#1a5a1a;color:#50a870;background:rgba(26,90,26,.2)" onclick="shareTicket('${sec}',${e.id})"><i class="ti ti-link"></i> Link</button>`:''}
+  </div>`;
+}
+
+// ── RENDER ALL ──
+function renderAll(){
+  renderSection('applicator');
+  renderSection('machine');
+  renderSection('setup');
+  renderContacts();
+}
+
+// ── STATS ──
+function renderStats(sec,prefix){
+  const entries=state[sec].entries.filter(e=>e.status!=='done');
+  const total=entries.length, open=entries.filter(e=>e.status==='open').length;
+  const wait=entries.filter(e=>e.status==='waiting').length, over=entries.filter(e=>e.status!=='done'&&days(e.date)>3).length;
+  $(prefix+'Stats').innerHTML=
+    `<div class="stat"><div class="stat-label">On Hand</div><div class="stat-val">${total}</div></div>`+
+    `<div class="stat"><div class="stat-label">Open</div><div class="stat-val">${open}</div></div>`+
+    `<div class="stat"><div class="stat-label">Waiting Parts</div><div class="stat-val">${wait}</div></div>`+
+    `<div class="stat${over>0?' stat-over':''}"><div class="stat-label">Overdue &gt;3d</div><div class="stat-val">${over}</div></div>`;
+}
+
+// ── APPLICATOR RENDER ──
+function renderSection(sec){
+  if(sec==='applicator') renderApplicator();
+  else if(sec==='machine') renderMachine();
+  else if(sec==='setup') renderSetup();
+}
+function renderApplicator(){
+  const q=($('aSearch')?.value||'').toLowerCase(), fs=$('aFilter')?.value||'';
+  const active=state.applicator.entries.filter(e=>e.status!=='done');
+  const f=active.filter(e=>{
+    const mq=!q||[e.apn,e.issue,e.press,e.terminal,e.wire].some(v=>(v||'').toLowerCase().includes(q));
+    return mq&&(!fs||e.status===fs);
+  });
+  renderStats('applicator','a');
+  // mobile cards
+  const cl=$('aCards'), em=$('aEmptyM');
+  if(!f.length){cl.innerHTML='';em.style.display='block';}
+  else{ em.style.display='none'; cl.innerHTML=f.map(e=>{
+    const d=days(e.date),ac=(e.status!=='done'&&d>3)?'age-warn':'age-ok';
+    const tw=[e.terminal,e.wire].filter(Boolean).map(t=>`<span class="chip">${t}</span>`).join('');
+    return`<div class="entry-card status-${e.status}">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;gap:8px">
+        <div><div class="entry-apn">${e.apn}</div>${e.press?`<div class="entry-press">${e.press}</div>`:''}</div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0"><span class="${ac}" style="font-size:11px">${daysLabel(e.date)}</span>${badge(e.status)}</div>
+      </div>
+      ${tw?`<div style="margin-bottom:6px">${tw}</div>`:''}
+      <div class="entry-issue">${e.issue}</div>${e.notes?`<div class="sub-text">${e.notes}</div>`:''}
+      <div class="entry-card-footer"><div style="font-size:11px;color:var(--hl-text3)">${e.by||''}</div>${actionBtns(e,'applicator')}</div>
+    </div>`;
+  }).join(''); }
+  // desktop table
+  const tb=$('aBody'), ed=$('aEmptyD');
+  if(!f.length){tb.innerHTML='';ed.style.display='block';}
+  else{ ed.style.display='none'; tb.innerHTML=f.map(e=>{
+    const d=days(e.date),ac=(e.status!=='done'&&d>3)?'age-warn':'age-ok';
+    const tw=[e.terminal,e.wire].filter(Boolean).map(t=>`<span class="chip">${t}</span>`).join('')||`<span style="color:var(--hl-text3)">—</span>`;
+    return`<tr>
+      <td style="font-weight:500;font-family:monospace;font-size:12px">${e.apn}</td>
+      <td style="color:var(--hl-text2);font-size:12px">${e.press||'—'}</td>
+      <td>${tw}</td>
+      <td><div style="font-size:12px">${e.issue}</div>${e.notes?`<div class="sub-text">${e.notes}</div>`:''}</td>
+      <td style="font-size:12px">${tktBadge(e)}<span style="color:var(--hl-text2)">${e.by||'—'}</span></td>
+      <td>${badge(e.status)}</td>
+      <td class="${ac}" style="font-size:12px">${daysLabel(e.date)}</td>
+      <td style="text-align:right;padding-right:4px">${actionBtns(e,'applicator')}</td>
+    </tr>`;
+  }).join(''); }
+}
+
+// ── MACHINE RENDER ──
+function renderMachine(){
+  const q=($('mSearch')?.value||'').toLowerCase(), fs=$('mFilter')?.value||'';
+  const active=state.machine.entries.filter(e=>e.status!=='done');
+  const f=active.filter(e=>{
+    const mq=!q||[e.machine,e.desc,e.result].some(v=>(v||'').toLowerCase().includes(q));
+    return mq&&(!fs||e.status===fs);
+  });
+  renderStats('machine','m');
+  const cl=$('mCards'),em=$('mEmptyM');
+  if(!f.length){cl.innerHTML='';em.style.display='block';}
+  else{ em.style.display='none'; cl.innerHTML=f.map(e=>{
+    const d=days(e.date),ac=(e.status!=='done'&&d>3)?'age-warn':'age-ok';
+    return`<div class="entry-card status-${e.status}">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;gap:8px">
+        <div><div class="entry-apn">${e.machine}</div></div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0"><span class="${ac}" style="font-size:11px">${daysLabel(e.date)}</span>${badge(e.status)}</div>
+      </div>
+      <div class="entry-issue">${e.desc}</div>${e.result?`<div class="sub-text">${e.result}</div>`:''}
+      <div class="entry-card-footer"><div style="font-size:11px;color:var(--hl-text3)">${e.by||''}</div>${actionBtns(e,'machine')}</div>
+    </div>`;
+  }).join(''); }
+  const tb=$('mBody'),ed=$('mEmptyD');
+  if(!f.length){tb.innerHTML='';ed.style.display='block';}
+  else{ ed.style.display='none'; tb.innerHTML=f.map(e=>{
+    const d=days(e.date),ac=(e.status!=='done'&&d>3)?'age-warn':'age-ok';
+    return`<tr>
+      <td style="font-weight:500;font-family:monospace;font-size:12px">${e.machine}</td>
+      <td><div style="font-size:12px">${e.desc}</div></td>
+      <td><div style="font-size:12px">${e.result||'—'}</div></td>
+      <td style="font-size:12px;color:var(--hl-text2)">${tktBadge(e)}${e.by||'—'}</td>
+      <td>${badge(e.status)}</td>
+      <td class="${ac}" style="font-size:12px">${daysLabel(e.date)}</td>
+      <td style="text-align:right;padding-right:4px">${actionBtns(e,'machine')}</td>
+    </tr>`;
+  }).join(''); }
+}
+
+// ── SETUP RENDER ──
+function renderSetup(){
+  const q=($('sSearch')?.value||'').toLowerCase(), fs=$('sFilter')?.value||'';
+  const active=state.setup.entries.filter(e=>e.status!=='done');
+  const f=active.filter(e=>{
+    const mq=!q||[e.terminal,e.awg,e.issue,e.doc].some(v=>(v||'').toLowerCase().includes(q));
+    return mq&&(!fs||e.status===fs);
+  });
+  renderStats('setup','s');
+  const cl=$('sCards'),em=$('sEmptyM');
+  if(!f.length){cl.innerHTML='';em.style.display='block';}
+  else{ em.style.display='none'; cl.innerHTML=f.map(e=>{
+    const d=days(e.date),ac=(e.status!=='done'&&d>3)?'age-warn':'age-ok';
+    return`<div class="entry-card status-${e.status}">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;gap:8px">
+        <div><div class="entry-apn">${e.terminal}</div>${e.awg?`<div class="entry-press">${e.awg}</div>`:''}</div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0"><span class="${ac}" style="font-size:11px">${daysLabel(e.date)}</span>${badge(e.status)}</div>
+      </div>
+      ${e.doc?`<div style="margin-bottom:4px"><span class="chip">${e.doc}</span></div>`:''}
+      <div class="entry-issue">${e.issue}</div>${e.notes?`<div class="sub-text">${e.notes}</div>`:''}
+      <div class="entry-card-footer"><div style="font-size:11px;color:var(--hl-text3)">${e.by||''}</div>${actionBtns(e,'setup')}</div>
+    </div>`;
+  }).join(''); }
+  const tb=$('sBody'),ed=$('sEmptyD');
+  if(!f.length){tb.innerHTML='';ed.style.display='block';}
+  else{ ed.style.display='none'; tb.innerHTML=f.map(e=>{
+    const d=days(e.date),ac=(e.status!=='done'&&d>3)?'age-warn':'age-ok';
+    return`<tr>
+      <td style="font-weight:500;font-family:monospace;font-size:12px">${e.terminal}</td>
+      <td style="font-size:12px;color:var(--hl-text2)">${e.awg||'—'}</td>
+      <td><div style="font-size:12px">${e.issue}</div>${e.notes?`<div class="sub-text">${e.notes}</div>`:''}</td>
+      <td style="font-size:12px;color:var(--hl-text2)">${e.doc||'—'}</td>
+      <td style="font-size:12px">${tktBadge(e)}${e.by||'—'}</td>
+      <td>${badge(e.status)}</td>
+      <td class="${ac}" style="font-size:12px">${daysLabel(e.date)}</td>
+      <td style="text-align:right;padding-right:4px">${actionBtns(e,'setup')}</td>
+    </tr>`;
+  }).join(''); }
+}
+
+// ── HISTORY ──
+function renderHistory(sec){
+  const resolved=state[sec].entries.filter(e=>e.status==='done');
+  const q=($(sec[0]+'HSearch')?.value||'').toLowerCase();
+  const f=!q?resolved:resolved.filter(e=>Object.values(e).some(v=>typeof v==='string'&&v.toLowerCase().includes(q)));
+  if(sec==='applicator'){
+    const cl=$('aHistCards'),em=$('aHistEmpty'),tb=$('aHistBody');
+    if(!f.length){cl.innerHTML='';tb.innerHTML='';em.style.display='block';return;} em.style.display='none';
+    cl.innerHTML=f.map(e=>`<div class="entry-card status-done"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><div><div class="entry-apn">${e.apn}</div>${e.press?`<div class="entry-press">${e.press}</div>`:''}</div>${badge('done')}</div><div class="entry-issue">${e.issue}</div>${e.notes?`<div class="sub-text">${e.notes}</div>`:''}<div class="entry-card-footer"><div style="font-size:11px;color:var(--hl-text3)">${e.by||''}</div>${actionBtns(e,'applicator',true)}</div></div>`).join('');
+    tb.innerHTML=f.map(e=>{const tw=[e.terminal,e.wire].filter(Boolean).map(t=>`<span class="chip">${t}</span>`).join('')||'—';return`<tr><td style="font-family:monospace;font-size:12px">${e.apn}</td><td style="font-size:12px;color:var(--hl-text2)">${e.press||'—'}</td><td>${tw}</td><td><div style="font-size:12px">${e.issue}</div>${e.notes?`<div class="sub-text">${e.notes}</div>`:''}</td><td style="font-size:12px;color:var(--hl-text2)">${e.by||'—'}</td><td>${badge('done')}</td><td style="font-size:12px;color:var(--hl-text3)">${daysLabel(e.date)}</td><td style="text-align:right;padding-right:4px">${actionBtns(e,'applicator',true)}</td></tr>`;}).join('');
+  } else if(sec==='machine'){
+    const cl=$('mHistCards'),em=$('mHistEmpty'),tb=$('mHistBody');
+    if(!f.length){cl.innerHTML='';tb.innerHTML='';em.style.display='block';return;} em.style.display='none';
+    cl.innerHTML=f.map(e=>`<div class="entry-card status-done"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><div class="entry-apn">${e.machine}</div>${badge('done')}</div><div class="entry-issue">${e.desc}</div>${e.result?`<div class="sub-text">${e.result}</div>`:''}<div class="entry-card-footer"><div style="font-size:11px;color:var(--hl-text3)">${e.by||''}</div>${actionBtns(e,'machine',true)}</div></div>`).join('');
+    tb.innerHTML=f.map(e=>`<tr><td style="font-family:monospace;font-size:12px">${e.machine}</td><td><div style="font-size:12px">${e.desc}</div></td><td style="font-size:12px;color:var(--hl-text2)">${e.result||'—'}</td><td style="font-size:12px;color:var(--hl-text2)">${e.by||'—'}</td><td>${badge('done')}</td><td style="font-size:12px;color:var(--hl-text3)">${daysLabel(e.date)}</td><td style="text-align:right;padding-right:4px">${actionBtns(e,'machine',true)}</td></tr>`).join('');
+  } else {
+    const cl=$('sHistCards'),em=$('sHistEmpty'),tb=$('sHistBody');
+    if(!f.length){cl.innerHTML='';tb.innerHTML='';em.style.display='block';return;} em.style.display='none';
+    cl.innerHTML=f.map(e=>`<div class="entry-card status-done"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><div><div class="entry-apn">${e.terminal}</div>${e.awg?`<div class="entry-press">${e.awg}</div>`:''}</div>${badge('done')}</div><div class="entry-issue">${e.issue}</div>${e.notes?`<div class="sub-text">${e.notes}</div>`:''}<div class="entry-card-footer"><div style="font-size:11px;color:var(--hl-text3)">${e.by||''}</div>${actionBtns(e,'setup',true)}</div></div>`).join('');
+    tb.innerHTML=f.map(e=>`<tr><td style="font-family:monospace;font-size:12px">${e.terminal}</td><td style="font-size:12px;color:var(--hl-text2)">${e.awg||'—'}</td><td><div style="font-size:12px">${e.issue}</div></td><td style="font-size:12px;color:var(--hl-text2)">${e.doc||'—'}</td><td style="font-size:12px;color:var(--hl-text2)">${e.by||'—'}</td><td>${badge('done')}</td><td style="font-size:12px;color:var(--hl-text3)">${daysLabel(e.date)}</td><td style="text-align:right;padding-right:4px">${actionBtns(e,'setup',true)}</td></tr>`).join('');
+  }
+}
+
+// ── QUEUE TAB ──
+function getActiveQueue(sec){
+  const active=state[sec].entries.filter(e=>e.status==='open'||e.status==='inprog');
+  const waiting=state[sec].entries.filter(e=>e.status==='waiting');
+  const order=state[sec].queue;
+  const ordered=[];
+  const rem=[...active];
+  order.forEach(id=>{ const i=rem.findIndex(e=>e.id===id); if(i!==-1) ordered.push(rem.splice(i,1)[0]); });
+  rem.forEach(e=>ordered.push(e));
+  return{ordered,waiting};
+}
+function renderQueueTab(sec){
+  const padId={applicator:'aQueuePad',machine:'mQueuePad',setup:'sQueuePad'}[sec];
+  const pad=$(padId); if(!pad) return;
+  const{ordered,waiting}=getActiveQueue(sec);
+  const all=[...ordered,...waiting];
+  if(!all.length){ pad.innerHTML='<div class="queue-empty"><i class="ti ti-check" style="font-size:26px;display:block;margin-bottom:6px;color:#50a870"></i>No open items</div>'; return; }
+  const primaryLabel={applicator:'Applicator #',machine:'Machine #',setup:'Terminal #'}[sec];
+  pad.innerHTML=`
+    <div class="queue-info"><strong style="color:var(--hl-text)"><i class="ti ti-drag-drop" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>Drag to set work order</strong> — or use arrows on mobile.<br>This order is used for ETA estimates on the ticket page.<br><span style="color:var(--hl-text3)">Waiting on Parts items are excluded from ETA.</span></div>
+    <div class="queue-list-drag" id="${sec}QList"></div>
+    <div class="queue-save-bar"><span style="font-size:12px;color:var(--hl-text3)" id="${sec}QHint">Drag items to set your work order</span><button class="btn btn-red" onclick="saveQueueOrder('${sec}')"><i class="ti ti-device-floppy"></i> Save Order</button></div>`;
+  const list=$(sec+'QList');
+  ordered.forEach((e,i)=>list.appendChild(makeQueueItem(e,i,ordered.length,false,sec)));
+  if(waiting.length){
+    const div=document.createElement('div');
+    div.style.cssText='font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--hl-text3);padding:8px 4px 4px;margin-top:4px';
+    div.textContent='Waiting on Parts — excluded from ETA';
+    list.appendChild(div);
+    waiting.forEach(e=>list.appendChild(makeQueueItem(e,null,0,true,sec)));
+  }
+}
+function makeQueueItem(e,pos,total,isWaiting,sec){
+  const el=document.createElement('div');
+  el.className='queue-drag-item'+(isWaiting?' status-waiting':'');
+  el.dataset.id=e.id;
+  const label={applicator:e.apn,machine:e.machine,setup:e.terminal}[sec]||'—';
+  const detail={applicator:[e.press,e.terminal,e.wire].filter(Boolean).join(' · ')||e.issue?.slice(0,40),machine:e.desc?.slice(0,50),setup:[e.awg,e.doc].filter(Boolean).join(' · ')||e.issue?.slice(0,40)}[sec]||'';
+  const tkt=e.ticketNum?`<span style="font-size:9px;color:#5090d0;font-family:monospace;margin-left:6px">${e.ticketNum}</span>`:'';
+  const posEl=isWaiting?`<div class="queue-position waiting-pos"><i class="ti ti-pause" style="font-size:10px"></i></div>`:`<div class="queue-position">${pos+1}</div>`;
+  el.innerHTML=`
+    <div class="queue-drag-handle"><i class="ti ti-grip-vertical"></i></div>
+    ${posEl}
+    <div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:4px"><span class="queue-item-apn">${label}</span>${tkt}</div><div class="queue-item-detail">${detail}</div></div>
+    <div class="queue-item-right">
+      ${!isWaiting?`<div class="queue-arrows"><button class="queue-arrow" onclick="moveQueue('${sec}',${e.id},-1)" ${pos===0?'disabled':''}><i class="ti ti-chevron-up" style="font-size:10px"></i></button><button class="queue-arrow" onclick="moveQueue('${sec}',${e.id},1)" ${pos===total-1?'disabled':''}><i class="ti ti-chevron-down" style="font-size:10px"></i></button></div>`:''}
+      <span class="badge badge-${e.status==='inprog'?'inprog':'open'}">${e.status==='inprog'?'In Progress':'Open'}</span>
+    </div>`;
+  if(!isWaiting){
+    el.draggable=true;
+    el.addEventListener('dragstart',ev=>{ dragSrcIndex=pos; el.classList.add('dragging'); ev.dataTransfer.effectAllowed='move'; });
+    el.addEventListener('dragend',  ()=>{ el.classList.remove('dragging'); document.querySelectorAll('.queue-drag-item').forEach(x=>x.classList.remove('drag-over')); });
+    el.addEventListener('dragover', ev=>{ ev.preventDefault(); el.classList.add('drag-over'); });
+    el.addEventListener('dragleave',()=>el.classList.remove('drag-over'));
+    el.addEventListener('drop',     ev=>{ ev.preventDefault(); el.classList.remove('drag-over'); if(dragSrcIndex===null||dragSrcIndex===pos) return; const{ordered}=getActiveQueue(sec); const ids=ordered.map(e=>e.id); const[m]=ids.splice(dragSrcIndex,1); ids.splice(pos,0,m); state[sec].queue=ids; markQueueDirty(sec); renderQueueTab(sec); });
+  }
+  return el;
+}
+function markQueueDirty(sec){ const h=$(sec+'QHint'); if(h){ h.textContent='Order changed — click Save Order to apply'; h.style.color='#d4a030'; } }
+function moveQueue(sec,id,dir){
+  const{ordered}=getActiveQueue(sec); const ids=ordered.map(e=>e.id); const idx=ids.indexOf(id); if(idx===-1) return;
+  const ni=idx+dir; if(ni<0||ni>=ids.length) return;
+  [ids[idx],ids[ni]]=[ids[ni],ids[idx]]; state[sec].queue=ids; markQueueDirty(sec); renderQueueTab(sec);
+}
+async function saveQueueOrder(sec){
+  state[sec].queue=getActiveQueue(sec).ordered.map(e=>e.id);
+  setSyncStatus('syncing');
+  try{ await writeGist({[QUEUE_FILES[sec]]:{content:JSON.stringify(state[sec].queue,null,2)}}); saveLocal(); setSyncStatus('ok'); toast('Queue order saved'); const h=$(sec+'QHint'); if(h){ h.textContent='Drag items to set your work order'; h.style.color=''; } renderQueueTab(sec); }
+  catch(e){ setSyncStatus('error'); }
+}
+
+// ── MODALS ──
+function openModal(sec,id=null){
+  editSection=sec; editId=id;
+  const e=id?state[sec].entries.find(x=>x.id===id):null;
+  if(sec==='applicator'){
+    $('aModalTitle').textContent=e?'Edit Applicator Entry':'Log Applicator Issue';
+    $('fApn').value=e?.apn||''; $('fPress').value=e?.press||''; $('fTerminal').value=e?.terminal||'';
+    $('fWire').value=e?.wire||''; $('fIssue').value=e?.issue||''; $('fNotes').value=e?.notes||'';
+    $('fStatus').value=e?.status||'open'; $('fBy').value=e?.by||(id?'':lsGet('hl_user_name')||'');
+    $('fTicket').value=e?.ticketNum?e.ticketNum.replace('TKT-','').replace('S-',''):''; $('fSuppress').checked=e?.ticketNum?.startsWith('S-')||false;
+  } else if(sec==='machine'){
+    $('mModalTitle').textContent=e?'Edit Machine Entry':'Log Machine Issue';
+    $('mMachine').value=e?.machine||''; $('mDesc').value=e?.desc||'';
+    $('mResult').value=e?.result||''; $('mStatus').value=e?.status||'open';
+    $('mBy').value=e?.by||(id?'':lsGet('hl_user_name')||''); $('mTicket').value=e?.ticketNum?e.ticketNum.replace('TKT-','').replace('S-',''):''; $('mSuppress').checked=e?.ticketNum?.startsWith('S-')||false;
+  } else {
+    $('sModalTitle').textContent=e?'Edit Setup Sheet Entry':'Log Setup Sheet Issue';
+    $('sTerminal').value=e?.terminal||''; $('sAwg').value=e?.awg||'';
+    $('sIssue').value=e?.issue||''; $('sDoc').value=e?.doc||'';
+    $('sNotes').value=e?.notes||''; $('sStatus').value=e?.status||'open';
+    $('sBy').value=e?.by||(id?'':lsGet('hl_user_name')||''); $('sTicket').value=e?.ticketNum?e.ticketNum.replace('TKT-','').replace('S-',''):''; $('sSuppress').checked=e?.ticketNum?.startsWith('S-')||false;
+  }
+  // Reset suppress checkbox
+  const chkMap = {applicator:'fSuppress',machine:'mSuppress',setup:'sSuppress'};
+  const chk = $(chkMap[sec]); if(chk) chk.checked = false;
+  $('modal-'+sec).classList.add('open');
+}
+function closeModal(sec){ $('modal-'+sec).classList.remove('open'); editId=null; editSection=null; }
+
+function saveEntry(sec){
+  let entry;
+  const existing=editId?state[sec].entries.find(e=>e.id===editId):null;
+  const suppressMap={applicator:'fSuppress',machine:'mSuppress',setup:'sSuppress'};
+  const suppress=$(suppressMap[sec])?.checked||false;
+  const tktRaw={applicator:$('fTicket'),machine:$('mTicket'),setup:$('sTicket')}[sec]?.value.trim();
+  const makeTkt=()=>'TKT-'+Math.floor(1000+Math.random()*9000);
+  const tkt=tktRaw?'TKT-'+tktRaw:(existing?.ticketNum||makeTkt());
+  // If suppressed, prefix ticket with S- so notifier knows to skip it
+  const finalTkt = suppress ? 'S-'+tkt.replace('TKT-','') : tkt;
+
+  if(sec==='applicator'){
+    const apn=$('fApn').value.trim(), issue=$('fIssue').value.trim();
+    if(!apn||!issue){ alert('Applicator # and issue description are required.'); return; }
+    entry={id:editId||Date.now(),apn,press:$('fPress').value.trim(),terminal:$('fTerminal').value.trim(),wire:$('fWire').value.trim(),issue,notes:$('fNotes').value.trim(),status:$('fStatus').value,by:$('fBy').value.trim(),date:existing?.date||Date.now(),...(finalTkt&&{ticketNum:finalTkt}),...(existing?.submittedBy&&{submittedBy:existing.submittedBy}),...(existing?.priority&&{priority:existing.priority})};
+  } else if(sec==='machine'){
+    const machine=$('mMachine').value.trim(), desc=$('mDesc').value.trim();
+    if(!machine||!desc){ alert('Machine # and description are required.'); return; }
+    entry={id:editId||Date.now(),machine,desc,result:$('mResult').value.trim(),status:$('mStatus').value,by:$('mBy').value.trim(),date:existing?.date||Date.now(),...(finalTkt&&{ticketNum:finalTkt})};
+  } else {
+    const terminal=$('sTerminal').value.trim(), issue=$('sIssue').value.trim();
+    if(!terminal||!issue){ alert('Terminal # and issue description are required.'); return; }
+    entry={id:editId||Date.now(),terminal,awg:$('sAwg').value.trim(),issue,doc:$('sDoc').value.trim(),notes:$('sNotes').value.trim(),status:$('sStatus').value,by:$('sBy').value.trim(),date:existing?.date||Date.now(),...(finalTkt&&{ticketNum:finalTkt})};
+  }
+  const byVal={applicator:$('fBy'),machine:$('mBy'),setup:$('sBy')}[sec]?.value.trim(); if(byVal) lsSet('hl_user_name',byVal);
+  if(editId){const i=state[sec].entries.findIndex(e=>e.id===editId);state[sec].entries[i]=entry;} else state[sec].entries.unshift(entry);
+  closeModal(sec); renderSection(sec); renderHistory(sec); renderQueueTab(sec); pushSection(sec);
+}
+function delEntry(sec,id){
+  if(!confirm('Remove this entry?')) return;
+  state[sec].entries=state[sec].entries.filter(e=>e.id!==id);
+  state[sec].queue=state[sec].queue.filter(qid=>qid!==id);
+  renderSection(sec); renderHistory(sec); renderQueueTab(sec); pushSection(sec);
+}
+
+// ── NOTIFY ──
+function openNotify(id,sec){
+  notifyId=id; notifySection=sec; selectedRecipients=new Set();
+  const e=state[sec].entries.find(x=>x.id===id);
+  const label={applicator:`Applicator ${e.apn}${e.press?' — '+e.press:''}`,machine:`Machine ${e.machine}`,setup:`Terminal ${e.terminal}${e.awg?' — '+e.awg:''}`}[sec];
+  const detail={applicator:[e.terminal,e.wire,e.issue].filter(Boolean).join(' | '),machine:e.desc,setup:[e.doc,e.issue].filter(Boolean).join(' | ')}[sec];
+  $('notifyLabel').textContent=label; $('notifyDetail').textContent=detail||''; $('notifyNote').value='';
+  const cl=$('notifyContactList');
+  if(!contacts.length){ cl.innerHTML=`<div style="font-size:12px;color:var(--hl-text3);padding:12px">No contacts added yet.</div>`; }
+  else cl.innerHTML=contacts.map(c=>`<div class="recipient-row" data-id="${c.id}" onclick="toggleRecipient(${c.id})"><div class="recipient-check"><div class="check-box"><i class="ti ti-check check-icon" style="display:none"></i></div></div><div class="recipient-info"><div class="recipient-name">${c.name}${c.role?` <span style="font-size:11px;font-weight:400;color:var(--hl-text3)">— ${c.role}</span>`:''}</div><div class="recipient-email">${c.email}</div></div></div>`).join('');
+  $('notifyModal').classList.add('open');
+}
+function closeNotifyModal(){ $('notifyModal').classList.remove('open'); notifyId=null; notifySection=null; }
+function toggleRecipient(id){
+  if(selectedRecipients.has(id)) selectedRecipients.delete(id); else selectedRecipients.add(id);
+  const row=document.querySelector(`.recipient-row[data-id="${id}"]`);
+  if(row){ row.classList.toggle('checked',selectedRecipients.has(id)); const ic=row.querySelector('.check-icon'); if(ic) ic.style.display=selectedRecipients.has(id)?'block':'none'; }
+}
+function getGreeting(){ const h=new Date().getHours(); return h<12?'Good morning':h<17?'Good afternoon':'Good evening'; }
+async function sendNotify(){
+  const e=state[notifySection].entries.find(x=>x.id===notifyId);
+  if(!selectedRecipients.size){ alert('Select at least one recipient.'); return; }
+  const rc=[...selectedRecipients].map(id=>contacts.find(c=>c.id===id)).filter(Boolean);
+  const note=$('notifyNote').value.trim();
+  const sectionLabel={applicator:`Applicator ${e.apn}`,machine:`Machine ${e.machine}`,setup:`Terminal ${e.terminal}`}[notifySection];
+  const statusText={done:'Resolved',inprog:'In Progress',waiting:'Waiting on Parts',open:'Open'}[e.status];
+  const desc={applicator:e.issue,machine:e.desc,setup:e.issue}[notifySection];
+  const base=window.location.origin+window.location.pathname.replace('index.html','').replace(/\/$/,'');
+
+  // Build notification payload for the notifier to pick up
+  const notification = {
+    id: Date.now(),
+    entryId: e.id,
+    section: notifySection,
+    sectionLabel,
+    statusText,
+    status: e.status,
+    desc,
+    note: note||null,
+    ticketNum: e.ticketNum||null,
+    ticketUrl: e.ticketNum ? base+'/t/?ticket='+e.ticketNum : null,
+    priority: e.priority||'normal',
+    by: e.by||null,
+    daysOpen: days(e.date),
+    // Extra fields per section
+    terminal: e.terminal||null,
+    wire: e.wire||null,
+    awg: e.awg||null,
+    doc: e.doc||null,
+    notes: e.notes||null,
+    result: e.result||null,
+    // Recipients
+    recipients: rc.map(c=>({ name:c.name, email:c.email })),
+    queuedAt: Date.now(),
+    queuedBy: lsGet('hl_user_name')||'Unknown'
+  };
+
+  // Disable button while saving
+  const btn=document.querySelector('#notifyModal .btn-red');
+  if(btn){ btn.disabled=true; btn.innerHTML='<i class="ti ti-loader spin"></i> Queueing…'; }
+
+  try{
+    // Load existing queue, append, save back
+    const id=await ensureGist();
+    let queue=[];
+    try{
+      const g=await gistAPI('GET','gists/'+id);
+      if(g.files[NOTIFY_FILE]) queue=JSON.parse(g.files[NOTIFY_FILE].content)||[];
+    }catch(e2){}
+    queue.push(notification);
+    await writeGist({[NOTIFY_FILE]:{content:JSON.stringify(queue,null,2)}});
+    closeNotifyModal();
+    toast('Notification queued — email will send within 60 seconds');
+  }catch(err){
+    if(btn){ btn.disabled=false; btn.innerHTML='<i class="ti ti-send"></i> Send Notification'; }
+    toast('Could not queue notification — check connection','#cc4444');
+    console.error(err);
+  }
+}
+
+// ── SHARE TICKET ──
+function shareTicket(sec,id){
+  const e=state[sec].entries.find(x=>x.id===id);
+  if(!e||!e.ticketNum){ toast('No ticket number on this entry','#cc4444'); return; }
+  const base=window.location.origin+window.location.pathname.replace('index.html','').replace(/\/$/,'');
+  const url=base+'/t/?ticket='+e.ticketNum;
+  navigator.clipboard.writeText(url).then(()=>toast('Ticket link copied')).catch(()=>prompt('Copy this link:',url));
+}
+
+// ── CONTACTS ──
+function renderContacts(){
+  const list=$('contactList'),em=$('emptyContacts');
+  if(!contacts.length){list.innerHTML='';em.style.display='block';return;} em.style.display='none';
+  const sorted=[...contacts].sort((a,b)=>a.name.localeCompare(b.name));
+  list.innerHTML=sorted.map(c=>`<div class="contact-row"><div class="contact-avatar">${ini(c.name)}</div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500">${c.name}${c.role?` <span style="font-weight:400;font-size:11px;color:var(--hl-text3)">— ${c.role}</span>`:''}</div><div style="font-size:11px;color:var(--hl-text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.email}</div></div><div style="display:flex;gap:4px;flex-shrink:0"><button class="btn-sm" style="border-color:var(--hl-border);color:var(--hl-text2)" onclick="openContactModal(${c.id})"><i class="ti ti-edit"></i> Edit</button><button class="btn-sm btn-del" onclick="delContact(${c.id})"><i class="ti ti-trash"></i> Delete</button></div></div>`).join('');
+}
+function parseOutlookEmail(raw){
+  const t=raw.trim();
+  const m1=t.match(/^"?([^"<]+?)"?\s*<([^>]+)>\s*$/); if(m1)return{name:m1[1].trim(),email:m1[2].trim()};
+  const m2=t.match(/^([^@\s]+@[^\s]+)$/); if(m2)return{name:null,email:m2[1].trim()};
+  return null;
+}
+function parseEmailField(){
+  const p=parseOutlookEmail($('cEmail').value);
+  $('parseHint').innerHTML=p?.name?`<i class="ti ti-check" style="font-size:12px;color:#50a870"></i><span style="color:#50a870">Parsed — will fill name: <strong>${p.name}</strong></span>`:'';
+}
+function openContactModal(id=null){
+  editCId=id; const c=id?contacts.find(x=>x.id===id):null;
+  $('contactModalTitle').textContent=c?'Edit Contact':'Add Contact';
+  $('cName').value=c?.name||''; $('cEmail').value=c?.email||''; $('cRole').value=c?.role||'';
+  $('parseHint').innerHTML=''; $('contactModal').classList.add('open');
+}
+function closeContactModal(){ $('contactModal').classList.remove('open'); editCId=null; }
+function saveContact(){
+  const emailRaw=$('cEmail').value.trim(), parsed=parseOutlookEmail(emailRaw);
+  const email=parsed?.email||emailRaw, nameField=$('cName').value.trim(), name=nameField||(parsed?.name||'');
+  if(!name){ alert('Name is required.'); return; }
+  if(!email||!email.includes('@')){ alert('A valid email address is required.'); return; }
+  if(!nameField&&parsed?.name) $('cName').value=parsed.name;
+  const c={id:editCId||Date.now(),name,email,role:$('cRole').value.trim()};
+  if(editCId){const i=contacts.findIndex(x=>x.id===editCId);contacts[i]=c;} else contacts.push(c);
+  closeContactModal(); renderContacts(); pushSection('applicator'); // contacts stored in applicator file
+}
+function delContact(id){ if(!confirm('Remove this contact?')) return; contacts=contacts.filter(c=>c.id!==id); renderContacts(); pushSection('applicator'); }
+
+// ── POLLING ──
+const POLL_INTERVAL=30000;
+let pollTimer=null, lastGistUpdatedAt=null, isEditing=false;
+async function pollForChanges(){
+  if($('app').style.display==='none'||isEditing) return;
+  try{
+    const id=await ensureGist(); const token=getToken();
+    const r=await fetch('https://api.github.com/gists/'+id,{headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}});
+    if(!r.ok) return;
+    const g=await r.json();
+    if(lastGistUpdatedAt&&g.updated_at!==lastGistUpdatedAt){
+      if(g.files[DATA_FILE]){ const d=JSON.parse(g.files[DATA_FILE].content); state.applicator.entries=d.issues||[]; if(d.contacts) contacts=d.contacts; }
+      if(g.files[MACH_FILE]){ const d=JSON.parse(g.files[MACH_FILE].content); state.machine.entries=d.issues||[]; }
+      if(g.files[SETUP_FILE]){ const d=JSON.parse(g.files[SETUP_FILE].content); state.setup.entries=d.issues||[]; }
+      ['applicator','machine','setup'].forEach(sec=>{ const f=g.files[QUEUE_FILES[sec]]; if(f) state[sec].queue=JSON.parse(f.content)||[]; });
+      saveLocal(); renderAll(); setSyncStatus('ok'); showPollToast();
+    }
+    lastGistUpdatedAt=g.updated_at;
+  }catch(e){}
+}
+function showPollToast(){
+  let t=document.getElementById('_pt'); if(!t){ t=document.createElement('div'); t.id='_pt'; t.style.cssText='position:fixed;bottom:56px;left:50%;transform:translateX(-50%);background:var(--hl-surface);border:1px solid var(--hl-border2);border-left:3px solid #5090d0;color:var(--hl-text);font-size:11px;padding:7px 14px;border-radius:4px;z-index:998;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap'; document.body.appendChild(t); }
+  t.innerHTML='<i class="ti ti-refresh" style="font-size:11px;vertical-align:-1px;margin-right:4px"></i>Updated from another device';
+  t.style.opacity='1'; setTimeout(()=>t.style.opacity='0',3000);
+}
+function startPolling(){ stopPolling(); pollTimer=setInterval(pollForChanges,POLL_INTERVAL); }
+function stopPolling(){ if(pollTimer){ clearInterval(pollTimer); pollTimer=null; } }
+document.addEventListener('DOMContentLoaded',()=>{
+  ['modal-applicator','modal-machine','modal-setup','notifyModal','contactModal','pinModal'].forEach(id=>{
+    const el=document.getElementById(id); if(!el) return;
+    new MutationObserver(()=>{ isEditing=el.classList.contains('open'); }).observe(el,{attributes:true,attributeFilter:['class']});
+  });
+});
+
+$('setupToken').addEventListener('keydown',e=>{ if(e.key==='Enter') doSetup(); });
+document.addEventListener('keydown',function(e){
+  const pa=document.getElementById('pinScreen').classList.contains('active');
+  if(!pa) return;
+  const tag=document.activeElement.tagName;
+  if(tag==='INPUT'||tag==='TEXTAREA') return;
+  if((e.key>='0'&&e.key<='9')||(e.code>='Numpad0'&&e.code<='Numpad9')){ pinKey(e.key.length===1?e.key:e.code.replace('Numpad','')); }
+  if(e.key==='Backspace'||e.key==='Delete') pinDel();
+});
+
+initApp();
+</script>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js').then(r=>console.log('SW:',r.scope)).catch(e=>console.log('SW fail:',e));
+  });
+}
+
+function exportToExcel(sec) {
+  const wb = XLSX.utils.book_new();
+
+  function fmtDate(ts) {
+    if (!ts) return '';
+    const d = new Date(ts);
+    return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  }
+
+  function daysSince(ts) {
+    if (!ts) return '';
+    return Math.floor((Date.now() - ts) / 86400000);
+  }
+
+  function statusLabel(s) {
+    return {open:'Open', inprog:'In Progress', waiting:'Waiting', done:'Resolved'}[s] || s;
+  }
+
+  if (sec === 'applicator' || sec === 'all') {
+    const rows = (state.applicator.entries || []).map(e => ({
+      'Ticket #': e.ticketNum || '',
+      'Applicator #': e.apn || '',
+      'Press': e.press || '',
+      'Terminal': e.terminal || '',
+      'Wire': e.wire || '',
+      'Issue': e.issue || '',
+      'Notes': e.notes || '',
+      'Status': statusLabel(e.status),
+      'Logged By': e.by || '',
+      'Date Logged': fmtDate(e.date),
+      'Days Open': daysSince(e.date)
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = [{wch:12},{wch:14},{wch:14},{wch:16},{wch:12},{wch:40},{wch:40},{wch:12},{wch:14},{wch:18},{wch:10}];
+    XLSX.utils.book_append_sheet(wb, ws, 'Applicator Log');
+  }
+
+  if (sec === 'machine' || sec === 'all') {
+    const rows = (state.machine.entries || []).map(e => ({
+      'Ticket #': e.ticketNum || '',
+      'Machine #': e.machine || '',
+      'Description': e.desc || '',
+      'Result / Notes': e.result || '',
+      'Status': statusLabel(e.status),
+      'Logged By': e.by || '',
+      'Date Logged': fmtDate(e.date),
+      'Days Open': daysSince(e.date)
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = [{wch:12},{wch:14},{wch:40},{wch:40},{wch:12},{wch:14},{wch:18},{wch:10}];
+    XLSX.utils.book_append_sheet(wb, ws, 'Machine Log');
+  }
+
+  if (sec === 'setup' || sec === 'all') {
+    const rows = (state.setup.entries || []).map(e => ({
+      'Ticket #': e.ticketNum || '',
+      'Terminal #': e.terminal || '',
+      'AWG': e.awg || '',
+      'Issue': e.issue || '',
+      'Document': e.doc || '',
+      'Notes': e.notes || '',
+      'Status': statusLabel(e.status),
+      'Logged By': e.by || '',
+      'Date Logged': fmtDate(e.date),
+      'Days Open': daysSince(e.date)
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = [{wch:12},{wch:14},{wch:8},{wch:40},{wch:16},{wch:40},{wch:12},{wch:14},{wch:18},{wch:10}];
+    XLSX.utils.book_append_sheet(wb, ws, 'Setup Log');
+  }
+
+  const sectionName = {applicator:'Applicator', machine:'Machine', setup:'Setup', all:'All'}[sec] || sec;
+  const dateStr = new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, 'HL-IssueLog-' + sectionName + '-' + dateStr + '.xlsx');
+}
+</script>
+</body>
+</html>
