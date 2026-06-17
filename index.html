@@ -262,6 +262,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <button class="btn btn-import" onclick="triggerImport()" title="Import"><i class="ti ti-upload"></i> <span class="btn-label">Import</span></button>
       <button class="btn btn-export" onclick="exportJSON()" title="Export"><i class="ti ti-download"></i> <span class="btn-label">Export</span></button>
       <button class="btn" onclick="openChangePIN()" title="Manage PINs"><i class="ti ti-lock"></i> <span class="btn-label">PIN</span></button>
+      <button class="btn" onclick="openSettings()" title="Settings"><i class="ti ti-adjustments-horizontal"></i> <span class="btn-label">Settings</span></button>
       <button class="btn" onclick="lockApp()" title="Lock"><i class="ti ti-logout"></i> <span class="btn-label">Lock</span></button>
     </div>
   </div>
@@ -599,6 +600,26 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal" style="max-width:380px">
+    <h2><i class="ti ti-settings" style="font-size:13px;margin-right:6px;vertical-align:-1px"></i>Settings</h2>
+    <div class="field">
+      <label>Overdue Threshold (days)</label>
+      <input type="number" id="settingOverdueDays" min="1" max="999" step="1" value="3" style="width:120px;font-family:monospace">
+      <div style="font-size:10px;color:var(--hl-text3);margin-top:5px;line-height:1.5">
+        Tickets older than this many days are flagged as overdue.<br>
+        <strong style="color:var(--hl-text2)">Waiting on Parts</strong> tickets are never counted as overdue regardless of age.
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeSettings()">Cancel</button>
+      <button class="btn btn-red" onclick="saveSettings()"><i class="ti ti-device-floppy"></i> Save</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -614,6 +635,7 @@ const QUEUE_FILES = {
 };
 const NOTIFY_FILE = 'hl_notify_queue.json';
 const INACTIVITY = 30 * 60 * 1000;
+let overdueDays = 3;
 
 // ── STATE ──
 // Each section has its own entries array and queue order
@@ -855,6 +877,7 @@ function doUnlock(userName){
 }
 function lockApp(silent=false){ clearTimeout(inactivityTimer); stopPolling(); sessionStorage.removeItem('hl_s'); const b=$('loggedInBadge'); if(b) b.style.display='none'; showScreen('pinScreen'); pinBuffer=''; updateDots(); $('pinTitle').textContent='Enter PIN'; $('pinSub').textContent='H&L Issue Log'; $('pinError').textContent=''; setPinLoading(''); pinMode='unlock'; }
 async function initApp(){
+  const saved=parseInt(lsGet('hl_overdue_days')||'',10); if(saved&&saved>=1) overdueDays=saved;
   const token=getToken(); if(!token){ showScreen('setupScreen'); return; }
   showScreen('pinScreen');
   if(sessionStorage.getItem('hl_s')==='1'){ loadLocal(); doUnlock(lsGet('hl_user_name')||''); loadFromGist().then(()=>{ renderAll(); setSyncStatus('ok'); }).catch(()=>{}); return; }
@@ -888,6 +911,25 @@ function importJSON(evt){
 }
 
 // ── PIN CHANGE ──
+
+// ── SETTINGS ──
+function openSettings(){
+  document.getElementById('settingOverdueDays').value = overdueDays;
+  document.getElementById('settingsModal').classList.add('open');
+}
+function closeSettings(){
+  document.getElementById('settingsModal').classList.remove('open');
+}
+function saveSettings(){
+  const v = parseInt(document.getElementById('settingOverdueDays').value, 10);
+  if (!v || v < 1) { return; }
+  overdueDays = v;
+  lsSet('hl_overdue_days', String(v));
+  closeSettings();
+  renderAll();
+  toast('Settings saved');
+}
+
 function openChangePIN(){
   $('pmCurrent').value=''; $('pmNew').value=''; $('nuName').value=''; $('nuPin').value='';
   $('pinModalErr').textContent='';
@@ -983,11 +1025,13 @@ function formatApn(input){
 function days(ts){ return Math.round((Date.now()-ts)/86400000); }
 function daysLabel(ts){
   const ms=Date.now()-ts;
-  const hrs=Math.floor(ms/3600000);
+  const totalHrs=Math.floor(ms/3600000);
   const d=Math.floor(ms/86400000);
-  if(hrs<1) return '<1hr';
-  if(hrs<24) return hrs+'hr'+(hrs!==1?'s':'');
-  return d+'d';
+  const h=totalHrs%24;
+  if(totalHrs<1) return '<1hr';
+  if(totalHrs<24) return totalHrs+'h';
+  if(h===0) return d+'d';
+  return d+'d '+h+'h';
 }
 function badge(s){
   const m={open:['badge-open','Open'],inprog:['badge-inprog','In Progress'],waiting:['badge-waiting','Waiting Parts'],done:['badge-done','Resolved']};
@@ -1016,12 +1060,12 @@ function renderAll(){
 function renderStats(sec,prefix){
   const entries=state[sec].entries.filter(e=>e.status!=='done');
   const total=entries.length, open=entries.filter(e=>e.status==='open').length;
-  const wait=entries.filter(e=>e.status==='waiting').length, over=entries.filter(e=>e.status!=='done'&&days(e.date)>3).length;
+  const wait=entries.filter(e=>e.status==='waiting').length, over=entries.filter(e=>e.status!=='done'&&e.status!=='waiting'&&days(e.date)>=overdueDays).length;
   $(prefix+'Stats').innerHTML=
     `<div class="stat"><div class="stat-label">On Hand</div><div class="stat-val">${total}</div></div>`+
     `<div class="stat"><div class="stat-label">Open</div><div class="stat-val">${open}</div></div>`+
     `<div class="stat"><div class="stat-label">Waiting Parts</div><div class="stat-val">${wait}</div></div>`+
-    `<div class="stat${over>0?' stat-over':''}"><div class="stat-label">Overdue &gt;3d</div><div class="stat-val">${over}</div></div>`;
+    `<div class="stat${over>0?' stat-over':''}"><div class="stat-label">Overdue ≥${overdueDays}d</div><div class="stat-val">${over}</div></div>`;
 }
 
 // ── APPLICATOR RENDER ──
@@ -1042,7 +1086,7 @@ function renderApplicator(){
   const cl=$('aCards'), em=$('aEmptyM');
   if(!f.length){cl.innerHTML='';em.style.display='block';}
   else{ em.style.display='none'; cl.innerHTML=f.map(e=>{
-    const d=days(e.date),ac=(e.status!=='done'&&d>3)?'age-warn':'age-ok';
+    const d=days(e.date),ac=(e.status!=='done'&&e.status!=='waiting'&&d>=overdueDays)?'age-warn':'age-ok';
     const tw=[e.terminal,e.wire].filter(Boolean).map(t=>`<span class="chip">${t}</span>`).join('');
     return`<div class="entry-card status-${e.status}">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;gap:8px">
@@ -1058,7 +1102,7 @@ function renderApplicator(){
   const tb=$('aBody'), ed=$('aEmptyD');
   if(!f.length){tb.innerHTML='';ed.style.display='block';}
   else{ ed.style.display='none'; tb.innerHTML=f.map(e=>{
-    const d=days(e.date),ac=(e.status!=='done'&&d>3)?'age-warn':'age-ok';
+    const d=days(e.date),ac=(e.status!=='done'&&e.status!=='waiting'&&d>=overdueDays)?'age-warn':'age-ok';
     const tw=[e.terminal,e.wire].filter(Boolean).map(t=>`<span class="chip">${t}</span>`).join('')||`<span style="color:var(--hl-text3)">—</span>`;
     return`<tr>
       <td style="font-weight:500;font-family:monospace;font-size:12px">${e.apn}</td>
@@ -1085,7 +1129,7 @@ function renderMachine(){
   const cl=$('mCards'),em=$('mEmptyM');
   if(!f.length){cl.innerHTML='';em.style.display='block';}
   else{ em.style.display='none'; cl.innerHTML=f.map(e=>{
-    const d=days(e.date),ac=(e.status!=='done'&&d>3)?'age-warn':'age-ok';
+    const d=days(e.date),ac=(e.status!=='done'&&e.status!=='waiting'&&d>=overdueDays)?'age-warn':'age-ok';
     return`<div class="entry-card status-${e.status}">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;gap:8px">
         <div><div class="entry-apn">${e.machine}</div></div>
@@ -1098,7 +1142,7 @@ function renderMachine(){
   const tb=$('mBody'),ed=$('mEmptyD');
   if(!f.length){tb.innerHTML='';ed.style.display='block';}
   else{ ed.style.display='none'; tb.innerHTML=f.map(e=>{
-    const d=days(e.date),ac=(e.status!=='done'&&d>3)?'age-warn':'age-ok';
+    const d=days(e.date),ac=(e.status!=='done'&&e.status!=='waiting'&&d>=overdueDays)?'age-warn':'age-ok';
     return`<tr>
       <td style="font-weight:500;font-family:monospace;font-size:12px">${e.machine}</td>
       <td><div style="font-size:12px">${e.desc}</div></td>
@@ -1123,7 +1167,7 @@ function renderSetup(){
   const cl=$('sCards'),em=$('sEmptyM');
   if(!f.length){cl.innerHTML='';em.style.display='block';}
   else{ em.style.display='none'; cl.innerHTML=f.map(e=>{
-    const d=days(e.date),ac=(e.status!=='done'&&d>3)?'age-warn':'age-ok';
+    const d=days(e.date),ac=(e.status!=='done'&&e.status!=='waiting'&&d>=overdueDays)?'age-warn':'age-ok';
     return`<div class="entry-card status-${e.status}">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;gap:8px">
         <div><div class="entry-apn">${e.terminal}</div>${e.awg?`<div class="entry-press">${e.awg}</div>`:''}</div>
@@ -1137,7 +1181,7 @@ function renderSetup(){
   const tb=$('sBody'),ed=$('sEmptyD');
   if(!f.length){tb.innerHTML='';ed.style.display='block';}
   else{ ed.style.display='none'; tb.innerHTML=f.map(e=>{
-    const d=days(e.date),ac=(e.status!=='done'&&d>3)?'age-warn':'age-ok';
+    const d=days(e.date),ac=(e.status!=='done'&&e.status!=='waiting'&&d>=overdueDays)?'age-warn':'age-ok';
     return`<tr>
       <td style="font-weight:500;font-family:monospace;font-size:12px">${e.terminal}</td>
       <td style="font-size:12px;color:var(--hl-text2)">${e.awg||'—'}</td>
@@ -1462,7 +1506,7 @@ function showPollToast(){
 function startPolling(){ stopPolling(); pollTimer=setInterval(pollForChanges,POLL_INTERVAL); }
 function stopPolling(){ if(pollTimer){ clearInterval(pollTimer); pollTimer=null; } }
 document.addEventListener('DOMContentLoaded',()=>{
-  ['modal-applicator','modal-machine','modal-setup','notifyModal','contactModal','pinModal'].forEach(id=>{
+  ['modal-applicator','modal-machine','modal-setup','notifyModal','contactModal','pinModal','settingsModal'].forEach(id=>{
     const el=document.getElementById(id); if(!el) return;
     new MutationObserver(()=>{ isEditing=el.classList.contains('open'); }).observe(el,{attributes:true,attributeFilter:['class']});
   });
@@ -1498,7 +1542,14 @@ function exportToExcel(sec) {
 
   function daysSince(ts) {
     if (!ts) return '';
-    return Math.floor((Date.now() - ts) / 86400000);
+    const ms = Date.now() - ts;
+    const totalHrs = Math.floor(ms / 3600000);
+    const d = Math.floor(ms / 86400000);
+    const h = totalHrs % 24;
+    if (totalHrs < 1) return '<1hr';
+    if (totalHrs < 24) return totalHrs + 'h';
+    if (h === 0) return d + 'd';
+    return d + 'd ' + h + 'h';
   }
 
   function statusLabel(s) {
@@ -1517,10 +1568,10 @@ function exportToExcel(sec) {
       'Status': statusLabel(e.status),
       'Logged By': e.by || '',
       'Date Logged': fmtDate(e.date),
-      'Days Open': daysSince(e.date)
+      'Age Open': daysSince(e.date)
     }));
     const ws = XLSX.utils.json_to_sheet(rows);
-    ws['!cols'] = [{wch:12},{wch:14},{wch:14},{wch:16},{wch:12},{wch:40},{wch:40},{wch:12},{wch:14},{wch:18},{wch:10}];
+    ws['!cols'] = [{wch:12},{wch:14},{wch:14},{wch:16},{wch:12},{wch:40},{wch:40},{wch:12},{wch:14},{wch:18},{wch:12}];
     XLSX.utils.book_append_sheet(wb, ws, 'Applicator Log');
   }
 
@@ -1533,10 +1584,10 @@ function exportToExcel(sec) {
       'Status': statusLabel(e.status),
       'Logged By': e.by || '',
       'Date Logged': fmtDate(e.date),
-      'Days Open': daysSince(e.date)
+      'Age Open': daysSince(e.date)
     }));
     const ws = XLSX.utils.json_to_sheet(rows);
-    ws['!cols'] = [{wch:12},{wch:14},{wch:40},{wch:40},{wch:12},{wch:14},{wch:18},{wch:10}];
+    ws['!cols'] = [{wch:12},{wch:14},{wch:40},{wch:40},{wch:12},{wch:14},{wch:18},{wch:12}];
     XLSX.utils.book_append_sheet(wb, ws, 'Machine Log');
   }
 
@@ -1551,10 +1602,10 @@ function exportToExcel(sec) {
       'Status': statusLabel(e.status),
       'Logged By': e.by || '',
       'Date Logged': fmtDate(e.date),
-      'Days Open': daysSince(e.date)
+      'Age Open': daysSince(e.date)
     }));
     const ws = XLSX.utils.json_to_sheet(rows);
-    ws['!cols'] = [{wch:12},{wch:14},{wch:8},{wch:40},{wch:16},{wch:40},{wch:12},{wch:14},{wch:18},{wch:10}];
+    ws['!cols'] = [{wch:12},{wch:14},{wch:8},{wch:40},{wch:16},{wch:40},{wch:12},{wch:14},{wch:18},{wch:12}];
     XLSX.utils.book_append_sheet(wb, ws, 'Setup Log');
   }
 
