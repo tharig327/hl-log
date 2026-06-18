@@ -3,13 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>H&L Issue Log</title>
+<title>H&L FloorSync</title>
 <meta name="theme-color" content="#cc2222">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="H&L Log">
-<meta name="application-name" content="H&L Log">
+<meta name="apple-mobile-web-app-title" content="H&L FloorSync">
+<meta name="application-name" content="H&L FloorSync">
 <link rel="manifest" href="manifest.json">
+<link rel="apple-touch-startup-image" href="splash.png">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -253,7 +255,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="card" style="max-width:320px;text-align:center">
     <div class="card-logo">H&L</div>
     <div class="card-title" id="pinTitle">Enter PIN</div>
-    <div class="card-sub" id="pinSub" style="margin-bottom:1.25rem">H&L Issue Log</div>
+    <div class="card-sub" id="pinSub" style="margin-bottom:1.25rem">H&L FloorSync</div>
     <div class="pin-dots" id="pinDots">
       <div class="pin-dot" id="d0"></div><div class="pin-dot" id="d1"></div>
       <div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div>
@@ -279,7 +281,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="header">
     <div class="header-left">
       <div class="hl-logo">H&L</div>
-      <div><h1>H&L Issue Log</h1><p>Applicator · Machine · Setup Sheet</p></div>
+      <div><h1>H&L FloorSync</h1><p>H&amp;L Manufacturing · CMMS</p></div>
     </div>
     <div class="header-actions">
       <span class="logged-in-badge" id="loggedInBadge" style="display:none"><i class="ti ti-user-circle"></i><span id="loggedInName"></span></span>
@@ -815,7 +817,7 @@ async function ensureGist(){
   const list=await gistAPI('GET','gists?per_page=100');
   const found=list.find(g=>g.files&&(g.files[DATA_FILE]||g.files[META_FILE]));
   if(found){ gistId=found.id; lsSet('hl_gist_id',gistId); return gistId; }
-  const created=await gistAPI('POST','gists',{description:'H&L Issue Log',public:false,files:{
+  const created=await gistAPI('POST','gists',{description:'H&L FloorSync',public:false,files:{
     [DATA_FILE]:{content:JSON.stringify({issues:[],contacts:[]},null,2)},
     [MACH_FILE]:{content:JSON.stringify({issues:[]},null,2)},
     [SETUP_FILE]:{content:JSON.stringify({issues:[]},null,2)},
@@ -1001,7 +1003,7 @@ function doUnlock(userName){
     if(n){ const badge=$('loggedInBadge'),name=$('loggedInName'); if(badge&&name){ name.textContent=n; badge.style.display='flex'; } }
   }
 }
-function lockApp(silent=false){ clearTimeout(inactivityTimer); stopPolling(); sessionStorage.removeItem('hl_s'); const b=$('loggedInBadge'); if(b) b.style.display='none'; showScreen('pinScreen'); pinBuffer=''; updateDots(); $('pinTitle').textContent='Enter PIN'; $('pinSub').textContent='H&L Issue Log'; $('pinError').textContent=''; setPinLoading(''); pinMode='unlock'; }
+function lockApp(silent=false){ clearTimeout(inactivityTimer); stopPolling(); sessionStorage.removeItem('hl_s'); const b=$('loggedInBadge'); if(b) b.style.display='none'; showScreen('pinScreen'); pinBuffer=''; updateDots(); $('pinTitle').textContent='Enter PIN'; $('pinSub').textContent='H&L FloorSync'; $('pinError').textContent=''; setPinLoading(''); pinMode='unlock'; }
 async function initApp(){
   const saved=parseInt(lsGet('hl_overdue_days')||'',10); if(saved&&saved>=1) overdueDays=saved;
   const token=getToken(); if(!token){ showScreen('setupScreen'); return; }
