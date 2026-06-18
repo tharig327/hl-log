@@ -236,10 +236,40 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   .receipt-wrap{box-shadow:none;border-radius:0;max-height:none;overflow:visible}
   @page{size:57mm auto;margin:0}
 }
+
+/* ── IN-APP SPLASH SCREEN ── */
+#splashScreen{
+  position:fixed;inset:0;z-index:9999;
+  background:#111111;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  transition:opacity .6s ease;
+}
+#splashScreen.fade-out{opacity:0;pointer-events:none}
+#splashScreen img{
+  width:min(340px,85vw);
+  height:min(340px,85vw);
+  object-fit:contain;
+  border-radius:24px;
+}
+#splashScreen .splash-sub{
+  margin-top:18px;
+  font-size:13px;
+  color:#555;
+  letter-spacing:.15em;
+  text-transform:uppercase;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+}
 </style>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </head>
 <body>
+
+<!-- ── IN-APP SPLASH ── -->
+<div id="splashScreen">
+  <img src="splash.png" alt="H&L FloorSync">
+  <div class="splash-sub">Loading…</div>
+</div>
 
 <!-- SETUP -->
 <div class="screen" id="setupScreen">
@@ -794,7 +824,7 @@ function showScreen(id){
   if(id==='app') $('app').style.display='block';
   else $(id).classList.add('active');
 }
-function showSetup(){ lockApp(true); $('setupToken').value=''; $('setupErr').textContent=''; showScreen('setupScreen'); }
+function showSetup(){ if(window._splashReady) window._splashReady(); lockApp(true); $('setupToken').value=''; $('setupErr').textContent=''; showScreen('setupScreen'); }
 
 async function doSetup(){
   const token=$('setupToken').value.trim(); $('setupErr').textContent='';
@@ -806,7 +836,7 @@ async function doSetup(){
     if(!r.ok) throw new Error('Token invalid ('+r.status+')');
     lsSet('hl_token',token);
     btn.disabled=false; btn.innerHTML='<i class="ti ti-plug-connected"></i> Connect';
-    showScreen('pinScreen'); await initPinScreen();
+    showScreen('pinScreen'); if(window._splashReady) window._splashReady(); await initPinScreen();
   }catch(e){ btn.disabled=false; btn.innerHTML='<i class="ti ti-plug-connected"></i> Connect'; $('setupErr').textContent=e.message||'Could not connect'; }
 }
 
@@ -996,7 +1026,7 @@ async function initPinScreen(){
   }catch(e){ setPinLoading('Offline — enter PIN'); pinMode='unlock'; }
 }
 function resetInactivity(){ clearTimeout(inactivityTimer); inactivityTimer=setTimeout(lockApp,INACTIVITY); }
-function doUnlock(userName){
+function doUnlock(userName){ if(window._splashReady) window._splashReady();
   sessionStorage.setItem('hl_s','1');
   showScreen('app'); resetInactivity();
   ['mousemove','keydown','click','touchstart'].forEach(e=>document.addEventListener(e,resetInactivity,{passive:true}));
@@ -1728,6 +1758,23 @@ document.addEventListener('keydown',function(e){
   if((e.key>='0'&&e.key<='9')||(e.code>='Numpad0'&&e.code<='Numpad9')){ pinKey(e.key.length===1?e.key:e.code.replace('Numpad','')); }
   if(e.key==='Backspace'||e.key==='Delete') pinDel();
 });
+
+// ── SPLASH DISMISS ──
+(function(){
+  const splash = document.getElementById('splashScreen');
+  if(!splash) return;
+  // Minimum display time: 2 seconds, then fade when app is ready
+  const minTime = 2000;
+  const start = Date.now();
+  window._splashReady = function(){
+    const elapsed = Date.now() - start;
+    const delay = Math.max(0, minTime - elapsed);
+    setTimeout(()=>{
+      splash.classList.add('fade-out');
+      setTimeout(()=>{ splash.style.display='none'; }, 650);
+    }, delay);
+  };
+})();
 
 initApp();
 // ── RECEIPT ──
