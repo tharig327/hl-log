@@ -267,7 +267,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <!-- ── IN-APP SPLASH ── -->
 <div id="splashScreen">
-  <img src="splash.png" alt="H&L FloorSync">
+  <img src="https://tharig327.github.io/hl-log/splash.png" alt="H&L FloorSync" onerror="if(window._splashReady)window._splashReady()">
   <div class="splash-sub">Loading…</div>
 </div>
 
@@ -1767,6 +1767,8 @@ document.addEventListener('keydown',function(e){
   const minTime = 2000;
   const start = Date.now();
   window._splashReady = function(){
+    if(splash._dismissed) return;
+    splash._dismissed = true;
     const elapsed = Date.now() - start;
     const delay = Math.max(0, minTime - elapsed);
     setTimeout(()=>{
@@ -1774,6 +1776,11 @@ document.addEventListener('keydown',function(e){
       setTimeout(()=>{ splash.style.display='none'; }, 650);
     }, delay);
   };
+  // Safety net — never stay stuck longer than 4 seconds
+  setTimeout(()=>{ if(window._splashReady) window._splashReady(); }, 4000);
+  // Also dismiss if image fails to load
+  const img = splash.querySelector('img');
+  if(img) img.onerror = ()=>{ if(window._splashReady) window._splashReady(); };
 })();
 
 initApp();
