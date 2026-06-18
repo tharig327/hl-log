@@ -984,7 +984,7 @@ async function handlePin(){
   const matchedLocal=users.find(u=>u.pinHash===h);
   if(matchedLocal){
     lsSet('hl_user_name',matchedLocal.name);
-    setPinLoading('Loading…'); await loadFromGist(); setPinLoading('');
+    setPinLoading('Loading…'); await loadFromGist(); fixTicketNums(); setPinLoading('');
     doUnlock(matchedLocal.name);
     ensureGist().then(id=>fetch('https://api.github.com/gists/'+id,{headers:{'Authorization':'token '+getToken(),'Accept':'application/vnd.github.v3+json'}}))
       .then(r=>r.json()).then(g=>{ if(g.files&&g.files[META_FILE]){ const m=JSON.parse(g.files[META_FILE].content); if(m.users) lsSet('hl_users',JSON.stringify(m.users)); } }).catch(()=>{});
@@ -1048,7 +1048,7 @@ async function initApp(){
   const saved=parseInt(lsGet('hl_overdue_days')||'',10); if(saved&&saved>=1) overdueDays=saved;
   const token=getToken(); if(!token){ showScreen('setupScreen'); return; }
   showScreen('pinScreen');
-  if(sessionStorage.getItem('hl_s')==='1'){ loadLocal(); doUnlock(lsGet('hl_user_name')||''); loadFromGist().then(()=>{ renderAll(); setSyncStatus('ok'); }).catch(()=>{}); return; }
+  if(sessionStorage.getItem('hl_s')==='1'){ loadLocal(); doUnlock(lsGet('hl_user_name')||''); loadFromGist().then(()=>{ fixTicketNums(); renderAll(); setSyncStatus('ok'); }).catch(()=>{}); return; }
   await initPinScreen();
 }
 
@@ -1761,6 +1761,25 @@ document.addEventListener('keydown',function(e){
   if((e.key>='0'&&e.key<='9')||(e.code>='Numpad0'&&e.code<='Numpad9')){ pinKey(e.key.length===1?e.key:e.code.replace('Numpad','')); }
   if(e.key==='Backspace'||e.key==='Delete') pinDel();
 });
+
+// ── TICKET NUMBER MIGRATION ──
+// Fix any entries that got S-TKT-XXXX instead of S-XXXX
+function fixTicketNums(){
+  let fixed = 0;
+  ['applicator','machine','setup'].forEach(sec=>{
+    state[sec].entries.forEach(e=>{
+      if(e.ticketNum && e.ticketNum.startsWith('S-TKT-')){
+        e.ticketNum = 'S-' + e.ticketNum.replace('S-TKT-','');
+        fixed++;
+      }
+    });
+  });
+  if(fixed > 0){
+    console.log('Fixed '+fixed+' malformed ticket number(s)');
+    saveLocal();
+    pushAll(true); // silently push fix to Gist
+  }
+}
 
 // ── SPLASH DISMISS ──
 (function(){
