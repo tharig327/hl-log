@@ -878,8 +878,7 @@ function printTicketReceipt(){
   const date = new Date(e.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
   const time = new Date(e.date).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});
   const tkt = e.ticketNum || '--';
-  const tktClean = tkt.replace('TKT-','').replace('S-','');
-  const ticketUrl = 'https://tharig327.github.io/hl-log/t/?ticket=' + tktClean;
+  const ticketUrl = 'https://tharig327.github.io/hl-log/t/?ticket=' + tkt;
   const qrId = 'tkt-receipt-qr';
 
   const extras = [];
