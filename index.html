@@ -1527,7 +1527,7 @@ async function saveEntry(sec){
   const makeTkt=()=>'TKT-'+Math.floor(1000+Math.random()*9000);
   const tkt=tktRaw?'TKT-'+tktRaw:(existing?.ticketNum||makeTkt());
   // If suppressed, prefix ticket with S- so notifier knows to skip it
-  const finalTkt = suppress ? 'S-' + tkt : tkt;
+  const finalTkt = suppress ? 'S-' + tkt.replace('TKT-','') : tkt;
 
   if(sec==='applicator'){
     const apn=$('fApn').value.trim(), issue=$('fIssue').value.trim();
