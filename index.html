@@ -1849,11 +1849,10 @@ function buildReceiptHTML(entry, sec){
     <div class="receipt-section-head">Issue Details</div>
     <div class="receipt-row"><span class="receipt-row-label">Type</span><span class="receipt-row-val">${typeLabel}</span></div>
     <div class="receipt-row"><span class="receipt-row-label">${idLabel}</span><span class="receipt-row-val">${primaryId}</span></div>
-    <div class="receipt-row"><span class="receipt-row-label">Issue</span><span class="receipt-row-val">${desc.slice(0,60)+(desc.length>60?'...':'')}</span></div>
+    <div class="receipt-row" style="flex-direction:column;gap:1px"><span class="receipt-row-label">Issue</span><span style="font-weight:700;font-size:12px;word-break:break-word;white-space:normal;line-height:1.4">${desc}</span></div>
     ${extraRows}
     <hr class="receipt-divider">
-    <div class="receipt-section-head">Status</div>
-    <div class="receipt-row"><span class="receipt-row-label">Status</span><span class="receipt-row-val">${statusText}</span></div>
+    <div class="receipt-section-head">Status &mdash; ${statusText}</div>
     <div class="receipt-row"><span class="receipt-row-label">Logged By</span><span class="receipt-row-val">${entry.by||'--'}</span></div>
     <div class="receipt-row"><span class="receipt-row-label">Date</span><span class="receipt-row-val">${date}</span></div>
     <div class="receipt-row"><span class="receipt-row-label">Time</span><span class="receipt-row-val">${time}</span></div>
