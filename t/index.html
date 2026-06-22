@@ -875,10 +875,12 @@ function printTicketReceipt(){
   const type = e.type || e.issueType || 'applicator';
   const typeLabel = {applicator:'Applicator Issue',machine:'Machine Issue',setup:'Setup Sheet Issue'}[type]||'Issue';
   const primaryId = e.apn || e.machine || e.terminal || '--';
+  const idLabel = type==='applicator'?'Applicator #':type==='machine'?'Machine #':'Terminal #';
   const desc = e.issue || e.desc || '--';
   const date = new Date(e.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
   const time = new Date(e.date).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});
   const tkt = e.ticketNum || '--';
+  const statusText = {done:'Resolved',inprog:'In Progress',waiting:'Waiting on Parts',open:'Open'}[e.status]||'Open';
   const ticketUrl = 'https://tharig327.github.io/hl-log/t/?ticket=' + tkt;
   const qrId = 'tkt-receipt-qr';
 
@@ -886,6 +888,7 @@ function printTicketReceipt(){
   if(type==='applicator'){
     if(e.press)    extras.push(['Press', e.press]);
     if(e.terminal) extras.push(['Terminal', e.terminal]);
+    if(e.wire)     extras.push(['Wire', e.wire]);
   } else if(type==='setup'){
     if(e.awg) extras.push(['AWG', e.awg]);
     if(e.doc) extras.push(['Document', e.doc]);
@@ -897,22 +900,23 @@ function printTicketReceipt(){
 
   document.getElementById('receiptContent').innerHTML = `
     <div class="receipt-header">
-      <div class="receipt-co">H&amp;L MFG</div>
-      <div class="receipt-title">REPAIR TICKET</div>
+      <div class="receipt-co">H&amp;L Manufacturing</div>
+      <div class="receipt-title">&#9472;&#9472; Repair Ticket &#9472;&#9472;</div>
     </div>
     <div class="receipt-tkt">${tkt}</div>
+    <div class="receipt-section-head">Issue Details</div>
     <div class="receipt-row"><span class="receipt-row-label">Type</span><span class="receipt-row-val">${typeLabel}</span></div>
-    <div class="receipt-row"><span class="receipt-row-label">ID</span><span class="receipt-row-val" style="font-weight:700">${primaryId}</span></div>
-    <hr class="receipt-divider">
-    <div class="receipt-row"><span class="receipt-row-label">Issue</span><span class="receipt-row-val">${desc.slice(0,50)}</span></div>
+    <div class="receipt-row"><span class="receipt-row-label">${idLabel}</span><span class="receipt-row-val">${primaryId}</span></div>
+    <div class="receipt-row" style="flex-direction:column;gap:1px"><span class="receipt-row-label">Issue</span><span style="font-weight:700;font-size:12px;word-break:break-word;white-space:normal;line-height:1.4">${desc}</span></div>
     ${extraRows}
     <hr class="receipt-divider">
-    <div class="receipt-row"><span class="receipt-row-label">By</span><span class="receipt-row-val">${e.by||'--'}</span></div>
+    <div class="receipt-section-head">Status &mdash; ${statusText}</div>
+    <div class="receipt-row"><span class="receipt-row-label">Logged By</span><span class="receipt-row-val">${e.by||'--'}</span></div>
     <div class="receipt-row"><span class="receipt-row-label">Date</span><span class="receipt-row-val">${date}</span></div>
     <div class="receipt-row"><span class="receipt-row-label">Time</span><span class="receipt-row-val">${time}</span></div>
     <hr class="receipt-divider">
     <div class="receipt-qr" id="${qrId}"></div>
-    <div class="receipt-footer">Scan to check status<br>tharig327.github.io/hl-log/t/</div>`;
+    <div class="receipt-footer">Scan to check ticket status<br><strong>tharig327.github.io/hl-log/t/</strong></div>`;
 
   document.getElementById('receiptModal').classList.remove('hidden');
   setTimeout(()=>{
