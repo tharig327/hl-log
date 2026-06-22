@@ -180,7 +180,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="top">
   <div class="hl-logo">H&L</div>
   <div>
-    <div class="top-title">H&L FloorSync Tickets</div>
+    <div class="top-title">Issue Tickets</div>
     <div class="top-sub">Submit a problem or check your ticket status</div>
   </div>
 </div>
@@ -398,7 +398,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 </div>
 
-<div class="footer">H&L Manufacturing · Issue Tracking System</div>
+<div class="footer">H&L Manufacturing · FloorSync CMMS</div>
 
 <script>
 const GIST_ID      = '934943f5c9d8ea126f30a27526c95771';
@@ -816,6 +816,7 @@ if(!/^(TKT-\d{4}|S-\d+)$/.test(tkt)){ result.innerHTML='<div class="err-box">Ple
       etaHtml='<div style="margin-top:10px;padding:12px 14px;background:rgba(30,120,60,.1);border:1px solid rgba(30,120,60,.3);border-radius:4px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#50a870;margin-bottom:4px">Estimated Completion</div><div style="font-size:22px;font-weight:700;line-height:1">'+rangeText+'</div><div style="font-size:11px;color:#aaa;margin-top:6px;display:flex;gap:12px;flex-wrap:wrap"><span>Queue position: <strong style="color:#f0f0f0">#'+pos+'</strong></span><span>Priority: <strong style="color:'+priorityColor+'">'+priorityLabel+'</strong></span><span>'+ahead+' ahead in queue</span></div></div>';
     }
 
+    lastLookedUpEntry = {...entry, _sec: foundSec};
     result.innerHTML=`
       <div class="status-card">
         <div class="status-header">
@@ -834,7 +835,8 @@ if(!/^(TKT-\d{4}|S-\d+)$/.test(tkt)){ result.innerHTML='<div class="err-box">Ple
       ${etaHtml}
       <div style="font-size:12px;color:var(--hl-text2);margin-top:10px;padding:10px 12px;background:var(--hl-surface2);border-radius:4px;border:1px solid var(--hl-border);line-height:1.5">
         <i class="ti ti-info-circle" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>${statusMsg}
-      </div>`;
+      </div>
+      <button onclick="printStatusReceipt()" style="width:100%;margin-top:10px;height:40px;background:rgba(74,58,122,.2);border:1px solid #4a3a7a;color:#a080d0;border-radius:4px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;gap:6px"><i class="ti ti-receipt" style="font-size:14px"></i> Print Receipt</button>`;
   }catch(e){
     result.innerHTML=`<div class="err-box">Could not load ticket data — check your connection.<br><span style="font-size:11px;opacity:.8">${e.message}</span></div>`;
   }
@@ -868,6 +870,67 @@ if ('serviceWorker' in navigator) {
 
 // ── RECEIPT ──
 let lastSubmittedEntry = null;
+
+let lastLookedUpEntry = null;
+
+function printStatusReceipt(){
+  if(!lastLookedUpEntry){ return; }
+  const e = lastLookedUpEntry;
+  const sec = e._sec || 'applicator';
+  const type = sec;
+  const typeLabel = {applicator:'Applicator Issue',machine:'Machine Issue',setup:'Setup Sheet Issue'}[type]||'Issue';
+  const primaryId = e.apn || e.machine || e.terminal || '--';
+  const idLabel = type==='applicator'?'Applicator #':type==='machine'?'Machine #':'Terminal #';
+  const desc = e.issue || e.desc || '--';
+  const date = new Date(e.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  const time = new Date(e.date).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});
+  const tkt = e.ticketNum || '--';
+  const statusText = {done:'Resolved',inprog:'In Progress',waiting:'Waiting on Parts',open:'Open'}[e.status]||'Open';
+  const ticketUrl = 'https://tharig327.github.io/hl-log/t/?ticket=' + tkt;
+  const qrId = 'status-receipt-qr';
+
+  const extras = [];
+  if(type==='applicator'){
+    if(e.press)    extras.push(['Press', e.press]);
+    if(e.terminal) extras.push(['Terminal', e.terminal]);
+    if(e.wire)     extras.push(['Wire', e.wire]);
+  } else if(type==='setup'){
+    if(e.awg) extras.push(['AWG', e.awg]);
+    if(e.doc) extras.push(['Document', e.doc]);
+  }
+
+  const extraRows = extras.map(([k,v])=>
+    `<div class="receipt-row"><span class="receipt-row-label">${k}</span><span class="receipt-row-val">${v}</span></div>`
+  ).join('');
+
+  document.getElementById('receiptContent').innerHTML = `
+    <div class="receipt-header">
+      <div class="receipt-co">H&amp;L Manufacturing</div>
+      <div class="receipt-title">&#9472;&#9472; Repair Ticket &#9472;&#9472;</div>
+    </div>
+    <div class="receipt-tkt">${tkt}</div>
+    <div class="receipt-section-head">Issue Details</div>
+    <div class="receipt-row"><span class="receipt-row-label">Type</span><span class="receipt-row-val">${typeLabel}</span></div>
+    <div class="receipt-row"><span class="receipt-row-label">${idLabel}</span><span class="receipt-row-val">${primaryId}</span></div>
+    <div class="receipt-row" style="flex-direction:column;gap:1px"><span class="receipt-row-label">Issue</span><span style="font-weight:700;font-size:12px;word-break:break-word;white-space:normal;line-height:1.4">${desc}</span></div>
+    ${extraRows}
+    <hr class="receipt-divider">
+    <div class="receipt-section-head">Status &mdash; ${statusText}</div>
+    <div class="receipt-row"><span class="receipt-row-label">Submitted By</span><span class="receipt-row-val">${e.submittedBy||e.by||'--'}</span></div>
+    <div class="receipt-row"><span class="receipt-row-label">Date</span><span class="receipt-row-val">${date}</span></div>
+    <div class="receipt-row"><span class="receipt-row-label">Time</span><span class="receipt-row-val">${time}</span></div>
+    <hr class="receipt-divider">
+    <div class="receipt-qr" id="${qrId}"></div>
+    <div class="receipt-footer">Scan to check ticket status<br><strong>tharig327.github.io/hl-log/t/</strong></div>`;
+
+  document.getElementById('receiptModal').classList.remove('hidden');
+  setTimeout(()=>{
+    const el = document.getElementById(qrId);
+    if(el && window.QRCode){
+      new QRCode(el,{text:ticketUrl,width:140,height:140,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});
+    }
+  }, 60);
+}
 
 function printTicketReceipt(){
   if(!lastSubmittedEntry){ alert('No ticket data available. Please submit a ticket first.'); return; }
