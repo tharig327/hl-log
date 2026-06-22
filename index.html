@@ -212,6 +212,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .logged-in-badge{font-size:10px;color:var(--hl-text3);display:flex;align-items:center;gap:4px;padding:0 2px;white-space:nowrap}
 .logged-in-badge i{font-size:12px;color:#50a870}
 
+<<<<<<< HEAD
 /* ── PHOTOS ── */
 .photo-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1rem;gap:12px}
 .photo-modal-overlay.hidden{display:none}
@@ -234,6 +235,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .photo-viewer img{max-width:100%;max-height:100%;object-fit:contain}
 .photo-viewer-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.15);border:none;color:#fff;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 
+=======
+>>>>>>> 60037240ce48ea38c1dd7401718e16099ebcd47d
 /* ── RECEIPT ── */
 .receipt-modal{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;display:flex;align-items:center;justify-content:center;padding:1rem}
 .receipt-modal.hidden{display:none}
@@ -787,6 +790,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 
 <div class="toast" id="toast"></div>
+<<<<<<< HEAD
 <!-- PHOTO MODAL -->
 <div class="photo-modal-overlay hidden" id="photoModal">
   <div class="photo-modal-box">
@@ -809,6 +813,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <button class="photo-viewer-close" onclick="closePhotoViewer()"><i class="ti ti-x"></i></button>
 </div>
 
+=======
+>>>>>>> 60037240ce48ea38c1dd7401718e16099ebcd47d
 <!-- RECEIPT PREVIEW MODAL -->
 <div class="receipt-modal hidden" id="receiptModal">
   <div style="display:flex;flex-direction:column;align-items:center;gap:0">
@@ -1270,7 +1276,10 @@ function actionBtns(e,sec,hist=false){
     <button class="btn-sm btn-del" onclick="delEntry('${sec}',${e.id})"><i class="ti ti-trash"></i> Delete</button>
     ${e.ticketNum?`<button class="btn-sm" style="border-color:#1a5a1a;color:#50a870;background:rgba(26,90,26,.2)" onclick="shareTicket('${sec}',${e.id})"><i class="ti ti-link"></i> Link</button>`:''}
     ${!hist?`<button class="btn-sm" style="border-color:#4a3a7a;color:#a080d0;background:rgba(74,58,122,.2)" onclick="showReceipt('${sec}',${e.id})"><i class="ti ti-receipt"></i> Receipt</button>`:''}
+<<<<<<< HEAD
     ${!hist&&e.ticketNum?`<button class="btn-sm" style="border-color:#2a5a3a;color:#50c870;background:rgba(42,90,58,.2)" onclick="openPhotoModal('${sec}',${e.id})"><i class="ti ti-camera"></i> Photos</button>`:''}
+=======
+>>>>>>> 60037240ce48ea38c1dd7401718e16099ebcd47d
   </div>`;
 }
 
@@ -1853,6 +1862,7 @@ function fixTicketNums(){
 })();
 
 initApp();
+<<<<<<< HEAD
 // ── PHOTOS ──
 let photoModalSec = null, photoModalId = null;
 
@@ -1941,6 +1951,8 @@ function closePhotoViewer(){
   document.getElementById('photoViewerImg').src = '';
 }
 
+=======
+>>>>>>> 60037240ce48ea38c1dd7401718e16099ebcd47d
 // ── RECEIPT ──
 function buildReceiptHTML(entry, sec){
   const typeLabel = {applicator:'Applicator Issue',machine:'Machine Issue',setup:'Setup Sheet Issue'}[sec];
