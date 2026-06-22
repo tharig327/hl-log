@@ -1,4 +1,4 @@
-const CACHE = 'hl-floorsync-v1';
+const CACHE = 'hl-floorsync-v2';
 
 const ASSETS = [
   './',
@@ -31,6 +31,12 @@ self.addEventListener('activate', e=>{
 // Fetch
 self.addEventListener('fetch', e=>{
   const url = new URL(e.request.url);
+
+  // Local photo server — never intercept, let browser handle directly
+  if(url.hostname==='tyler.hl.local' || url.hostname==='TYLER.hl.local'){
+    e.respondWith(fetch(e.request));
+    return;
+  }
 
   // GitHub API → always network
   if(url.hostname==='api.github.com'){
