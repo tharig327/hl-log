@@ -3,15 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>H&L Issue Log</title>
+<title>H&L FloorSync</title>
 <meta name="theme-color" content="#cc2222">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="H&L Log">
-<meta name="application-name" content="H&L Log">
+<meta name="apple-mobile-web-app-title" content="H&L FloorSync">
+<meta name="application-name" content="H&L FloorSync">
 <link rel="manifest" href="manifest.json">
+<!-- iOS Splash Screens -->
+<link rel="apple-touch-startup-image" href="Splash.png" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)">
+<link rel="apple-touch-startup-image" href="Splash.png" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)">
+<link rel="apple-touch-startup-image" href="Splash.png" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)">
+<link rel="apple-touch-startup-image" href="Splash.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)">
+<link rel="apple-touch-startup-image" href="Splash.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2)">
+<link rel="apple-touch-startup-image" href="Splash.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)">
+<link rel="apple-touch-startup-image" href="Splash.png">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -201,10 +211,69 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 }
 .logged-in-badge{font-size:10px;color:var(--hl-text3);display:flex;align-items:center;gap:4px;padding:0 2px;white-space:nowrap}
 .logged-in-badge i{font-size:12px;color:#50a870}
+
+/* ── RECEIPT ── */
+.receipt-modal{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;display:flex;align-items:center;justify-content:center;padding:1rem}
+.receipt-modal.hidden{display:none}
+.receipt-wrap{background:#fff;color:#000;width:220px;padding:14px 12px;font-family:'Arial','Helvetica Neue',sans-serif;font-size:12px;line-height:1.5;border-radius:3px;max-height:90vh;overflow-y:auto}
+.receipt-header{text-align:center;padding-bottom:10px;margin-bottom:10px;border-bottom:2px solid #000}
+.receipt-co{font-size:16px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.receipt-title{font-size:10px;font-weight:600;letter-spacing:.25em;text-transform:uppercase;margin-top:3px;color:#333}
+.receipt-tkt{text-align:center;font-size:20px;font-weight:800;letter-spacing:.06em;margin:10px 0;border:2.5px solid #000;padding:8px 6px;font-family:'Courier New',monospace;background:#f7f7f7}
+.receipt-row{display:flex;justify-content:space-between;align-items:baseline;gap:6px;margin-bottom:5px;font-size:11px}
+.receipt-row-label{color:#555;flex-shrink:0;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.receipt-row-val{text-align:right;font-weight:700;word-break:break-word;font-size:12px}
+.receipt-divider{border:none;border-top:1.5px dashed #999;margin:10px 0}
+.receipt-section-head{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#888;margin:8px 0 4px}
+.receipt-qr{text-align:center;margin:10px 0}
+.receipt-footer{text-align:center;font-size:9px;color:#777;margin-top:8px;border-top:1.5px dashed #999;padding-top:8px;line-height:1.6;letter-spacing:.02em}
+.receipt-actions{display:flex;gap:8px;margin-top:12px;justify-content:center}
+.receipt-btn{height:36px;padding:0 16px;font-size:12px;border-radius:4px;cursor:pointer;border:1px solid var(--hl-border2);background:var(--hl-surface2);color:var(--hl-text);display:flex;align-items:center;gap:5px}
+.receipt-btn-print{background:var(--hl-red);color:#fff;border-color:var(--hl-red)}
+@media print{
+  body > *:not(#receiptModal){display:none !important}
+  #receiptModal{position:static !important;background:none !important;padding:0 !important}
+  .receipt-actions{display:none !important}
+  .receipt-wrap{box-shadow:none;border-radius:0;max-height:none;overflow:visible;width:57mm;padding:3mm}
+  @page{size:57mm auto;margin:0}
+}
+
+/* ── IN-APP SPLASH SCREEN ── */
+#splashScreen{
+  position:fixed;inset:0;z-index:9999;
+  background:#111111;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  transition:opacity .6s ease;
+}
+#splashScreen.fade-out{opacity:0;pointer-events:none}
+#splashScreen img{
+  width:100vw;
+  height:100vh;
+  object-fit:contain;
+  object-position:center center;
+}
+#splashScreen .splash-sub{
+  position:absolute;
+  bottom:40px;
+  left:0;right:0;
+  text-align:center;
+  font-size:13px;
+  color:#555;
+  letter-spacing:.15em;
+  text-transform:uppercase;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+}
 </style>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </head>
 <body>
+
+<!-- ── IN-APP SPLASH ── -->
+<div id="splashScreen">
+  <img src="./Splash.png" alt="H&L FloorSync" onerror="if(window._splashReady)window._splashReady()">
+  <div class="splash-sub">Loading…</div>
+</div>
 
 <!-- SETUP -->
 <div class="screen" id="setupScreen">
@@ -227,7 +296,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="card" style="max-width:320px;text-align:center">
     <div class="card-logo">H&L</div>
     <div class="card-title" id="pinTitle">Enter PIN</div>
-    <div class="card-sub" id="pinSub" style="margin-bottom:1.25rem">H&L Issue Log</div>
+    <div class="card-sub" id="pinSub" style="margin-bottom:1.25rem">H&L FloorSync</div>
     <div class="pin-dots" id="pinDots">
       <div class="pin-dot" id="d0"></div><div class="pin-dot" id="d1"></div>
       <div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div>
@@ -253,7 +322,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="header">
     <div class="header-left">
       <div class="hl-logo">H&L</div>
-      <div><h1>H&L Issue Log</h1><p>Applicator · Machine · Setup Sheet</p></div>
+      <div><h1>H&L FloorSync</h1><p>H&amp;L Manufacturing · CMMS</p></div>
     </div>
     <div class="header-actions">
       <span class="logged-in-badge" id="loggedInBadge" style="display:none"><i class="ti ti-user-circle"></i><span id="loggedInName"></span></span>
@@ -696,6 +765,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 
 <div class="toast" id="toast"></div>
+<!-- RECEIPT PREVIEW MODAL -->
+<div class="receipt-modal hidden" id="receiptModal">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:0">
+    <div class="receipt-wrap" id="receiptContent"></div>
+    <div class="receipt-actions">
+      <button class="receipt-btn" onclick="closeReceipt()"><i class="ti ti-x"></i> Close</button>
+      <button class="receipt-btn receipt-btn-print" onclick="window.print()"><i class="ti ti-printer"></i> Print</button>
+    </div>
+  </div>
+</div>
 
 <script>
 // ── FILES ──
@@ -708,7 +787,7 @@ const QUEUE_FILES = {
   machine:    'hl_queue_machine.json',
   setup:      'hl_queue_setup.json'
 };
-const NOTIFY_FILE = 'hl_notify_queue.json';
+const NOTIFY_FILE  = 'hl_notify_queue.json';
 const INACTIVITY = 30 * 60 * 1000;
 let overdueDays = 3;
 
@@ -749,7 +828,7 @@ function showScreen(id){
   if(id==='app') $('app').style.display='block';
   else $(id).classList.add('active');
 }
-function showSetup(){ lockApp(true); $('setupToken').value=''; $('setupErr').textContent=''; showScreen('setupScreen'); }
+function showSetup(){ if(window._splashReady) window._splashReady(); lockApp(true); $('setupToken').value=''; $('setupErr').textContent=''; showScreen('setupScreen'); }
 
 async function doSetup(){
   const token=$('setupToken').value.trim(); $('setupErr').textContent='';
@@ -761,7 +840,7 @@ async function doSetup(){
     if(!r.ok) throw new Error('Token invalid ('+r.status+')');
     lsSet('hl_token',token);
     btn.disabled=false; btn.innerHTML='<i class="ti ti-plug-connected"></i> Connect';
-    showScreen('pinScreen'); await initPinScreen();
+    showScreen('pinScreen'); if(window._splashReady) window._splashReady(); await initPinScreen();
   }catch(e){ btn.disabled=false; btn.innerHTML='<i class="ti ti-plug-connected"></i> Connect'; $('setupErr').textContent=e.message||'Could not connect'; }
 }
 
@@ -779,7 +858,7 @@ async function ensureGist(){
   const list=await gistAPI('GET','gists?per_page=100');
   const found=list.find(g=>g.files&&(g.files[DATA_FILE]||g.files[META_FILE]));
   if(found){ gistId=found.id; lsSet('hl_gist_id',gistId); return gistId; }
-  const created=await gistAPI('POST','gists',{description:'H&L Issue Log',public:false,files:{
+  const created=await gistAPI('POST','gists',{description:'H&L FloorSync',public:false,files:{
     [DATA_FILE]:{content:JSON.stringify({issues:[],contacts:[]},null,2)},
     [MACH_FILE]:{content:JSON.stringify({issues:[]},null,2)},
     [SETUP_FILE]:{content:JSON.stringify({issues:[]},null,2)},
@@ -906,7 +985,7 @@ async function handlePin(){
   const matchedLocal=users.find(u=>u.pinHash===h);
   if(matchedLocal){
     lsSet('hl_user_name',matchedLocal.name);
-    setPinLoading('Loading…'); await loadFromGist(); setPinLoading('');
+    setPinLoading('Loading…'); await loadFromGist(); fixTicketNums(); setPinLoading('');
     doUnlock(matchedLocal.name);
     ensureGist().then(id=>fetch('https://api.github.com/gists/'+id,{headers:{'Authorization':'token '+getToken(),'Accept':'application/vnd.github.v3+json'}}))
       .then(r=>r.json()).then(g=>{ if(g.files&&g.files[META_FILE]){ const m=JSON.parse(g.files[META_FILE].content); if(m.users) lsSet('hl_users',JSON.stringify(m.users)); } }).catch(()=>{});
@@ -951,7 +1030,7 @@ async function initPinScreen(){
   }catch(e){ setPinLoading('Offline — enter PIN'); pinMode='unlock'; }
 }
 function resetInactivity(){ clearTimeout(inactivityTimer); inactivityTimer=setTimeout(lockApp,INACTIVITY); }
-function doUnlock(userName){
+function doUnlock(userName){ if(window._splashReady) window._splashReady();
   sessionStorage.setItem('hl_s','1');
   showScreen('app'); resetInactivity();
   ['mousemove','keydown','click','touchstart'].forEach(e=>document.addEventListener(e,resetInactivity,{passive:true}));
@@ -965,12 +1044,12 @@ function doUnlock(userName){
     if(n){ const badge=$('loggedInBadge'),name=$('loggedInName'); if(badge&&name){ name.textContent=n; badge.style.display='flex'; } }
   }
 }
-function lockApp(silent=false){ clearTimeout(inactivityTimer); stopPolling(); sessionStorage.removeItem('hl_s'); const b=$('loggedInBadge'); if(b) b.style.display='none'; showScreen('pinScreen'); pinBuffer=''; updateDots(); $('pinTitle').textContent='Enter PIN'; $('pinSub').textContent='H&L Issue Log'; $('pinError').textContent=''; setPinLoading(''); pinMode='unlock'; }
+function lockApp(silent=false){ clearTimeout(inactivityTimer); stopPolling(); sessionStorage.removeItem('hl_s'); const b=$('loggedInBadge'); if(b) b.style.display='none'; showScreen('pinScreen'); pinBuffer=''; updateDots(); $('pinTitle').textContent='Enter PIN'; $('pinSub').textContent='H&L FloorSync'; $('pinError').textContent=''; setPinLoading(''); pinMode='unlock'; }
 async function initApp(){
   const saved=parseInt(lsGet('hl_overdue_days')||'',10); if(saved&&saved>=1) overdueDays=saved;
   const token=getToken(); if(!token){ showScreen('setupScreen'); return; }
   showScreen('pinScreen');
-  if(sessionStorage.getItem('hl_s')==='1'){ loadLocal(); doUnlock(lsGet('hl_user_name')||''); loadFromGist().then(()=>{ renderAll(); setSyncStatus('ok'); }).catch(()=>{}); return; }
+  if(sessionStorage.getItem('hl_s')==='1'){ loadLocal(); doUnlock(lsGet('hl_user_name')||''); loadFromGist().then(()=>{ fixTicketNums(); renderAll(); setSyncStatus('ok'); }).catch(()=>{}); return; }
   await initPinScreen();
 }
 
@@ -1145,6 +1224,7 @@ function actionBtns(e,sec,hist=false){
     <button class="btn-sm" style="border-color:var(--hl-border);color:var(--hl-text2)" onclick="openModal('${sec}',${e.id})"><i class="ti ti-edit"></i> Edit</button>
     <button class="btn-sm btn-del" onclick="delEntry('${sec}',${e.id})"><i class="ti ti-trash"></i> Delete</button>
     ${e.ticketNum?`<button class="btn-sm" style="border-color:#1a5a1a;color:#50a870;background:rgba(26,90,26,.2)" onclick="shareTicket('${sec}',${e.id})"><i class="ti ti-link"></i> Link</button>`:''}
+    ${!hist?`<button class="btn-sm" style="border-color:#4a3a7a;color:#a080d0;background:rgba(74,58,122,.2)" onclick="showReceipt('${sec}',${e.id})"><i class="ti ti-receipt"></i> Receipt</button>`:''}
   </div>`;
 }
 
@@ -1448,7 +1528,7 @@ async function saveEntry(sec){
   const makeTkt=()=>'TKT-'+Math.floor(1000+Math.random()*9000);
   const tkt=tktRaw?'TKT-'+tktRaw:(existing?.ticketNum||makeTkt());
   // If suppressed, prefix ticket with S- so notifier knows to skip it
-  const finalTkt = suppress ? 'S-' + tkt : tkt;
+  const finalTkt = suppress ? 'S-' + tkt.replace('TKT-','') : tkt;
 
   if(sec==='applicator'){
     const apn=$('fApn').value.trim(), issue=$('fIssue').value.trim();
@@ -1683,7 +1763,124 @@ document.addEventListener('keydown',function(e){
   if(e.key==='Backspace'||e.key==='Delete') pinDel();
 });
 
+// ── TICKET NUMBER MIGRATION ──
+// Fix any entries that got S-TKT-XXXX instead of S-XXXX
+function fixTicketNums(){
+  let fixed = 0;
+  ['applicator','machine','setup'].forEach(sec=>{
+    state[sec].entries.forEach(e=>{
+      if(e.ticketNum && e.ticketNum.startsWith('S-TKT-')){
+        e.ticketNum = 'S-' + e.ticketNum.replace('S-TKT-','');
+        fixed++;
+      }
+    });
+  });
+  if(fixed > 0){
+    console.log('Fixed '+fixed+' malformed ticket number(s)');
+    saveLocal();
+    pushAll(true); // silently push fix to Gist
+  }
+}
+
+// ── SPLASH DISMISS ──
+(function(){
+  const splash = document.getElementById('splashScreen');
+  if(!splash) return;
+  // Minimum display time: 2 seconds, then fade when app is ready
+  const minTime = 2000;
+  const start = Date.now();
+  window._splashReady = function(){
+    if(splash._dismissed) return;
+    splash._dismissed = true;
+    const elapsed = Date.now() - start;
+    const delay = Math.max(0, minTime - elapsed);
+    setTimeout(()=>{
+      splash.classList.add('fade-out');
+      setTimeout(()=>{ splash.style.display='none'; }, 650);
+    }, delay);
+  };
+  // Safety net — never stay stuck longer than 4 seconds
+  setTimeout(()=>{ if(window._splashReady) window._splashReady(); }, 4000);
+  // Also dismiss if image fails to load
+  const img = splash.querySelector('img');
+  if(img) img.onerror = ()=>{ if(window._splashReady) window._splashReady(); };
+})();
+
 initApp();
+// ── RECEIPT ──
+function buildReceiptHTML(entry, sec){
+  const typeLabel = {applicator:'Applicator Issue',machine:'Machine Issue',setup:'Setup Sheet Issue'}[sec];
+  const primaryId = {applicator:entry.apn,machine:entry.machine,setup:entry.terminal}[sec]||'--';
+  const desc = {applicator:entry.issue,machine:entry.desc,setup:entry.issue}[sec]||'--';
+  const statusText = {done:'Resolved',inprog:'In Progress',waiting:'Waiting on Parts',open:'Open'}[entry.status]||'Open';
+  const date = new Date(entry.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  const time = new Date(entry.date).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});
+  const base = 'https://tharig327.github.io/hl-log';
+  const ticketUrl = entry.ticketNum ? base+'/t/?ticket='+entry.ticketNum : null;
+  const tkt = entry.ticketNum || '--';
+  const qrId = 'receipt-qr-'+Date.now();
+
+  const extras = [];
+  if(sec==='applicator'){
+    if(entry.press)    extras.push(['Press', entry.press]);
+    if(entry.terminal) extras.push(['Terminal', entry.terminal]);
+    if(entry.wire)     extras.push(['Wire', entry.wire]);
+  } else if(sec==='setup'){
+    if(entry.customer) extras.push(['Customer', entry.customer]);
+    if(entry.awg)      extras.push(['AWG', entry.awg]);
+    if(entry.doc)      extras.push(['Document', entry.doc]);
+  }
+  if(entry.notes||entry.result){
+    const n = entry.notes||entry.result;
+    extras.push(['Notes', n.slice(0,50)+(n.length>50?'...':'')]);
+  }
+
+  const extraRows = extras.map(([k,v])=>
+    `<div class="receipt-row"><span class="receipt-row-label">${k}</span><span class="receipt-row-val">${v}</span></div>`
+  ).join('');
+
+  const idLabel = sec==='applicator'?'Applicator #':sec==='machine'?'Machine #':'Terminal #';
+  const html = `
+    <div class="receipt-header">
+      <div class="receipt-co">H&amp;L Manufacturing</div>
+      <div class="receipt-title">&#9472;&#9472; Repair Ticket &#9472;&#9472;</div>
+    </div>
+    <div class="receipt-tkt">${tkt}</div>
+    <div class="receipt-section-head">Issue Details</div>
+    <div class="receipt-row"><span class="receipt-row-label">Type</span><span class="receipt-row-val">${typeLabel}</span></div>
+    <div class="receipt-row"><span class="receipt-row-label">${idLabel}</span><span class="receipt-row-val">${primaryId}</span></div>
+    <div class="receipt-row" style="flex-direction:column;gap:1px"><span class="receipt-row-label">Issue</span><span style="font-weight:700;font-size:12px;word-break:break-word;white-space:normal;line-height:1.4">${desc}</span></div>
+    ${extraRows}
+    <hr class="receipt-divider">
+    <div class="receipt-section-head">Status &mdash; ${statusText}</div>
+    <div class="receipt-row"><span class="receipt-row-label">Logged By</span><span class="receipt-row-val">${entry.by||'--'}</span></div>
+    <div class="receipt-row"><span class="receipt-row-label">Date</span><span class="receipt-row-val">${date}</span></div>
+    <div class="receipt-row"><span class="receipt-row-label">Time</span><span class="receipt-row-val">${time}</span></div>
+    <hr class="receipt-divider">
+    ${ticketUrl ? `<div class="receipt-qr" id="${qrId}"></div><div class="receipt-footer">Scan to check ticket status<br><strong>tharig327.github.io/hl-log/t/</strong></div>` : `<div class="receipt-footer">tharig327.github.io/hl-log/t/</div>`}`;
+
+  return { html, qrId, ticketUrl };
+}
+
+function showReceipt(sec, id){
+  const entry = state[sec].entries.find(e=>e.id===id);
+  if(!entry){ toast('Entry not found','#cc4444'); return; }
+  const { html, qrId, ticketUrl } = buildReceiptHTML(entry, sec);
+  document.getElementById('receiptContent').innerHTML = html;
+  document.getElementById('receiptModal').classList.remove('hidden');
+  if(ticketUrl){
+    setTimeout(()=>{
+      const el = document.getElementById(qrId);
+      if(el && window.QRCode){
+        new QRCode(el,{text:ticketUrl,width:140,height:140,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});
+      }
+    }, 60);
+  }
+}
+
+function closeReceipt(){
+  document.getElementById('receiptModal').classList.add('hidden');
+}
 async function bulkAddCustomers(){
   const input = document.getElementById('bulkCustomers').value.trim();
   if(!input) return;
