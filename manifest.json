@@ -1,7 +1,7 @@
 {
-  "name": "H&L Issue Log",
-  "short_name": "Issue Log",
-  "description": "H&L Applicator Issue Log — track incoming applicators,Machines and repairs",
+  "name": "H&L FloorSync",
+  "short_name": "FloorSync",
+  "description": "H&L FloorSync — Shop floor maintenance tracker for applicators, machines and setup sheets",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#111111",
@@ -19,6 +19,14 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "Splash.png",
+      "sizes": "1080x1080",
+      "type": "image/png",
+      "label": "H&L FloorSync Launch Screen"
     }
   ]
 }

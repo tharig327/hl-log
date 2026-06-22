@@ -1,8 +1,9 @@
-const CACHE = 'hl-applicator-v5';
+const CACHE = 'hl-floorsync-v1';
 
 const ASSETS = [
   './',
   './manifest.json',
+  './Splash.png',
   'https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css'
 ];
 
@@ -15,7 +16,7 @@ self.addEventListener('install', e=>{
   );
 });
 
-// Activate
+// Activate — wipe all old caches
 self.addEventListener('activate', e=>{
   e.waitUntil(
     caches.keys().then(keys =>
@@ -31,6 +32,7 @@ self.addEventListener('activate', e=>{
 self.addEventListener('fetch', e=>{
   const url = new URL(e.request.url);
 
+  // GitHub API → always network
   if(url.hostname==='api.github.com'){
     e.respondWith(fetch(e.request).catch(()=>
       new Response('{"error":"offline"}',{headers:{'Content-Type':'application/json'}})
@@ -38,8 +40,22 @@ self.addEventListener('fetch', e=>{
     return;
   }
 
-  // HTML → ALWAYS NETWORK FIRST
+  // HTML → network first so updates always come through
   if(url.pathname.endsWith('.html') || url.pathname==='/' || url.pathname.endsWith('/')){
+    e.respondWith(
+      fetch(e.request)
+        .then(r=>{
+          const clone=r.clone();
+          caches.open(CACHE).then(c=>c.put(e.request,clone));
+          return r;
+        })
+        .catch(()=>caches.match(e.request))
+    );
+    return;
+  }
+
+  // Images → network first so Splash.png always loads fresh
+  if(url.pathname.match(/\.(png|jpg|jpeg|gif|svg|webp)$/i)){
     e.respondWith(
       fetch(e.request)
         .then(r=>{
