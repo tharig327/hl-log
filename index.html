@@ -550,6 +550,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="field"><label>Terminal P/N</label><input id="fTerminal" placeholder="e.g. 794956-1"></div>
       <div class="field"><label>Wire Gauge / Type</label><input id="fWire" placeholder="e.g. 0.5mm² TXL"></div>
     </div>
+    <div class="field"><label>Customer</label><input list="fCustomerOptions" id="fCustomer" placeholder="Select or type customer"><datalist id="fCustomerOptions"></datalist></div>
     <div class="field"><label>Issue Description *</label><textarea id="fIssue" placeholder="Crimp height off, blade worn, carrier jammed…"></textarea></div>
     <div class="field"><label>Notes / Resolution Steps</label><textarea id="fNotes" style="height:52px" placeholder="What's been done or what's pending…"></textarea></div>
     <div class="row2">
@@ -583,6 +584,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="field"><label>Machine # *</label><input id="mMachine" placeholder="e.g. KM-4T #2" autocomplete="off"></div>
       <div class="field"><label>Logged By</label><input id="mBy" placeholder="Your name"></div>
     </div>
+    <div class="field"><label>Customer</label><input list="mCustomerOptions" id="mCustomer" placeholder="Select or type customer"><datalist id="mCustomerOptions"></datalist></div>
     <div class="field"><label>Description *</label><textarea id="mDesc" placeholder="Describe the machine problem…"></textarea></div>
     <div class="field"><label>Result / Notes</label><textarea id="mResult" style="height:52px" placeholder="What was found, what was done…"></textarea></div>
     <div class="row2">
@@ -688,6 +690,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="parse-hint" id="parseHint"></div>
     </div>
     <div class="field"><label>Role / Department</label><input id="cRole" placeholder="e.g. Production Supervisor"></div>
+    <div class="field">
+      <label>Notify for Customers <span style="font-weight:400;color:var(--hl-text3)">(leave blank = receives all notifications)</span></label>
+      <div id="cCustomerList" style="border:1px solid var(--hl-border2);border-radius:3px;background:var(--hl-bg);max-height:160px;overflow-y:auto;padding:6px 8px">
+        <div style="font-size:11px;color:var(--hl-text3);padding:4px 0">Loading customers…</div>
+      </div>
+    </div>
     <div class="modal-actions"><button class="btn" onclick="closeContactModal()">Cancel</button><button class="btn btn-red" onclick="saveContact()">Save Contact</button></div>
   </div>
 </div>
@@ -1184,13 +1192,12 @@ function switchSubTab(sec,tab){
 
 // ── HELPERS ──
 function renderCustomerDropdown(){
-  const dl = document.getElementById('customerOptions');
-  if(!dl) return;
-
-  dl.innerHTML = customersList
-    .sort((a,b)=>a.name.localeCompare(b.name))
-    .map(c => `<option value="${c.name}"></option>`)
-    .join('');
+  const sorted = [...customersList].sort((a,b)=>a.name.localeCompare(b.name));
+  const opts = sorted.map(c=>`<option value="${c.name}"></option>`).join('');
+  ['customerOptions','fCustomerOptions','mCustomerOptions'].forEach(id=>{
+    const dl = document.getElementById(id);
+    if(dl) dl.innerHTML = opts;
+  });
 }
 function formatApn(input){
   let v = input.value.toUpperCase().replace(/[^T0-9\-]/g,'');
@@ -1498,11 +1505,13 @@ function openModal(sec,id=null){
     $('fWire').value=e?.wire||''; $('fIssue').value=e?.issue||''; $('fNotes').value=e?.notes||'';
     $('fStatus').value=e?.status||'open'; $('fBy').value=e?.by||(id?'':lsGet('hl_user_name')||'');
     $('fTicket').value=e?.ticketNum?e.ticketNum.replace('TKT-','').replace('S-',''):''; $('fSuppress').checked=e?.ticketNum?.startsWith('S-')||false;
+    renderCustomerDropdown(); $('fCustomer').value=e?.customer||'';
   } else if(sec==='machine'){
     $('mModalTitle').textContent=e?'Edit Machine Entry':'Log Machine Issue';
     $('mMachine').value=e?.machine||''; $('mDesc').value=e?.desc||'';
     $('mResult').value=e?.result||''; $('mStatus').value=e?.status||'open';
     $('mBy').value=e?.by||(id?'':lsGet('hl_user_name')||''); $('mTicket').value=e?.ticketNum?e.ticketNum.replace('TKT-','').replace('S-',''):''; $('mSuppress').checked=e?.ticketNum?.startsWith('S-')||false;
+    renderCustomerDropdown(); $('mCustomer').value=e?.customer||'';
   } else {
     $('sModalTitle').textContent=e?'Edit Setup Sheet Entry':'Log Setup Sheet Issue';
     $('sTerminal').value=e?.terminal||''; $('sAwg').value=e?.awg||'';   
@@ -1533,11 +1542,11 @@ async function saveEntry(sec){
   if(sec==='applicator'){
     const apn=$('fApn').value.trim(), issue=$('fIssue').value.trim();
     if(!apn||!issue){ alert('Applicator # and issue description are required.'); return; }
-    entry={id:editId||Date.now(),apn,press:$('fPress').value.trim(),terminal:$('fTerminal').value.trim(),wire:$('fWire').value.trim(),issue,notes:$('fNotes').value.trim(),status:$('fStatus').value,by:$('fBy').value.trim(),date:existing?.date||Date.now(),...(finalTkt&&{ticketNum:finalTkt}),...(existing?.submittedBy&&{submittedBy:existing.submittedBy}),...(existing?.priority&&{priority:existing.priority})};
+    entry={id:editId||Date.now(),apn,press:$('fPress').value.trim(),terminal:$('fTerminal').value.trim(),wire:$('fWire').value.trim(),customer:$('fCustomer').value.trim(),issue,notes:$('fNotes').value.trim(),status:$('fStatus').value,by:$('fBy').value.trim(),date:existing?.date||Date.now(),...(finalTkt&&{ticketNum:finalTkt}),...(existing?.submittedBy&&{submittedBy:existing.submittedBy}),...(existing?.priority&&{priority:existing.priority})};
   } else if(sec==='machine'){
     const machine=$('mMachine').value.trim(), desc=$('mDesc').value.trim();
     if(!machine||!desc){ alert('Machine # and description are required.'); return; }
-    entry={id:editId||Date.now(),machine,desc,result:$('mResult').value.trim(),status:$('mStatus').value,by:$('mBy').value.trim(),date:existing?.date||Date.now(),...(finalTkt&&{ticketNum:finalTkt})};
+    entry={id:editId||Date.now(),machine,desc,result:$('mResult').value.trim(),status:$('mStatus').value,by:$('mBy').value.trim(),customer:$('mCustomer').value.trim(),date:existing?.date||Date.now(),...(finalTkt&&{ticketNum:finalTkt})};
   } else {
     const terminal=$('sTerminal').value.trim(), issue=$('sIssue').value.trim();
     if(!terminal||!issue){ alert('Terminal # and issue description are required.'); return; }
@@ -1583,7 +1592,20 @@ function openNotify(id,sec){
   $('notifyLabel').textContent=label; $('notifyDetail').textContent=detail||''; $('notifyNote').value='';
   const cl=$('notifyContactList');
   if(!contacts.length){ cl.innerHTML=`<div style="font-size:12px;color:var(--hl-text3);padding:12px">No contacts added yet.</div>`; }
-  else cl.innerHTML=contacts.map(c=>`<div class="recipient-row" data-id="${c.id}" onclick="toggleRecipient(${c.id})"><div class="recipient-check"><div class="check-box"><i class="ti ti-check check-icon" style="display:none"></i></div></div><div class="recipient-info"><div class="recipient-name">${c.name}${c.role?` <span style="font-size:11px;font-weight:400;color:var(--hl-text3)">— ${c.role}</span>`:''}</div><div class="recipient-email">${c.email}</div></div></div>`).join('');
+  else {
+    // Filter: show contacts with no customer filter (gets all) OR assigned to this entry's customer
+    const entryCustomerId = e.customer ? (customersList.find(cu=>cu.name===e.customer)?.id||null) : null;
+    const filtered = contacts.filter(ct=>{
+      if(!ct.customers||!ct.customers.length) return true; // no filter = gets all
+      if(!entryCustomerId) return true; // no customer on entry = show all contacts
+      return ct.customers.map(x=>String(x)).includes(String(entryCustomerId));
+    });
+    const hint = entryCustomerId
+      ? `<div style="font-size:10px;color:var(--hl-text3);margin-bottom:6px;padding:6px 8px;background:var(--hl-surface2);border-radius:3px">Showing contacts for <strong style="color:var(--hl-text2)">${e.customer}</strong> + unfiltered contacts</div>`
+      : '';
+    cl.innerHTML = hint + filtered.map(ct=>`<div class="recipient-row" data-id="${ct.id}" onclick="toggleRecipient(${ct.id})"><div class="recipient-check"><div class="check-box"><i class="ti ti-check check-icon" style="display:none"></i></div></div><div class="recipient-info"><div class="recipient-name">${ct.name}${ct.role?` <span style="font-size:11px;font-weight:400;color:var(--hl-text3)">— ${ct.role}</span>`:''}</div><div class="recipient-email">${ct.email}</div></div></div>`).join('');
+    if(!filtered.length) cl.innerHTML = hint + `<div style="font-size:12px;color:var(--hl-text3);padding:12px">No contacts match this customer.</div>`;
+  }
   $('notifyModal').classList.add('open');
 }
 function closeNotifyModal(){ $('notifyModal').classList.remove('open'); notifyId=null; notifySection=null; }
@@ -1680,11 +1702,41 @@ function parseEmailField(){
   const p=parseOutlookEmail($('cEmail').value);
   $('parseHint').innerHTML=p?.name?`<i class="ti ti-check" style="font-size:12px;color:#50a870"></i><span style="color:#50a870">Parsed — will fill name: <strong>${p.name}</strong></span>`:'';
 }
+let _selectedContactCustomers = new Set();
+
+function _toggleContactCustomer(idStr){
+  if(_selectedContactCustomers.has(idStr)) _selectedContactCustomers.delete(idStr);
+  else _selectedContactCustomers.add(idStr);
+  // Update visual state
+  document.querySelectorAll('#cCustomerList .ccu-row').forEach(row=>{
+    const isSelected = _selectedContactCustomers.has(row.dataset.cid);
+    row.style.background = isSelected ? 'rgba(204,34,34,.15)' : '';
+    row.querySelector('.ccu-check').textContent = isSelected ? '✓' : '';
+    row.querySelector('.ccu-check').style.color = isSelected ? '#cc2222' : 'transparent';
+  });
+}
+
 function openContactModal(id=null){
   editCId=id; const c=id?contacts.find(x=>x.id===id):null;
   $('contactModalTitle').textContent=c?'Edit Contact':'Add Contact';
   $('cName').value=c?.name||''; $('cEmail').value=c?.email||''; $('cRole').value=c?.role||'';
-  $('parseHint').innerHTML=''; $('contactModal').classList.add('open');
+  $('parseHint').innerHTML='';
+  // Init selected set from existing contact
+  _selectedContactCustomers = new Set((c?.customers||[]).map(x=>String(x)));
+  const cl=$('cCustomerList');
+  if(!customersList.length){
+    cl.innerHTML='<div style="font-size:11px;color:var(--hl-text3);padding:8px">No customers added yet.</div>';
+  } else {
+    const sorted = [...customersList].sort((a,b)=>a.name.localeCompare(b.name));
+    cl.innerHTML = sorted.map(cu=>{
+      const sel = _selectedContactCustomers.has(String(cu.id));
+      return `<div class="ccu-row" data-cid="${cu.id}" onclick="_toggleContactCustomer('${cu.id}')" style="display:flex;align-items:center;gap:10px;padding:8px 8px;border-bottom:1px solid var(--hl-border);cursor:pointer;user-select:none;${sel?'background:rgba(204,34,34,.15)':''}">
+        <span class="ccu-check" style="width:16px;height:16px;border:2px solid var(--hl-border2);border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:${sel?'#cc2222':'transparent'};flex-shrink:0;background:${sel?'rgba(204,34,34,.1)':'var(--hl-surface2)'}">${sel?'✓':''}</span>
+        <span style="font-size:12px;color:var(--hl-text)">${cu.name}</span>
+      </div>`;
+    }).join('');
+  }
+  $('contactModal').classList.add('open');
 }
 function closeContactModal(){ $('contactModal').classList.remove('open'); editCId=null; }
 function saveContact(){
@@ -1693,7 +1745,8 @@ function saveContact(){
   if(!name){ alert('Name is required.'); return; }
   if(!email||!email.includes('@')){ alert('A valid email address is required.'); return; }
   if(!nameField&&parsed?.name) $('cName').value=parsed.name;
-  const c={id:editCId||Date.now(),name,email,role:$('cRole').value.trim()};
+  const checkedCustomers = [..._selectedContactCustomers];
+  const c={id:editCId||Date.now(),name,email,role:$('cRole').value.trim(),customers:checkedCustomers};
   if(editCId){const i=contacts.findIndex(x=>x.id===editCId);contacts[i]=c;} else contacts.push(c);
   closeContactModal(); renderContacts(); pushSection('applicator'); // contacts stored in applicator file
 }
