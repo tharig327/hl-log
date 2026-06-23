@@ -886,6 +886,17 @@ if(urlParams.get('type')&&['applicator','machine','setup'].includes(urlParams.ge
     // Init
 loadCommonIssues();
 loadOpenTickets(); // 👈 ADD THIS
+
+// Load customers for autocomplete dropdowns on page load
+(async function loadCustomersForAutocomplete(){
+  try{
+    const g = await gistAPI('GET','gists/'+GIST_ID);
+    if(g.files && g.files['hl_applicator_data.json']){
+      const d = JSON.parse(g.files['hl_applicator_data.json'].content);
+      populateCustomerLists(d.customers||[]);
+    }
+  }catch(e){}
+})();
 </script>
 <script>
 if ('serviceWorker' in navigator) {
