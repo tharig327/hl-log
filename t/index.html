@@ -221,6 +221,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <input type="text" id="aName" placeholder="e.g. John Smith" autocomplete="name">
         <div class="field-err">Please enter your name</div>
       </div>
+      <div class="field" id="fa-customer">
+        <label>Customer</label>
+        <input type="text" id="aCustomer" placeholder="e.g. BraunAbility" autocomplete="off" list="aCustomerList">
+        <datalist id="aCustomerList"></datalist>
+      </div>
       <div class="row2">
         <div class="field" id="fa-apn">
           <label>Applicator # *</label>
@@ -265,6 +270,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <input type="text" id="mName" placeholder="e.g. John Smith" autocomplete="name">
         <div class="field-err">Please enter your name</div>
       </div>
+      <div class="field" id="fm-customer">
+        <label>Customer</label>
+        <input type="text" id="mCustomer" placeholder="e.g. BraunAbility" autocomplete="off" list="mCustomerList">
+        <datalist id="mCustomerList"></datalist>
+      </div>
       <div class="field" id="fm-machine">
         <label>Machine # *</label>
         <input type="text" id="mMachine" placeholder="e.g. KM-4T #2" autocomplete="off">
@@ -299,6 +309,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <label>Your Name *</label>
         <input type="text" id="sName" placeholder="e.g. John Smith" autocomplete="name">
         <div class="field-err">Please enter your name</div>
+      </div>
+      <div class="field" id="fs-customer">
+        <label>Customer</label>
+        <input type="text" id="sCustomer" placeholder="e.g. BraunAbility" autocomplete="off" list="sCustomerList">
+        <datalist id="sCustomerList"></datalist>
       </div>
       <div class="row2">
         <div class="field" id="fs-terminal">
@@ -654,6 +669,14 @@ async function gistAPI(method,path,body){
   return r.json();
 }
 
+function populateCustomerLists(customers){
+  const opts = (customers||[]).sort((a,b)=>a.name.localeCompare(b.name))
+    .map(cu=>`<option value="${cu.name}">`).join('');
+  ['aCustomerList','mCustomerList','sCustomerList'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.innerHTML=opts;
+  });
+}
+
 async function loadAllData(){
   const g=await gistAPI('GET','gists/'+GIST_ID);
   const applicator=g.files[DATA_FILE]?JSON.parse(g.files[DATA_FILE].content):{issues:[],contacts:[]};
@@ -661,6 +684,7 @@ async function loadAllData(){
   const setup=g.files[SETUP_FILE]?JSON.parse(g.files[SETUP_FILE].content):{issues:[]};
   const queues={};
   ['applicator','machine','setup'].forEach(sec=>{ const f=g.files[QUEUE_FILES[sec]]; queues[sec]=f?JSON.parse(f.content):[]; });
+  populateCustomerLists(applicator.customers||[]);
   return{applicator,machine,setup,queues};
 }
 
@@ -714,19 +738,19 @@ async function submitTicket(){
     if(type==='applicator'){
       const priority=document.getElementById('aPriority').value;
       const priorityLabel={normal:'Normal priority',high:'HIGH priority — affecting production',urgent:'URGENT — line is down'}[priority];
-      entry={id:now,apn:document.getElementById('aApn').value.trim(),press:document.getElementById('aPress').value.trim(),terminal:'',wire:'',issue:getIssueValue('a'),notes:priorityLabel+' | Submitted by: '+name+' | Ref: '+tktNum,status:'open',by:name,date:now,ticketNum:tktNum,submittedBy:name,priority,issueType:'applicator'};
+      entry={id:now,apn:document.getElementById('aApn').value.trim(),press:document.getElementById('aPress').value.trim(),terminal:'',wire:'',issue:getIssueValue('a'),customer:(document.getElementById('aCustomer')?.value.trim()||''),notes:priorityLabel+' | Submitted by: '+name+' | Ref: '+tktNum,status:'open',by:name,date:now,ticketNum:tktNum,submittedBy:name,priority,issueType:'applicator'};
       allData.applicator.issues.unshift(entry);
       await saveSection('applicator',allData.applicator);
     } else if(type==='machine'){
       const priority=document.getElementById('mPriority').value;
       const priorityLabel={normal:'Normal priority',high:'HIGH priority — affecting production',urgent:'URGENT — line is down'}[priority];
-      entry={id:now,machine:document.getElementById('mMachine').value.trim(),desc:getIssueValue('m'),result:priorityLabel+' | Submitted by: '+name,status:'open',by:name,date:now,ticketNum:tktNum,submittedBy:name,priority,issueType:'machine'};
+      entry={id:now,machine:document.getElementById('mMachine').value.trim(),desc:getIssueValue('m'),customer:(document.getElementById('mCustomer')?.value.trim()||''),result:priorityLabel+' | Submitted by: '+name,status:'open',by:name,date:now,ticketNum:tktNum,submittedBy:name,priority,issueType:'machine'};
       allData.machine.issues.unshift(entry);
       await saveSection('machine',allData.machine);
     } else {
       const priority=document.getElementById('sPriority').value;
       const priorityLabel={normal:'Normal priority',high:'HIGH priority — blocking production',urgent:'URGENT'}[priority];
-      entry={id:now,terminal:document.getElementById('sTerminal').value.trim(),awg:document.getElementById('sAwg').value.trim(),issue:getIssueValue('s'),doc:document.getElementById('sDoc').value.trim(),notes:priorityLabel+' | Submitted by: '+name,status:'open',by:name,date:now,ticketNum:tktNum,submittedBy:name,priority,issueType:'setup'};
+      entry={id:now,terminal:document.getElementById('sTerminal').value.trim(),awg:document.getElementById('sAwg').value.trim(),issue:getIssueValue('s'),customer:(document.getElementById('sCustomer')?.value.trim()||''),doc:document.getElementById('sDoc').value.trim(),notes:priorityLabel+' | Submitted by: '+name,status:'open',by:name,date:now,ticketNum:tktNum,submittedBy:name,priority,issueType:'setup'};
       allData.setup.issues.unshift(entry);
       await saveSection('setup',allData.setup);
     }
@@ -753,7 +777,7 @@ async function submitTicket(){
 function resetSubmit(){
   // Clear all fields
   ['aName','aApn','aPress','aIssue','mName','mMachine','mDesc','sName','sTerminal','sAwg','sIssue','sDoc'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
-  ['aIssueSelect','mIssueSelect','sIssueSelect'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  ['aIssueSelect','mIssueSelect','sIssueSelect','aCustomer','mCustomer','sCustomer'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   ['aIssueWrap','mIssueWrap','sIssueWrap'].forEach(id=>{ const el=document.getElementById(id); if(el) el.classList.remove('show'); });
   ['aPriority','mPriority','sPriority'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value='normal'; });
   document.getElementById('submitBtn').disabled=false;
