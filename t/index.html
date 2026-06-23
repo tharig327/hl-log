@@ -5,7 +5,104 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>H&L FloorSync — Submit a Ticket</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js">
+// ── PHOTO SERVER ─────────────────────────────────────────────────────────
+const PHOTO_SERVER = 'https://TYLER.hl.local:3002';
+let photoServerOnline = false;
+let pendingSubmitPhotos = [];
+
+async function checkPhotoServer(){
+  try{
+    const r = await fetch(PHOTO_SERVER+'/ping', {signal: AbortSignal.timeout(3000)});
+    const j = await r.json();
+    photoServerOnline = j.ok === true;
+  }catch(e){ photoServerOnline = false; }
+  const zone = document.getElementById('submitPhotoDrop');
+  const offline = document.getElementById('photoOfflineMsg');
+  if(zone) zone.style.display = photoServerOnline ? '' : 'none';
+  if(offline) offline.style.display = photoServerOnline ? 'none' : 'block';
+}
+
+async function uploadPhoto(file, ticketId){
+  const fd = new FormData();
+  fd.append('photo', file);
+  fd.append('ticketId', ticketId || 'pending');
+  const r = await fetch(PHOTO_SERVER+'/upload', { method:'POST', body:fd });
+  const j = await r.json();
+  if(!j.success) throw new Error(j.error||'Upload failed');
+  return j.filename;
+}
+
+function renderSubmitThumbs(){
+  const container = document.getElementById('submitPhotoThumbs');
+  if(!container) return;
+  container.innerHTML = '';
+  pendingSubmitPhotos.forEach((p, idx) => {
+    const div = document.createElement('div');
+    div.className = 'photo-thumb';
+    div.innerHTML = p.uploaded
+      ? `<img src="${PHOTO_SERVER+'/photo/'+p.filename}">`
+      : `<img src="${p.objectUrl}"><div class="thumb-uploading"><i class="ti ti-loader spin" style="font-size:15px;color:#fff"></i></div>`;
+    const del = document.createElement('button');
+    del.className = 'thumb-del';
+    del.innerHTML = '×';
+    del.onclick = async (e) => {
+      e.stopPropagation();
+      if(p.uploaded) try{ await fetch(PHOTO_SERVER+'/photo/'+p.filename, {method:'DELETE'}); }catch(ex){}
+      URL.revokeObjectURL(p.objectUrl);
+      pendingSubmitPhotos.splice(idx, 1);
+      renderSubmitThumbs();
+    };
+    div.appendChild(del);
+    container.appendChild(div);
+  });
+}
+
+async function handleSubmitPhotoFiles(files){
+  const ALLOWED = ['image/jpeg','image/png','image/webp','image/gif'];
+  for(const file of Array.from(files)){
+    if(!ALLOWED.includes(file.type)){ alert('Only images allowed (JPG, PNG, WEBP)'); continue; }
+    if(file.size > 10*1024*1024){ alert('File too large (max 10 MB)'); continue; }
+    const objectUrl = URL.createObjectURL(file);
+    const entry = { filename: null, objectUrl, uploaded: false };
+    pendingSubmitPhotos.push(entry);
+    renderSubmitThumbs();
+    try{
+      const filename = await uploadPhoto(file, null);
+      entry.filename = filename;
+      entry.uploaded = true;
+      renderSubmitThumbs();
+    }catch(ex){
+      alert('Upload failed: '+ex.message);
+      pendingSubmitPhotos = pendingSubmitPhotos.filter(x=>x!==entry);
+      URL.revokeObjectURL(objectUrl);
+      renderSubmitThumbs();
+    }
+  }
+}
+
+// Setup drop zone
+window.addEventListener('DOMContentLoaded', ()=>{
+  checkPhotoServer();
+  const zone = document.getElementById('submitPhotoDrop');
+  if(zone){
+    const inp = zone.querySelector('input');
+    if(inp) inp.onchange = e => handleSubmitPhotoFiles(e.target.files);
+    zone.addEventListener('dragover', e=>{ e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', ()=>zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', e=>{ e.preventDefault(); zone.classList.remove('drag-over'); handleSubmitPhotoFiles(e.dataTransfer.files); });
+  }
+});
+
+// Mini lightbox for status page
+function openMiniLightbox(src){
+  const lb = document.getElementById('miniLightbox');
+  lb.querySelector('img').src = src;
+  lb.classList.remove('hidden');
+}
+function closeMiniLightbox(){ document.getElementById('miniLightbox').classList.add('hidden'); }
+
+</script>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <meta name="theme-color" content="#cc2222">
@@ -173,6 +270,26 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   .receipt-wrap{box-shadow:none;border-radius:0;max-height:none;overflow:visible;width:57mm;padding:3mm}
   @page{size:57mm auto;margin:0}
 }
+
+/* ── PHOTO ATTACHMENT ── */
+.photo-drop-zone{border:2px dashed var(--hl-border2);border-radius:4px;padding:14px;text-align:center;cursor:pointer;transition:border-color .15s;position:relative;background:var(--hl-bg);margin-top:8px}
+.photo-drop-zone:hover,.photo-drop-zone.drag-over{border-color:var(--hl-red)}
+.photo-drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.photo-drop-zone .dz-label{font-size:12px;color:var(--hl-text3);pointer-events:none}
+.photo-drop-zone .dz-label i{display:block;font-size:20px;margin-bottom:3px;color:var(--hl-text3)}
+.photo-thumbs{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.photo-thumb{position:relative;width:68px;height:68px;border-radius:3px;overflow:hidden;border:1px solid var(--hl-border2);background:var(--hl-surface2);flex-shrink:0}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.photo-thumb .thumb-del{position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.7);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px}
+.photo-thumb .thumb-uploading{position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center}
+/* Status page photo strip */
+.status-photos{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.status-photos img{width:80px;height:80px;object-fit:cover;border-radius:4px;cursor:pointer;border:1px solid var(--hl-border2)}
+/* Mini lightbox */
+.mini-lightbox{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1rem}
+.mini-lightbox.hidden{display:none}
+.mini-lightbox img{max-width:90vw;max-height:80vh;object-fit:contain;border-radius:4px}
+.mini-lb-close{margin-top:14px;height:36px;padding:0 18px;font-size:13px;border-radius:4px;cursor:pointer;border:1px solid var(--hl-border2);background:var(--hl-surface2);color:var(--hl-text);display:flex;align-items:center;gap:6px}
 </style>
 </head>
 <body>
@@ -354,6 +471,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       </div>
     </div>
 
+    <div class="field" style="margin-top:4px">
+      <label>Photos <span style="font-weight:400;color:var(--hl-text3)">(optional)</span></label>
+      <div id="photoOfflineMsg" style="font-size:11px;color:var(--hl-text3);display:none">Photo server offline — photos unavailable.</div>
+      <div id="submitPhotoDrop" class="photo-drop-zone" style="display:none">
+        <input type="file" accept="image/*" multiple>
+        <div class="dz-label"><i class="ti ti-camera-plus"></i>Click or drag photos to attach</div>
+      </div>
+      <div class="photo-thumbs" id="submitPhotoThumbs"></div>
+    </div>
     <button class="btn btn-red" id="submitBtn" onclick="submitTicket()"><i class="ti ti-send"></i> Submit Ticket</button>
   </div>
 
@@ -738,19 +864,21 @@ async function submitTicket(){
     if(type==='applicator'){
       const priority=document.getElementById('aPriority').value;
       const priorityLabel={normal:'Normal priority',high:'HIGH priority — affecting production',urgent:'URGENT — line is down'}[priority];
-      entry={id:now,apn:document.getElementById('aApn').value.trim(),press:document.getElementById('aPress').value.trim(),terminal:'',wire:'',issue:getIssueValue('a'),customer:(document.getElementById('aCustomer')?.value.trim()||''),notes:priorityLabel+' | Submitted by: '+name+' | Ref: '+tktNum,status:'open',by:name,date:now,ticketNum:tktNum,submittedBy:name,priority,issueType:'applicator'};
+      // Rename pending photos to real ticket ID
+      const uploadedPhotos = pendingSubmitPhotos.filter(p=>p.uploaded).map(p=>p.filename);
+      entry={id:now,apn:document.getElementById('aApn').value.trim(),press:document.getElementById('aPress').value.trim(),terminal:'',wire:'',issue:getIssueValue('a'),customer:(document.getElementById('aCustomer')?.value.trim()||''),notes:priorityLabel+' | Submitted by: '+name+' | Ref: '+tktNum,status:'open',by:name,date:now,ticketNum:tktNum,submittedBy:name,priority,issueType:'applicator',...(uploadedPhotos.length&&{photos:uploadedPhotos})};
       allData.applicator.issues.unshift(entry);
       await saveSection('applicator',allData.applicator);
     } else if(type==='machine'){
       const priority=document.getElementById('mPriority').value;
       const priorityLabel={normal:'Normal priority',high:'HIGH priority — affecting production',urgent:'URGENT — line is down'}[priority];
-      entry={id:now,machine:document.getElementById('mMachine').value.trim(),desc:getIssueValue('m'),customer:(document.getElementById('mCustomer')?.value.trim()||''),result:priorityLabel+' | Submitted by: '+name,status:'open',by:name,date:now,ticketNum:tktNum,submittedBy:name,priority,issueType:'machine'};
+      entry={id:now,machine:document.getElementById('mMachine').value.trim(),desc:getIssueValue('m'),customer:(document.getElementById('mCustomer')?.value.trim()||''),result:priorityLabel+' | Submitted by: '+name,status:'open',by:name,date:now,ticketNum:tktNum,submittedBy:name,priority,issueType:'machine',...(uploadedPhotos.length&&{photos:uploadedPhotos})};
       allData.machine.issues.unshift(entry);
       await saveSection('machine',allData.machine);
     } else {
       const priority=document.getElementById('sPriority').value;
       const priorityLabel={normal:'Normal priority',high:'HIGH priority — blocking production',urgent:'URGENT'}[priority];
-      entry={id:now,terminal:document.getElementById('sTerminal').value.trim(),awg:document.getElementById('sAwg').value.trim(),issue:getIssueValue('s'),customer:(document.getElementById('sCustomer')?.value.trim()||''),doc:document.getElementById('sDoc').value.trim(),notes:priorityLabel+' | Submitted by: '+name,status:'open',by:name,date:now,ticketNum:tktNum,submittedBy:name,priority,issueType:'setup'};
+      entry={id:now,terminal:document.getElementById('sTerminal').value.trim(),awg:document.getElementById('sAwg').value.trim(),issue:getIssueValue('s'),customer:(document.getElementById('sCustomer')?.value.trim()||''),doc:document.getElementById('sDoc').value.trim(),notes:priorityLabel+' | Submitted by: '+name,status:'open',by:name,date:now,ticketNum:tktNum,submittedBy:name,priority,issueType:'setup',...(uploadedPhotos.length&&{photos:uploadedPhotos})};
       allData.setup.issues.unshift(entry);
       await saveSection('setup',allData.setup);
     }
@@ -761,6 +889,7 @@ async function submitTicket(){
     localStorage.setItem('hl_my_tickets',JSON.stringify(myTickets.slice(0,20)));
 
     // Show success
+    pendingSubmitPhotos=[]; renderSubmitThumbs();
     document.getElementById('successTktNum').textContent=tktNum;
     lastSubmittedEntry = {...entry, type, ticketNum:tktNum};
     const typeInfo={applicator:{label:'Applicator Issue',color:'#e07050',bg:'rgba(180,60,20,.15)'},machine:{label:'Machine Issue',color:'#d4a030',bg:'rgba(160,120,20,.15)'},setup:{label:'Setup Sheet Issue',color:'#5090d0',bg:'rgba(20,80,160,.15)'}}[type];
@@ -860,7 +989,8 @@ if(!/^(TKT-\d{4}|S-\d+)$/.test(tkt)){ result.innerHTML='<div class="err-box">Ple
       <div style="font-size:12px;color:var(--hl-text2);margin-top:10px;padding:10px 12px;background:var(--hl-surface2);border-radius:4px;border:1px solid var(--hl-border);line-height:1.5">
         <i class="ti ti-info-circle" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>${statusMsg}
       </div>
-      <button onclick="printStatusReceipt()" style="width:100%;margin-top:10px;height:40px;background:rgba(74,58,122,.2);border:1px solid #4a3a7a;color:#a080d0;border-radius:4px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;gap:6px"><i class="ti ti-receipt" style="font-size:14px"></i> Print Receipt</button>`;
+      <button onclick="printStatusReceipt()" style="width:100%;margin-top:10px;height:40px;background:rgba(74,58,122,.2);border:1px solid #4a3a7a;color:#a080d0;border-radius:4px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;gap:6px"><i class="ti ti-receipt" style="font-size:14px"></i> Print Receipt</button>
+      ${(entry.photos&&entry.photos.length) ? '<div style="margin-top:10px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--hl-text3);margin-bottom:6px">Photos</div><div class="status-photos">'+entry.photos.map(f=>'<img src="'+PHOTO_SERVER+'/photo/'+f+'" onclick="openMiniLightbox(this.src)" alt="'+f+'">').join('')+'</div></div>' : ''}`;
   }catch(e){
     result.innerHTML=`<div class="err-box">Could not load ticket data — check your connection.<br><span style="font-size:11px;opacity:.8">${e.message}</span></div>`;
   }
@@ -1038,5 +1168,11 @@ function printTicketReceipt(){
   </div>
 </div>
 
+
+<!-- MINI LIGHTBOX -->
+<div class="mini-lightbox hidden" id="miniLightbox" onclick="closeMiniLightbox()">
+  <img src="" alt="">
+  <button class="mini-lb-close" onclick="closeMiniLightbox()"><i class="ti ti-x"></i> Close</button>
+</div>
 </body>
 </html>

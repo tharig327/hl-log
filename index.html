@@ -264,6 +264,30 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   text-transform:uppercase;
   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 }
+
+/* ── PHOTO ATTACHMENT ── */
+.photo-server-offline{display:none}
+.photo-drop-zone{border:2px dashed var(--hl-border2);border-radius:4px;padding:16px;text-align:center;cursor:pointer;transition:border-color .15s;position:relative;background:var(--hl-bg)}
+.photo-drop-zone:hover,.photo-drop-zone.drag-over{border-color:var(--hl-red)}
+.photo-drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.photo-drop-zone .dz-label{font-size:12px;color:var(--hl-text3);pointer-events:none}
+.photo-drop-zone .dz-label i{display:block;font-size:22px;margin-bottom:4px;color:var(--hl-text3)}
+.photo-thumbs{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.photo-thumb{position:relative;width:72px;height:72px;border-radius:3px;overflow:hidden;border:1px solid var(--hl-border2);background:var(--hl-surface2);flex-shrink:0}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.photo-thumb .thumb-del{position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.7);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px}
+.photo-thumb .thumb-uploading{position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center}
+.photo-count-badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;background:rgba(74,58,122,.2);border:1px solid #4a3a7a;color:#a080d0;border-radius:3px;padding:2px 6px;margin-left:4px;white-space:nowrap}
+/* Lightbox */
+.photo-lightbox{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1rem}
+.photo-lightbox.hidden{display:none}
+.photo-lightbox img{max-width:90vw;max-height:75vh;object-fit:contain;border-radius:4px}
+.photo-lightbox-strip{display:flex;gap:8px;margin-top:12px;overflow-x:auto;max-width:90vw;padding-bottom:4px}
+.photo-lightbox-strip img{width:60px;height:60px;object-fit:cover;border-radius:3px;cursor:pointer;border:2px solid transparent;flex-shrink:0}
+.photo-lightbox-strip img.active{border-color:var(--hl-red)}
+.photo-lightbox-actions{display:flex;gap:8px;margin-top:10px}
+.photo-lightbox-btn{height:34px;padding:0 14px;font-size:12px;border-radius:4px;cursor:pointer;border:1px solid var(--hl-border2);background:var(--hl-surface2);color:var(--hl-text);display:flex;align-items:center;gap:5px}
+.photo-lightbox-btn-del{background:rgba(58,16,16,.4);border-color:#552020;color:#e05555}
 </style>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </head>
@@ -572,6 +596,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <div style="font-size:10px;color:var(--hl-text3);margin-top:1px">Log this entry without triggering an email notification</div>
       </div>
     </div>
+    <div class="field" id="photoSection-applicator">
+      <label>Photos <span style="font-weight:400;color:var(--hl-text3)">(optional)</span></label>
+      <div class="photo-server-offline" style="font-size:11px;color:var(--hl-text3);padding:6px 0">Photo server offline — start photo-server.js to enable attachments.</div>
+      <div id="photoDrop-applicator" class="photo-drop-zone">
+        <input type="file" accept="image/*" multiple>
+        <div class="dz-label"><i class="ti ti-camera-plus"></i>Click or drag photos here</div>
+      </div>
+      <div class="photo-thumbs-wrap"><div class="photo-thumbs" id="photoThumbs-applicator"></div></div>
+    </div>
     <div class="modal-actions"><button class="btn" onclick="closeModal('applicator')">Cancel</button><button class="btn btn-red" onclick="saveEntry('applicator')">Save Entry</button></div>
   </div>
 </div>
@@ -604,6 +637,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <div style="font-size:12px;font-weight:500;color:var(--hl-text)">Suppress notification</div>
         <div style="font-size:10px;color:var(--hl-text3);margin-top:1px">Log this entry without triggering an email notification</div>
       </div>
+    </div>
+    <div class="field" id="photoSection-machine">
+      <label>Photos <span style="font-weight:400;color:var(--hl-text3)">(optional)</span></label>
+      <div class="photo-server-offline" style="font-size:11px;color:var(--hl-text3);padding:6px 0">Photo server offline — start photo-server.js to enable attachments.</div>
+      <div id="photoDrop-machine" class="photo-drop-zone">
+        <input type="file" accept="image/*" multiple>
+        <div class="dz-label"><i class="ti ti-camera-plus"></i>Click or drag photos here</div>
+      </div>
+      <div class="photo-thumbs-wrap"><div class="photo-thumbs" id="photoThumbs-machine"></div></div>
     </div>
     <div class="modal-actions"><button class="btn" onclick="closeModal('machine')">Cancel</button><button class="btn btn-red" onclick="saveEntry('machine')">Save Entry</button></div>
   </div>
@@ -656,6 +698,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <div style="font-size:12px;font-weight:500;color:var(--hl-text)">Suppress notification</div>
         <div style="font-size:10px;color:var(--hl-text3);margin-top:1px">Log this entry without triggering an email notification</div>
       </div>
+    </div>
+    <div class="field" id="photoSection-setup">
+      <label>Photos <span style="font-weight:400;color:var(--hl-text3)">(optional)</span></label>
+      <div class="photo-server-offline" style="font-size:11px;color:var(--hl-text3);padding:6px 0">Photo server offline — start photo-server.js to enable attachments.</div>
+      <div id="photoDrop-setup" class="photo-drop-zone">
+        <input type="file" accept="image/*" multiple>
+        <div class="dz-label"><i class="ti ti-camera-plus"></i>Click or drag photos here</div>
+      </div>
+      <div class="photo-thumbs-wrap"><div class="photo-thumbs" id="photoThumbs-setup"></div></div>
     </div>
     <div class="modal-actions"><button class="btn" onclick="closeModal('setup')">Cancel</button><button class="btn btn-red" onclick="saveEntry('setup')">Save Entry</button></div>
   </div>
@@ -1043,6 +1094,7 @@ function doUnlock(userName){ if(window._splashReady) window._splashReady();
   showScreen('app'); resetInactivity();
   ['mousemove','keydown','click','touchstart'].forEach(e=>document.addEventListener(e,resetInactivity,{passive:true}));
   renderAll(); setSyncStatus('ok'); startPolling();
+  setupPhotoDrop('applicator'); setupPhotoDrop('machine'); setupPhotoDrop('setup');
   if(userName){
     toast('Welcome, '+userName+'!','#50a870');
     const badge=$('loggedInBadge'), name=$('loggedInName');
@@ -1232,6 +1284,7 @@ function actionBtns(e,sec,hist=false){
     <button class="btn-sm btn-del" onclick="delEntry('${sec}',${e.id})"><i class="ti ti-trash"></i> Delete</button>
     ${e.ticketNum?`<button class="btn-sm" style="border-color:#1a5a1a;color:#50a870;background:rgba(26,90,26,.2)" onclick="shareTicket('${sec}',${e.id})"><i class="ti ti-link"></i> Link</button>`:''}
     ${!hist?`<button class="btn-sm" style="border-color:#4a3a7a;color:#a080d0;background:rgba(74,58,122,.2)" onclick="showReceipt('${sec}',${e.id})"><i class="ti ti-receipt"></i> Receipt</button>`:''}
+    ${e.photos&&e.photos.length?`<button class="btn-sm photo-count-badge" onclick="openLightbox('${sec}',${e.id})"><i class="ti ti-photo" style="font-size:11px"></i> ${e.photos.length}</button>`:''}
   </div>`;
 }
 
@@ -1524,6 +1577,19 @@ $('sCustomer').value = e?.customer || '';
   // Reset suppress checkbox
   const chkMap = {applicator:'fSuppress',machine:'mSuppress',setup:'sSuppress'};
   const chk = $(chkMap[sec]); if(chk) chk.checked = false;
+  // Reset pending photos
+  pendingPhotos[sec] = [];
+  // If editing an existing entry, show existing photos as saved (not pending)
+  const existingPhotos = e?.photos || [];
+  if(existingPhotos.length){
+    const thumbsEl = $('photoThumbs-'+sec);
+    if(thumbsEl){
+      thumbsEl.innerHTML = existingPhotos.map((f,idx)=>`<div class="photo-thumb" id="ethumb_${idx}"><img src="${PHOTO_SERVER+'/photo/'+f}" alt="${f}"><button class="thumb-del" onclick="removeExistingPhoto('${sec}',${e.id},'${f}',${idx})">×</button></div>`).join('');
+    }
+  } else {
+    const thumbsEl = $('photoThumbs-'+sec);
+    if(thumbsEl) thumbsEl.innerHTML = '';
+  }
   $('modal-'+sec).classList.add('open');
 }
 function closeModal(sec){ $('modal-'+sec).classList.remove('open'); editId=null; editSection=null; }
@@ -1542,11 +1608,15 @@ async function saveEntry(sec){
   if(sec==='applicator'){
     const apn=$('fApn').value.trim(), issue=$('fIssue').value.trim();
     if(!apn||!issue){ alert('Applicator # and issue description are required.'); return; }
-    entry={id:editId||Date.now(),apn,press:$('fPress').value.trim(),terminal:$('fTerminal').value.trim(),wire:$('fWire').value.trim(),customer:$('fCustomer').value.trim(),issue,notes:$('fNotes').value.trim(),status:$('fStatus').value,by:$('fBy').value.trim(),date:existing?.date||Date.now(),...(finalTkt&&{ticketNum:finalTkt}),...(existing?.submittedBy&&{submittedBy:existing.submittedBy}),...(existing?.priority&&{priority:existing.priority})};
+    const newPhotos_a = pendingPhotos['applicator'].filter(p=>p.uploaded).map(p=>p.filename);
+    const allPhotos_a = [...(existing?.photos||[]), ...newPhotos_a];
+    entry={id:editId||Date.now(),apn,press:$('fPress').value.trim(),terminal:$('fTerminal').value.trim(),wire:$('fWire').value.trim(),customer:$('fCustomer').value.trim(),issue,notes:$('fNotes').value.trim(),status:$('fStatus').value,by:$('fBy').value.trim(),date:existing?.date||Date.now(),...(finalTkt&&{ticketNum:finalTkt}),...(existing?.submittedBy&&{submittedBy:existing.submittedBy}),...(existing?.priority&&{priority:existing.priority}),...(allPhotos_a.length&&{photos:allPhotos_a})};
   } else if(sec==='machine'){
     const machine=$('mMachine').value.trim(), desc=$('mDesc').value.trim();
     if(!machine||!desc){ alert('Machine # and description are required.'); return; }
-    entry={id:editId||Date.now(),machine,desc,result:$('mResult').value.trim(),status:$('mStatus').value,by:$('mBy').value.trim(),customer:$('mCustomer').value.trim(),date:existing?.date||Date.now(),...(finalTkt&&{ticketNum:finalTkt})};
+    const newPhotos_m = pendingPhotos['machine'].filter(p=>p.uploaded).map(p=>p.filename);
+    const allPhotos_m = [...(existing?.photos||[]), ...newPhotos_m];
+    entry={id:editId||Date.now(),machine,desc,result:$('mResult').value.trim(),status:$('mStatus').value,by:$('mBy').value.trim(),customer:$('mCustomer').value.trim(),date:existing?.date||Date.now(),...(finalTkt&&{ticketNum:finalTkt}),...(allPhotos_m.length&&{photos:allPhotos_m})};
   } else {
     const terminal=$('sTerminal').value.trim(), issue=$('sIssue').value.trim();
     if(!terminal||!issue){ alert('Terminal # and issue description are required.'); return; }
@@ -1569,8 +1639,10 @@ await pushCustomers();
 
 }
 
+    const newPhotos_s = pendingPhotos['setup'].filter(p=>p.uploaded).map(p=>p.filename);
+    const allPhotos_s = [...(existing?.photos||[]), ...newPhotos_s];
 entry={id:editId||Date.now(),
-  customer: customerVal,terminal,awg:$('sAwg').value.trim(),issue,doc:$('sDoc').value.trim(),notes:$('sNotes').value.trim(),status:$('sStatus').value,by:$('sBy').value.trim(),date:existing?.date||Date.now(),...(finalTkt&&{ticketNum:finalTkt})};
+  customer: customerVal,terminal,awg:$('sAwg').value.trim(),issue,doc:$('sDoc').value.trim(),notes:$('sNotes').value.trim(),status:$('sStatus').value,by:$('sBy').value.trim(),date:existing?.date||Date.now(),...(finalTkt&&{ticketNum:finalTkt}),...(allPhotos_s.length&&{photos:allPhotos_s})};
   }
   const byVal={applicator:$('fBy'),machine:$('mBy'),setup:$('sBy')}[sec]?.value.trim(); if(byVal) lsSet('hl_user_name',byVal);
   if(editId){const i=state[sec].entries.findIndex(e=>e.id===editId);state[sec].entries[i]=entry;} else state[sec].entries.unshift(entry);
@@ -2000,6 +2072,162 @@ async function pushCustomers(){
 }
 </script>
 <script>
+
+
+// ── PHOTO SERVER ─────────────────────────────────────────────────────────
+const PHOTO_SERVER = 'https://TYLER.hl.local:3002';
+let photoServerOnline = false;
+
+async function checkPhotoServer(){
+  try{
+    const r = await fetch(PHOTO_SERVER+'/ping', {signal: AbortSignal.timeout(3000)});
+    const j = await r.json();
+    photoServerOnline = j.ok === true;
+  }catch(e){ photoServerOnline = false; }
+  // Show/hide upload zones
+  document.querySelectorAll('.photo-server-offline').forEach(el=>{
+    el.style.display = photoServerOnline ? 'none' : 'block';
+  });
+  document.querySelectorAll('.photo-drop-zone').forEach(el=>{
+    el.style.display = photoServerOnline ? '' : 'none';
+  });
+  document.querySelectorAll('.photo-thumbs-wrap').forEach(el=>{
+    el.style.display = photoServerOnline ? '' : 'none';
+  });
+}
+
+// Per-modal pending photos: { filename, objectUrl, uploaded }
+const pendingPhotos = { applicator: [], machine: [], setup: [] };
+
+async function uploadPhoto(file, ticketId, sec){
+  const fd = new FormData();
+  fd.append('photo', file);
+  fd.append('ticketId', ticketId || 'pending');
+  const r = await fetch(PHOTO_SERVER+'/upload', { method:'POST', body:fd });
+  const j = await r.json();
+  if(!j.success) throw new Error(j.error||'Upload failed');
+  return j.filename;
+}
+
+function renderPendingThumbs(sec){
+  const container = document.getElementById('photoThumbs-'+sec);
+  if(!container) return;
+  container.innerHTML = '';
+  pendingPhotos[sec].forEach((p, idx) => {
+    const div = document.createElement('div');
+    div.className = 'photo-thumb';
+    div.innerHTML = p.uploaded
+      ? `<img src="${PHOTO_SERVER+'/photo/'+p.filename}" onerror="this.src='${p.objectUrl}'">`
+      : `<img src="${p.objectUrl}"><div class="thumb-uploading"><i class="ti ti-loader spin" style="font-size:16px;color:#fff"></i></div>`;
+    const del = document.createElement('button');
+    del.className = 'thumb-del';
+    del.innerHTML = '×';
+    del.onclick = async (e) => {
+      e.stopPropagation();
+      if(p.uploaded){
+        try{ await fetch(PHOTO_SERVER+'/photo/'+p.filename, {method:'DELETE'}); }catch(ex){}
+      }
+      URL.revokeObjectURL(p.objectUrl);
+      pendingPhotos[sec].splice(idx, 1);
+      renderPendingThumbs(sec);
+    };
+    div.appendChild(del);
+    container.appendChild(div);
+  });
+}
+
+async function handlePhotoFiles(files, sec, ticketId){
+  const ALLOWED = ['image/jpeg','image/png','image/webp','image/gif'];
+  for(const file of Array.from(files)){
+    if(!ALLOWED.includes(file.type)){ toast('Only images allowed (JPG, PNG, WEBP)', '#cc4444'); continue; }
+    if(file.size > 10*1024*1024){ toast('File too large (max 10 MB)', '#cc4444'); continue; }
+    const objectUrl = URL.createObjectURL(file);
+    const entry = { filename: null, objectUrl, uploaded: false };
+    pendingPhotos[sec].push(entry);
+    renderPendingThumbs(sec);
+    try{
+      const filename = await uploadPhoto(file, ticketId || 'pending', sec);
+      entry.filename = filename;
+      entry.uploaded = true;
+      renderPendingThumbs(sec);
+    }catch(ex){
+      toast('Upload failed: '+ex.message, '#cc4444');
+      pendingPhotos[sec] = pendingPhotos[sec].filter(x=>x!==entry);
+      URL.revokeObjectURL(objectUrl);
+      renderPendingThumbs(sec);
+    }
+  }
+}
+
+function setupPhotoDrop(sec){
+  const zone = document.getElementById('photoDrop-'+sec);
+  if(!zone) return;
+  const inp  = zone.querySelector('input[type=file]');
+  if(inp) inp.onchange = e => handlePhotoFiles(e.target.files, sec, null);
+  zone.addEventListener('dragover', e=>{ e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', ()=>zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e=>{ e.preventDefault(); zone.classList.remove('drag-over'); handlePhotoFiles(e.dataTransfer.files, sec, null); });
+}
+
+// ── LIGHTBOX ─────────────────────────────────────────────────────────────
+let lbPhotos = [], lbIdx = 0, lbEntryId = null, lbSec = null;
+
+function openLightbox(sec, entryId){
+  const entry = state[sec].entries.find(e=>e.id===entryId);
+  if(!entry||!entry.photos||!entry.photos.length){ toast('No photos on this entry','#cc4444'); return; }
+  lbPhotos = entry.photos; lbIdx = 0; lbEntryId = entryId; lbSec = sec;
+  renderLightbox();
+  document.getElementById('photoLightbox').classList.remove('hidden');
+}
+
+function renderLightbox(){
+  const lb = document.getElementById('photoLightbox');
+  const main = lb.querySelector('.lb-main-img');
+  const strip = lb.querySelector('.photo-lightbox-strip');
+  const filename = lbPhotos[lbIdx];
+  main.src = PHOTO_SERVER+'/photo/'+filename;
+  main.alt = filename;
+  strip.innerHTML = lbPhotos.map((f,i)=>`<img src="${PHOTO_SERVER+'/photo/'+f}" class="${i===lbIdx?'active':''}" onclick="lbGoto(${i})">`).join('');
+  lb.querySelector('.lb-del-btn').style.display = 'flex';
+}
+
+function lbGoto(i){ lbIdx=i; renderLightbox(); }
+
+async function lbDeleteCurrent(){
+  if(!confirm('Delete this photo?')) return;
+  const filename = lbPhotos[lbIdx];
+  try{ await fetch(PHOTO_SERVER+'/photo/'+filename, {method:'DELETE'}); }catch(ex){}
+  // Remove from entry
+  const entry = state[lbSec].entries.find(e=>e.id===lbEntryId);
+  if(entry){ entry.photos = entry.photos.filter(f=>f!==filename); }
+  lbPhotos = lbPhotos.filter(f=>f!==filename);
+  if(!lbPhotos.length){ closeLightbox(); pushSection(lbSec); renderSection(lbSec); return; }
+  lbIdx = Math.min(lbIdx, lbPhotos.length-1);
+  renderLightbox();
+  pushSection(lbSec); renderSection(lbSec);
+}
+
+function closeLightbox(){ document.getElementById('photoLightbox').classList.add('hidden'); lbPhotos=[]; lbEntryId=null; lbSec=null; }
+
+// Check server on load
+checkPhotoServer();
+
+
+function removeExistingPhoto(sec, entryId, filename, idx){
+  const entry = state[sec].entries.find(e=>e.id===entryId);
+  if(!entry) return;
+  if(!confirm('Remove this photo from the entry?')) return;
+  // Remove from server
+  fetch(PHOTO_SERVER+'/photo/'+filename, {method:'DELETE'}).catch(()=>{});
+  // Remove from entry
+  entry.photos = (entry.photos||[]).filter(f=>f!==filename);
+  // Remove from thumb UI
+  const th = document.getElementById('ethumb_'+idx);
+  if(th) th.remove();
+  // If being saved later, entry.photos is already updated in state
+  renderSection(sec);
+}
+
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
     navigator.serviceWorker.register('sw.js').then(r=>console.log('SW:',r.scope)).catch(e=>console.log('SW fail:',e));
@@ -2193,5 +2421,15 @@ async function deleteCustomer(id){
 }
 
 </script>
+
+<!-- PHOTO LIGHTBOX -->
+<div class="photo-lightbox hidden" id="photoLightbox">
+  <img class="lb-main-img" src="" alt="" style="cursor:zoom-in" onclick="">
+  <div class="photo-lightbox-strip"></div>
+  <div class="photo-lightbox-actions">
+    <button class="photo-lightbox-btn" onclick="closeLightbox()"><i class="ti ti-x"></i> Close</button>
+    <button class="photo-lightbox-btn photo-lightbox-btn-del lb-del-btn" onclick="lbDeleteCurrent()" style="display:none"><i class="ti ti-trash"></i> Delete Photo</button>
+  </div>
+</div>
 </body>
 </html>
