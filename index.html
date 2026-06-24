@@ -1092,11 +1092,13 @@ function resetInactivity(){ clearTimeout(inactivityTimer); inactivityTimer=setTi
 function setupPhotoDrop(sec){
   const zone = document.getElementById('photoDrop-'+sec);
   if(!zone) return;
-  const inp  = zone.querySelector('input[type=file]');
-  if(inp) inp.onchange = e => handlePhotoFiles(e.target.files, sec, null);
+  const tktFieldId = {applicator:'fTicket', machine:'mTicket', setup:'sTicket'}[sec];
+  const getTicketId = () => { const val = $(tktFieldId)?.value?.trim(); return val ? 'TKT-'+val : null; };
+  const inp = zone.querySelector('input[type=file]');
+  if(inp) inp.onchange = e => handlePhotoFiles(e.target.files, sec, getTicketId());
   zone.addEventListener('dragover', e=>{ e.preventDefault(); zone.classList.add('drag-over'); });
   zone.addEventListener('dragleave', ()=>zone.classList.remove('drag-over'));
-  zone.addEventListener('drop', e=>{ e.preventDefault(); zone.classList.remove('drag-over'); handlePhotoFiles(e.dataTransfer.files, sec, null); });
+  zone.addEventListener('drop', e=>{ e.preventDefault(); zone.classList.remove('drag-over'); handlePhotoFiles(e.dataTransfer.files, sec, getTicketId()); });
 }
 
 function doUnlock(userName){ if(window._splashReady) window._splashReady();

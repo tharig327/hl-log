@@ -872,6 +872,23 @@ async function submitTicket(){
   const tktNum=makeTktNum();
   const now=Date.now();
 
+  // Rename any pending photos to use the real ticket number
+  if(PHOTO_SERVER && pendingSubmitPhotos.length){
+    for(const p of pendingSubmitPhotos){
+      if(!p.uploaded || !p.filename) continue;
+      try{
+        const newFilename = p.filename.replace(/^[^_]+/, tktNum.replace('TKT-','TKT-'));
+        const r = await fetch(PHOTO_SERVER+'/rename', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json','ngrok-skip-browser-warning':'true'},
+          body: JSON.stringify({oldName: p.filename, newName: newFilename})
+        });
+        const j = await r.json();
+        if(j.success) p.filename = j.newName;
+      }catch(ex){ /* rename failed — keep original filename */ }
+    }
+  }
+
   try{
     const allData=await loadAllData();
     let entry={};
