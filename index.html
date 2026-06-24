@@ -2098,30 +2098,19 @@ async function pushCustomers(){
 
 
 // ── PHOTO SERVER ─────────────────────────────────────────────────────────
-let PHOTO_SERVER = null;
+let PHOTO_SERVER = 'https://schedule-palm-tasting.ngrok-free.dev';
 let photoServerOnline = false;
 
 async function checkPhotoServer(){
+  PHOTO_SERVER = 'https://schedule-palm-tasting.ngrok-free.dev';
   try{
-    // Read the current ngrok URL from the Gist
-    const gid = await ensureGist();
-    const r = await fetch('https://api.github.com/gists/'+gid, {
-      headers:{'Authorization':'token '+getToken(),'Accept':'application/vnd.github.v3+json'}
-    });
-    const g = await r.json();
-    const f = g.files && g.files['hl_photo_server.json'];
-    if (!f) throw new Error('No photo server URL in Gist');
-    const data = JSON.parse(f.content);
-    if (!data.url) throw new Error('Empty URL in Gist');
-    PHOTO_SERVER = data.url;
-    // Now ping it
     const pr = await fetch(PHOTO_SERVER+'/ping', {
       signal: AbortSignal.timeout(5000),
       headers: {'ngrok-skip-browser-warning': 'true'}
     });
     const pj = await pr.json();
     photoServerOnline = pj.ok === true;
-  }catch(e){ photoServerOnline = false; console.warn('Photo server check failed:', e.message); }
+  }catch(e){ photoServerOnline = false; console.warn('Photo server offline:', e.message); }
   // Show/hide upload zones
   document.querySelectorAll('.photo-server-offline').forEach(el=>{
     el.style.display = photoServerOnline ? 'none' : 'block';
