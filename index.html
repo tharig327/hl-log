@@ -1094,16 +1094,16 @@ function setupPhotoDrop(sec){
   if(!zone) return;
   const tktFieldId  = {applicator:'fTicket',  machine:'mTicket',  setup:'sTicket'}[sec];
   const nameFieldId = {applicator:'fApn',      machine:'mMachine', setup:'sTerminal'}[sec];
+  // Called at upload time so it reads whatever is in the fields right now
   const getTicketId = () => {
-    // Prefer ticket number field
-    const tkt = $(tktFieldId)?.value?.trim();
+    const tkt  = $(tktFieldId)?.value?.trim();
     if(tkt) return 'TKT-'+tkt;
-    // Fall back to the primary identifier (APN, machine name, terminal)
     const name = $(nameFieldId)?.value?.trim();
     if(name) return name.replace(/[^a-zA-Z0-9_-]/g,'_');
-    return null;
+    return 'unknown';
   };
   const inp = zone.querySelector('input[type=file]');
+  // Use arrow functions so getTicketId() is called fresh on each interaction
   if(inp) inp.onchange = e => handlePhotoFiles(e.target.files, sec, getTicketId());
   zone.addEventListener('dragover', e=>{ e.preventDefault(); zone.classList.add('drag-over'); });
   zone.addEventListener('dragleave', ()=>zone.classList.remove('drag-over'));
