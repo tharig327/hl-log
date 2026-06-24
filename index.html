@@ -2077,15 +2077,30 @@ async function pushCustomers(){
 
 
 // ── PHOTO SERVER ─────────────────────────────────────────────────────────
-const PHOTO_SERVER = 'https://10.0.1.72:3002';
+let PHOTO_SERVER = null;
 let photoServerOnline = false;
 
 async function checkPhotoServer(){
   try{
-    const r = await fetch(PHOTO_SERVER+'/ping', {signal: AbortSignal.timeout(3000)});
-    const j = await r.json();
-    photoServerOnline = j.ok === true;
-  }catch(e){ photoServerOnline = false; }
+    // Read the current ngrok URL from the Gist
+    const gid = await ensureGist();
+    const r = await fetch('https://api.github.com/gists/'+gid, {
+      headers:{'Authorization':'token '+getToken(),'Accept':'application/vnd.github.v3+json'}
+    });
+    const g = await r.json();
+    const f = g.files && g.files['hl_photo_server.json'];
+    if (!f) throw new Error('No photo server URL in Gist');
+    const data = JSON.parse(f.content);
+    if (!data.url) throw new Error('Empty URL in Gist');
+    PHOTO_SERVER = data.url;
+    // Now ping it
+    const pr = await fetch(PHOTO_SERVER+'/ping', {
+      signal: AbortSignal.timeout(5000),
+      headers: {'ngrok-skip-browser-warning': 'true'}
+    });
+    const pj = await pr.json();
+    photoServerOnline = pj.ok === true;
+  }catch(e){ photoServerOnline = false; console.warn('Photo server check failed:', e.message); }
   // Show/hide upload zones
   document.querySelectorAll('.photo-server-offline').forEach(el=>{
     el.style.display = photoServerOnline ? 'none' : 'block';
@@ -2105,7 +2120,7 @@ async function uploadPhoto(file, ticketId, sec){
   const fd = new FormData();
   fd.append('photo', file);
   fd.append('ticketId', ticketId || 'pending');
-  const r = await fetch(PHOTO_SERVER+'/upload', { method:'POST', body:fd });
+  const r = await fetch(PHOTO_SERVER+'/upload', { method:'POST', body:fd, headers:{'ngrok-skip-browser-warning':'true'} });
   const j = await r.json();
   if(!j.success) throw new Error(j.error||'Upload failed');
   return j.filename;
@@ -2127,7 +2142,7 @@ function renderPendingThumbs(sec){
     del.onclick = async (e) => {
       e.stopPropagation();
       if(p.uploaded){
-        try{ await fetch(PHOTO_SERVER+'/photo/'+p.filename, {method:'DELETE'}); }catch(ex){}
+        try{ await fetch(PHOTO_SERVER+'/photo/'+p.filename, {method:'DELETE',headers:{'ngrok-skip-browser-warning':'true'}}); }catch(ex){}
       }
       URL.revokeObjectURL(p.objectUrl);
       pendingPhotos[sec].splice(idx, 1);
@@ -2198,7 +2213,7 @@ function lbGoto(i){ lbIdx=i; renderLightbox(); }
 async function lbDeleteCurrent(){
   if(!confirm('Delete this photo?')) return;
   const filename = lbPhotos[lbIdx];
-  try{ await fetch(PHOTO_SERVER+'/photo/'+filename, {method:'DELETE'}); }catch(ex){}
+  try{ await fetch(PHOTO_SERVER+'/photo/'+filename, {method:'DELETE',headers:{'ngrok-skip-browser-warning':'true'}}); }catch(ex){}
   // Remove from entry
   const entry = state[lbSec].entries.find(e=>e.id===lbEntryId);
   if(entry){ entry.photos = entry.photos.filter(f=>f!==filename); }
@@ -2220,7 +2235,7 @@ function removeExistingPhoto(sec, entryId, filename, idx){
   if(!entry) return;
   if(!confirm('Remove this photo from the entry?')) return;
   // Remove from server
-  fetch(PHOTO_SERVER+'/photo/'+filename, {method:'DELETE'}).catch(()=>{});
+  fetch(PHOTO_SERVER+'/photo/'+filename, {method:'DELETE',headers:{'ngrok-skip-browser-warning':'true'}}).catch(()=>{});
   // Remove from entry
   entry.photos = (entry.photos||[]).filter(f=>f!==filename);
   // Remove from thumb UI

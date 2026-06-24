@@ -7,16 +7,31 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js">
 // ── PHOTO SERVER ─────────────────────────────────────────────────────────
-const PHOTO_SERVER = 'https://TYLER.hl.local:3002';
+let PHOTO_SERVER = null;
 let photoServerOnline = false;
 let pendingSubmitPhotos = [];
 
 async function checkPhotoServer(){
   try{
-    const r = await fetch(PHOTO_SERVER+'/ping', {signal: AbortSignal.timeout(3000)});
-    const j = await r.json();
-    photoServerOnline = j.ok === true;
-  }catch(e){ photoServerOnline = false; }
+    const GIST_ID = '934943f5c9d8ea126f30a27526c95771';
+    const token = localStorage.getItem('hl_gh_token') || localStorage.getItem('gh_token') || '';
+    const headers = token
+      ? {'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}
+      : {'Accept':'application/vnd.github.v3+json'};
+    const r = await fetch('https://api.github.com/gists/'+GIST_ID, {headers});
+    const g = await r.json();
+    const f = g.files && g.files['hl_photo_server.json'];
+    if (!f) throw new Error('No photo server file in Gist');
+    const data = JSON.parse(f.content);
+    if (!data.url) throw new Error('Empty URL');
+    PHOTO_SERVER = data.url;
+    const pr = await fetch(PHOTO_SERVER+'/ping', {
+      signal: AbortSignal.timeout(5000),
+      headers: {'ngrok-skip-browser-warning': 'true'}
+    });
+    const pj = await pr.json();
+    photoServerOnline = pj.ok === true;
+  }catch(e){ photoServerOnline = false; console.warn('Photo server check failed:', e.message); }
   const zone = document.getElementById('submitPhotoDrop');
   const offline = document.getElementById('photoOfflineMsg');
   if(zone) zone.style.display = photoServerOnline ? '' : 'none';
@@ -27,7 +42,7 @@ async function uploadPhoto(file, ticketId){
   const fd = new FormData();
   fd.append('photo', file);
   fd.append('ticketId', ticketId || 'pending');
-  const r = await fetch(PHOTO_SERVER+'/upload', { method:'POST', body:fd });
+  const r = await fetch(PHOTO_SERVER+'/upload', { method:'POST', body:fd, headers:{'ngrok-skip-browser-warning':'true'} });
   const j = await r.json();
   if(!j.success) throw new Error(j.error||'Upload failed');
   return j.filename;
@@ -48,7 +63,7 @@ function renderSubmitThumbs(){
     del.innerHTML = '×';
     del.onclick = async (e) => {
       e.stopPropagation();
-      if(p.uploaded) try{ await fetch(PHOTO_SERVER+'/photo/'+p.filename, {method:'DELETE'}); }catch(ex){}
+      if(p.uploaded) try{ await fetch(PHOTO_SERVER+'/photo/'+p.filename, {method:'DELETE',headers:{'ngrok-skip-browser-warning':'true'}}); }catch(ex){}
       URL.revokeObjectURL(p.objectUrl);
       pendingSubmitPhotos.splice(idx, 1);
       renderSubmitThumbs();
