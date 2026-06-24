@@ -1092,8 +1092,17 @@ function resetInactivity(){ clearTimeout(inactivityTimer); inactivityTimer=setTi
 function setupPhotoDrop(sec){
   const zone = document.getElementById('photoDrop-'+sec);
   if(!zone) return;
-  const tktFieldId = {applicator:'fTicket', machine:'mTicket', setup:'sTicket'}[sec];
-  const getTicketId = () => { const val = $(tktFieldId)?.value?.trim(); return val ? 'TKT-'+val : null; };
+  const tktFieldId  = {applicator:'fTicket',  machine:'mTicket',  setup:'sTicket'}[sec];
+  const nameFieldId = {applicator:'fApn',      machine:'mMachine', setup:'sTerminal'}[sec];
+  const getTicketId = () => {
+    // Prefer ticket number field
+    const tkt = $(tktFieldId)?.value?.trim();
+    if(tkt) return 'TKT-'+tkt;
+    // Fall back to the primary identifier (APN, machine name, terminal)
+    const name = $(nameFieldId)?.value?.trim();
+    if(name) return name.replace(/[^a-zA-Z0-9_-]/g,'_');
+    return null;
+  };
   const inp = zone.querySelector('input[type=file]');
   if(inp) inp.onchange = e => handlePhotoFiles(e.target.files, sec, getTicketId());
   zone.addEventListener('dragover', e=>{ e.preventDefault(); zone.classList.add('drag-over'); });
@@ -2214,17 +2223,22 @@ function renderLightbox(){
 function lbGoto(i){ lbIdx=i; renderLightbox(); }
 
 async function lbDeleteCurrent(){
+  if(!lbSec || !lbEntryId || !lbPhotos.length) return;
   if(!confirm('Delete this photo?')) return;
   const filename = lbPhotos[lbIdx];
+  // Delete from server
   try{ await fetch(PHOTO_SERVER+'/photo/'+filename, {method:'DELETE',headers:{'ngrok-skip-browser-warning':'true'}}); }catch(ex){}
-  // Remove from entry
-  const entry = state[lbSec].entries.find(e=>e.id===lbEntryId);
-  if(entry){ entry.photos = entry.photos.filter(f=>f!==filename); }
+  // Remove from state entry safely
+  const sec = state[lbSec];
+  if(sec && sec.entries){
+    const entry = sec.entries.find(e=>e.id===lbEntryId);
+    if(entry){ entry.photos = (entry.photos||[]).filter(f=>f!==filename); }
+  }
   lbPhotos = lbPhotos.filter(f=>f!==filename);
-  if(!lbPhotos.length){ closeLightbox(); pushSection(lbSec); renderSection(lbSec); return; }
+  if(!lbPhotos.length){ closeLightbox(); if(state[lbSec]) { pushSection(lbSec); renderSection(lbSec); } return; }
   lbIdx = Math.min(lbIdx, lbPhotos.length-1);
   renderLightbox();
-  pushSection(lbSec); renderSection(lbSec);
+  if(state[lbSec]){ pushSection(lbSec); renderSection(lbSec); }
 }
 
 function closeLightbox(){ document.getElementById('photoLightbox').classList.add('hidden'); lbPhotos=[]; lbEntryId=null; lbSec=null; }
