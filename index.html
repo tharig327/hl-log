@@ -2201,26 +2201,52 @@ async function handlePhotoFiles(files, sec, ticketId){
 // ── LIGHTBOX ─────────────────────────────────────────────────────────────
 let lbPhotos = [], lbIdx = 0, lbEntryId = null, lbSec = null;
 
-function openLightbox(sec, entryId){
+async function openLightbox(sec, entryId){
   const entry = state[sec].entries.find(e=>e.id===entryId);
   if(!entry||!entry.photos||!entry.photos.length){ toast('No photos on this entry','#cc4444'); return; }
+  if(!PHOTO_SERVER){ toast('Photo server not connected','#cc4444'); return; }
   lbPhotos = entry.photos; lbIdx = 0; lbEntryId = entryId; lbSec = sec;
-  renderLightbox();
   document.getElementById('photoLightbox').classList.remove('hidden');
+  await renderLightbox();
 }
 
-function renderLightbox(){
+// Cache blob URLs for photos so we don't re-fetch on every render
+const photoBlobCache = {};
+
+async function fetchPhotoBlob(filename){
+  if(photoBlobCache[filename]) return photoBlobCache[filename];
+  try{
+    const r = await fetch(PHOTO_SERVER+'/photo/'+filename, {headers:{'ngrok-skip-browser-warning':'true'}});
+    if(!r.ok) throw new Error('Not found');
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    photoBlobCache[filename] = url;
+    return url;
+  }catch(e){ return null; }
+}
+
+async function renderLightbox(){
   const lb = document.getElementById('photoLightbox');
   const main = lb.querySelector('.lb-main-img');
   const strip = lb.querySelector('.photo-lightbox-strip');
   const filename = lbPhotos[lbIdx];
-  main.src = PHOTO_SERVER+'/photo/'+filename;
+  // Load main image via blob to bypass ngrok warning
+  main.src = '';
   main.alt = filename;
-  strip.innerHTML = lbPhotos.map((f,i)=>`<img src="${PHOTO_SERVER+'/photo/'+f}" class="${i===lbIdx?'active':''}" onclick="lbGoto(${i})">`).join('');
+  const blobUrl = await fetchPhotoBlob(filename);
+  if(blobUrl) main.src = blobUrl;
+  else main.alt = 'Failed to load: '+filename;
+  // Render strip — load blobs async
+  strip.innerHTML = lbPhotos.map((f,i)=>`<img id="lbstrip_${i}" class="${i===lbIdx?'active':''}" onclick="lbGoto(${i})" src="" alt="${f}">`).join('');
+  lbPhotos.forEach(async (f,i)=>{
+    const u = await fetchPhotoBlob(f);
+    const el = document.getElementById('lbstrip_'+i);
+    if(el && u) el.src = u;
+  });
   lb.querySelector('.lb-del-btn').style.display = 'flex';
 }
 
-function lbGoto(i){ lbIdx=i; renderLightbox(); }
+function lbGoto(i){ lbIdx=i; renderLightbox(); } // renderLightbox is async
 
 async function lbDeleteCurrent(){
   if(!lbSec || !lbEntryId || !lbPhotos.length) return;
