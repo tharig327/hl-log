@@ -1,4 +1,4 @@
-const CACHE = 'hl-floorsync-v4';
+const CACHE = 'hl-floorsync-v5';
 
 const ASSETS = [
   './',
