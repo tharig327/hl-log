@@ -2241,19 +2241,29 @@ async function lbDeleteCurrent(){
   if(!lbSec || !lbEntryId || !lbPhotos.length) return;
   if(!confirm('Delete this photo?')) return;
   const filename = lbPhotos[lbIdx];
-  // Delete from server
+  const currentSec = lbSec;
+  // Delete from server — ignore 404 (file already gone)
   try{ await fetch(PHOTO_SERVER+'/photo/'+filename, {method:'DELETE',headers:{'ngrok-skip-browser-warning':'true'}}); }catch(ex){}
-  // Remove from state entry safely
-  const sec = state[lbSec];
-  if(sec && sec.entries){
-    const entry = sec.entries.find(e=>e.id===lbEntryId);
-    if(entry){ entry.photos = (entry.photos||[]).filter(f=>f!==filename); }
+  // Remove from state entry
+  const secState = state[currentSec];
+  if(secState && secState.entries){
+    const entry = secState.entries.find(e=>e.id===lbEntryId);
+    if(entry){
+      entry.photos = (entry.photos||[]).filter(f=>f!==filename);
+      if(entry.photos.length === 0) delete entry.photos;
+    }
   }
+  // Always save to Gist regardless of server response
+  try{ await pushSection(currentSec); }catch(ex){ console.warn('pushSection failed:', ex); }
   lbPhotos = lbPhotos.filter(f=>f!==filename);
-  if(!lbPhotos.length){ closeLightbox(); if(state[lbSec]) { pushSection(lbSec); renderSection(lbSec); } return; }
+  if(!lbPhotos.length){
+    closeLightbox();
+    renderSection(currentSec);
+    return;
+  }
   lbIdx = Math.min(lbIdx, lbPhotos.length-1);
   renderLightbox();
-  if(state[lbSec]){ pushSection(lbSec); renderSection(lbSec); }
+  renderSection(currentSec);
 }
 
 function closeLightbox(){ document.getElementById('photoLightbox').classList.add('hidden'); lbPhotos=[]; lbEntryId=null; lbSec=null; }
