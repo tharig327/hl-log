@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>H&L FloorSync – Ticket Submission Guide</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Share+Tech+Mono&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --red: #c0392b;
+    --red-dark: #9b2b1e;
+    --bg: #111;
+    --surface: #1a1a1a;
+    --surface2: #222;
+    --border: #2e2e2e;
+    --text: #e8e8e8;
+    --muted: #888;
+    --mono: 'Share Tech Mono', monospace;
+    --sans: 'Barlow', sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.6;
+    padding: 2rem 1rem 4rem;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    background: var(--red);
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.1rem;
+    width: 44px; height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+
+  header h1 { font-size: 1.4rem; font-weight: 700; }
+  header p { color: var(--muted); font-size: 0.85rem; margin-top: 2px; }
+
+  .doc-label {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--red);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+  }
+
+  h2 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 0.3rem;
+  }
+
+  .intro {
+    max-width: 680px;
+    margin-bottom: 2.5rem;
+    color: #bbb;
+  }
+
+  /* Tab selector */
+  .tab-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .tab-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: var(--sans);
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 0.5rem 1.1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+  .tab-btn:hover { background: #2a2a2a; color: var(--text); }
+  .tab-btn.active {
+    background: var(--red);
+    border-color: var(--red);
+    color: #fff;
+  }
+
+  /* Panel */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* Section header */
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 1.5rem;
+  }
+  .section-icon {
+    width: 40px; height: 40px;
+    background: var(--red);
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+  .section-title { font-size: 1.2rem; font-weight: 700; }
+  .section-sub { color: var(--muted); font-size: 0.83rem; margin-top: 2px; }
+
+  /* Field guide rows */
+  .fields {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    margin-bottom: 2rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .field-row {
+    background: var(--surface);
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 0;
+  }
+
+  .field-row + .field-row { border-top: 1px solid var(--border); }
+
+  .field-label {
+    padding: 0.85rem 1rem;
+    border-right: 1px solid var(--border);
+  }
+  .field-name {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--red);
+    font-weight: 600;
+    display: block;
+    margin-bottom: 2px;
+  }
+  .req-badge {
+    font-size: 0.65rem;
+    background: #2a1010;
+    color: #e07070;
+    border: 1px solid #5a2020;
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-family: var(--mono);
+    margin-left: 4px;
+  }
+  .opt-badge {
+    font-size: 0.65rem;
+    background: #1a1a2a;
+    color: #7070b0;
+    border: 1px solid #2a2a4a;
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-family: var(--mono);
+    margin-left: 4px;
+  }
+
+  .field-desc {
+    padding: 0.85rem 1rem;
+    color: #ccc;
+    font-size: 0.88rem;
+  }
+
+  .example {
+    display: inline-block;
+    margin-top: 4px;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: #888;
+    background: #1e1e1e;
+    border: 1px solid #2e2e2e;
+    border-radius: 3px;
+    padding: 1px 7px;
+  }
+
+  /* Callout box */
+  .callout {
+    background: var(--surface2);
+    border-left: 3px solid var(--red);
+    border-radius: 0 6px 6px 0;
+    padding: 0.9rem 1.1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.88rem;
+    color: #bbb;
+  }
+  .callout strong { color: var(--text); }
+
+  /* Dropdown options */
+  .options-label {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.5rem;
+    margin-top: 1rem;
+  }
+  .option-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 1.5rem;
+  }
+  .option-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
+    display: flex;
+    gap: 10px;
+  }
+  .option-name {
+    font-family: var(--mono);
+    color: #e8e8e8;
+    font-size: 0.82rem;
+    flex-shrink: 0;
+    min-width: 220px;
+  }
+  .option-desc { color: var(--muted); font-size: 0.82rem; }
+
+  /* Priority table */
+  .priority-row { align-items: center; }
+  .priority-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+
+  /* Tips */
+  .tips {
+    margin-top: 2rem;
+    padding: 1rem 1.2rem;
+    background: #161616;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+  .tips-title {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--red);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.6rem;
+  }
+  .tips ul {
+    padding-left: 1.2rem;
+    color: #bbb;
+    font-size: 0.87rem;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  /* Common fields shared section */
+  .shared-note {
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-bottom: 1.5rem;
+    padding: 0.6rem 1rem;
+    background: #181818;
+    border-radius: 4px;
+    border: 1px solid #2a2a2a;
+  }
+
+  @media (max-width: 560px) {
+    .field-row { grid-template-columns: 1fr; }
+    .field-label { border-right: none; border-bottom: 1px solid var(--border); }
+    .option-item { flex-direction: column; gap: 2px; }
+    .option-name { min-width: unset; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">H&L</div>
+  <div>
+    <h1>FloorSync – Ticket Submission Guide</h1>
+    <p>How to fill out the Issue Tickets form for each issue type</p>
+  </div>
+</header>
+
+<div class="doc-label">Quick reference</div>
+<p class="intro">
+  The ticket form has three issue types — <strong>Applicator</strong>, <strong>Machine</strong>, and <strong>Setup Sheet</strong> — each with slightly different required fields. Select a tab below for a field-by-field walkthrough.
+</p>
+
+<!-- Tab buttons -->
+<div class="tab-row">
+  <button class="tab-btn active" onclick="show('applicator', this)">🔧 Applicator</button>
+  <button class="tab-btn" onclick="show('machine', this)">⚙️ Machine</button>
+  <button class="tab-btn" onclick="show('setup', this)">📄 Setup Sheet</button>
+</div>
+
+<!-- ==============================
+     APPLICATOR PANEL
+     ============================== -->
+<div id="applicator" class="panel active">
+
+  <div class="section-header">
+    <div class="section-icon">🔧</div>
+    <div>
+      <div class="section-title">Applicator Issue</div>
+      <div class="section-sub">Use when the applicator itself has a problem — damage, wear, misalignment, etc.</div>
+    </div>
+  </div>
+
+  <div class="shared-note">Fields marked <span class="req-badge">REQ</span> must be filled in before submitting. Fields marked <span class="opt-badge">OPT</span> are optional but helpful.</div>
+
+  <div class="fields">
+    <div class="field-row">
+      <div class="field-label">
+        <span class="field-name">YOUR NAME <span class="req-badge">REQ</span></span>
+      </div>
+      <div class="field-desc">
+        First and last name of the person submitting the ticket — not the supervisor or engineer, whoever is filling out the form right now.
+        <br><span class="example">e.g. John Smith</span>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">
+        <span class="field-name">CUSTOMER <span class="opt-badge">OPT</span></span>
+      </div>
+      <div class="field-desc">
+        The customer whose job this applicator is running for at the time of the issue, if applicable.
+        <br><span class="example">e.g. BraunAbility</span>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">
+        <span class="field-name">APPLICATOR # <span class="req-badge">REQ</span></span>
+      </div>
+      <div class="field-desc">
+        The applicator asset number. <strong>Must be in the format T- followed by exactly 4 digits.</strong>
+        <br><span class="example">T-0000 → T-9999</span>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">
+        <span class="field-name">PRESS / MACHINE <span class="opt-badge">OPT</span></span>
+      </div>
+      <div class="field-desc">
+        The press or machine the applicator is currently installed on.
+        <br><span class="example">e.g. KM-4T #2</span>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">
+        <span class="field-name">ISSUE TYPE <span class="req-badge">REQ</span></span>
+      </div>
+      <div class="field-desc">
+        Select the best-matching issue from the dropdown. If nothing fits, choose <em>Other — describe below</em> and explain in the description box.
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">
+        <span class="field-name">DESCRIPTION</span>
+      </div>
+      <div class="field-desc">
+        Required if <em>Other</em> is selected. Be specific: describe what is happening, when it started, and any symptoms.
+        <br><span class="example">e.g. "Crimp height drifting high after ~200 cycles, adjusted shut height with no effect"</span>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">
+        <span class="field-name">PRIORITY <span class="req-badge">REQ</span></span>
+      </div>
+      <div class="field-desc">
+        How urgent is this? See the priority guide below.
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">
+        <span class="field-name">PHOTOS <span class="opt-badge">OPT</span></span>
+      </div>
+      <div class="field-desc">
+        Attach photos of the applicator or defective crimps if available. Click or drag into the upload area.
+      </div>
+    </div>
+  </div>
+
+  <div class="options-label">Issue Type Options — Applicator</div>
+  <div class="option-list">
+    <div class="option-item">
+      <span class="option-name">Crimp height out of spec</span>
+      <span class="option-desc">Measured crimp height is outside the spec window; adjustment has not resolved it.</span>
+    </div>
+    <div class="option-item">
+      <span class="option-name">Pull force failure</span>
+      <span class="option-desc">Terminal pull test results are below the minimum per USCAR-21 / IPC-WHMA-A-620 or HL internal spec.</span>
+    </div>
+    <div class="option-item">
+      <span class="option-name">Applicator damage / broken part</span>
+      <span class="option-desc">Visible physical damage — cracked die holder, broken crimp tooling, bent feed mechanism, etc.</span>
+    </div>
+    <div class="option-item">
+      <span class="option-name">Feed / index issue</span>
+      <span class="option-desc">Terminal strip not advancing correctly; skipping, jamming, or double-feeding.</span>
+    </div>
+    <div class="option-item">
+      <span class="option-name">Other — describe below</span>
+      <span class="option-desc">None of the above apply. Use the description box to explain the issue in detail.</span>
+    </div>
+  </div>
+
+  <div class="options-label">Priority Guide</div>
+  <div class="option-list">
+    <div class="option-item priority-row">
+      <span class="option-name"><span class="priority-dot" style="background:#e74c3c"></span>High — affecting production now</span>
+      <span class="option-desc">Production is stopped or parts are being scrapped. Needs immediate attention.</span>
+    </div>
+    <div class="option-item priority-row">
+      <span class="option-name"><span class="priority-dot" style="background:#e67e22"></span>Medium — can finish current run</span>
+      <span class="option-desc">Issue exists but can be managed through the current job. Needs repair before next setup.</span>
+    </div>
+    <div class="option-item priority-row">
+      <span class="option-name"><span class="priority-dot" style="background:#27ae60"></span>Normal — can wait for scheduled repair</span>
+      <span class="option-desc">Minor issue or observation that doesn't affect current output. Log for next PM or scheduled repair.</span>
+    </div>
+  </div>
+
+  <div class="tips">
+    <div class="tips-title">Tips — Applicator tickets</div>
+    <ul>
+      <li>Always include the T-number — this is how the ticket gets routed to the right applicator record.</li>
+      <li>Include the press name so the technician knows where to find the applicator without hunting.</li>
+      <li>If you have crimp height measurements or pull test readings, put them in the description — it speeds up diagnosis significantly.</li>
+      <li>A photo of the defective crimp cross-section or the damaged component is always helpful.</li>
+    </ul>
+  </div>
+
+</div>
+
+<!-- ==============================
+     MACHINE PANEL
+     ============================== -->
+<div id="machine" class="panel">
+
+  <div class="section-header">
+    <div class="section-icon">⚙️</div>
+    <div>
+      <div class="section-title">Machine Issue</div>
+      <div class="section-sub">Use when the press, crimper, or other equipment itself has a problem — not the applicator.</div>
+    </div>
+  </div>
+
+  <div class="shared-note">Fields marked <span class="req-badge">REQ</span> must be filled in before submitting. Fields marked <span class="opt-badge">OPT</span> are optional but helpful.</div>
+
+  <div class="fields">
+    <div class="field-row">
+      <div class="field-label">
+        <span class="field-name">YOUR NAME <span class="req-badge">REQ</span></span>
+      </div>
+      <div class="field-desc">
+        First and last name of the person submitting the ticket.
+        <br><span class="example">e.g. John Smith</span>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">
+        <span class="field-name">CUSTOMER <span class="opt-badge">OPT</span></span>
+      </div>
+      <div class="field-desc">
+        Customer job running at the time of the issue, if applicable.
+        <br><span class="example">e.g. BraunAbility</span>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">
+        <span class="field-name">MACHINE # <span class="req-badge">REQ</span></span>
+      </div>
+      <div class="field-desc">
+        The press or machine identifier. Use the name/number posted on the machine.
+        <br><span class="example">e.g. KM-4T #2</span>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">
+        <span class="field-name">ISSUE TYPE <span class="req-badge">REQ</span></span>
+      </div>
+      <div class="field-desc">
+        Select the best-matching issue from the dropdown.
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">
+        <span class="field-name">PRIORITY <span class="req-badge">REQ</span></span>
+      </div>
+      <div class="field-desc">
+        Select how urgently this needs to be addressed. See the priority guide below.
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">
+        <span class="field-name">PHOTOS <span class="opt-badge">OPT</span></span>
+      </div>
+      <div class="field-desc">
+        Photos of the machine issue — error codes on the screen, damaged components, etc.
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Machine vs. Applicator:</strong> If the press is running fine but the terminal results are bad, the issue is likely the <em>applicator</em>, not the machine. Submit an Applicator ticket instead. If the press itself is making noise, throwing errors, or won't cycle, submit a Machine ticket.
+  </div>
+
+  <div class="options-label">Issue Type Options — Machine</div>
+  <div class="option-list">
+    <div class="option-item">
+      <span class="option-name">Won't cycle / no power</span>
+      <span class="option-desc">Press will not actuate or has no power. Check E-stops first before submitting.</span>
+    </div>
+    <div class="option-item">
+      <span class="option-name">Error code / alarm</span>
+      <span class="option-desc">Machine is displaying an error or alarm code. Include the code in the description if possible.</span>
+    </div>
+    <div class="option-item">
+      <span class="option-name">Abnormal noise or vibration</span>
+      <span class="option-desc">Grinding, knocking, or vibration not normally present during operation.</span>
+    </div>
+    <div class="option-item">
+      <span class="option-name">Shut height / stroke issue</span>
+      <span class="option-desc">Machine is not reaching or maintaining correct shut height consistently.</span>
+    </div>
+    <div class="option-item">
+      <span class="option-name">Pneumatic / air issue</span>
+      <span class="option-desc">Low air pressure, leaks, or pneumatic components not operating correctly.</span>
+    </div>
+    <div class="option-item">
+      <span class="option-name">Other — describe below</span>
+      <span class="option-desc">None of the above. Describe the issue in detail.</span>
+    </div>
+  </div>
+
+  <div class="options-label">Priority Guide</div>
+  <div class="option-list">
+    <div class="option-item priority-row">
+      <span class="option-name"><span class="priority-dot" style="background:#e74c3c"></span>High — affecting production now</span>
+      <span class="option-desc">Machine is down; production cannot continue.</span>
+    </div>
+    <div class="option-item priority-row">
+      <span class="option-name"><span class="priority-dot" style="background:#e67e22"></span>Medium — can finish current run</span>
+      <span class="option-desc">Issue is present but production can limp through the current job with caution.</span>
+    </div>
+    <div class="option-item priority-row">
+      <span class="option-name"><span class="priority-dot" style="background:#27ae60"></span>Normal — can wait for scheduled repair</span>
+      <span class="option-desc">Minor — log for next PM cycle or scheduled maintenance window.</span>
+    </div>
+  </div>
+
+  <div class="tips">
+    <div class="tips-title">Tips — Machine tickets</div>
+    <ul>
+      <li>If the machine shows an error code, photograph the screen and attach it — this is the fastest path to diagnosis.</li>
+      <li>Note whether the issue is consistent or intermittent, and approximately how many cycles between failures if intermittent.</li>
+      <li>If you had to E-stop the machine, leave it in the state you stopped it if safe to do so — don't reset before the tech arrives.</li>
+    </ul>
+  </div>
+
+</div>
+
+<!-- ==============================
+     SETUP SHEET PANEL
+     ============================== -->
+<div id="setup" class="panel">
+
+  <div class="section-header">
+    <div class="section-icon">📄</div>
+    <div>
+      <div class="section-title">Setup Sheet Issue</div>
+      <div class="section-sub">Use when there's an error, discrepancy, or missing information in a crimp setup sheet or work instruction document.</div>
+    </div>
+  </div>
+
+  <div class="shared-note">Fields marked <span class="req-badge">REQ</span> must be filled in before submitting. Fields marked <span class="opt-badge">OPT</span> are optional but helpful.</div>
+
+  <div class="fields">
+    <div class="field-row">
+      <div class="field-label">
+        <span class="field-name">YOUR NAME <span class="req-badge">REQ</span></span>
+      </div>
+      <div class="field-desc">
+        First and last name of the person submitting the ticket.
+        <br><span class="example">e.g. John Smith</span>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">
+        <span class="field-name">CUSTOMER <span class="opt-badge">OPT</span></span>
+      </div>
+      <div class="field-desc">
+        Customer the setup sheet applies to, if applicable.
+        <br><span class="example">e.g. BraunAbility</span>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">
+        <span class="field-name">TERMINAL # <span class="req-badge">REQ</span></span>
+      </div>
+      <div class="field-desc">
+        The terminal part number the setup sheet is for. Use the full manufacturer part number from the setup sheet header.
+        <br><span class="example">e.g. 02233</span>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">
+        <span class="field-name">AWG <span class="opt-badge">OPT</span></span>
+      </div>
+      <div class="field-desc">
+        Wire gauge the setup sheet covers, if the issue is specific to a particular wire size.
+        <br><span class="example">e.g. 18 AWG</span>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">
+        <span class="field-name">ISSUE TYPE <span class="req-badge">REQ</span></span>
+      </div>
+      <div class="field-desc">
+        Select the type of document issue from the dropdown.
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">
+        <span class="field-name">DOCUMENT / FILE REFERENCE <span class="opt-badge">OPT</span></span>
+      </div>
+      <div class="field-desc">
+        The document number, file name, or revision of the setup sheet in question. Helps engineering locate the exact file.
+        <br><span class="example">e.g. SS-2024-0042, rev B</span>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">
+        <span class="field-name">PRIORITY <span class="req-badge">REQ</span></span>
+      </div>
+      <div class="field-desc">
+        How urgently the document needs to be corrected or updated.
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">
+        <span class="field-name">PHOTOS <span class="opt-badge">OPT</span></span>
+      </div>
+      <div class="field-desc">
+        Photos of the specific section of the document with the error, or of actual vs. expected results on the floor.
+      </div>
+    </div>
+  </div>
+
+  <div class="options-label">Issue Type Options — Setup Sheet</div>
+  <div class="option-list">
+    <div class="option-item">
+      <span class="option-name">Wrong crimp height / dimension</span>
+      <span class="option-desc">The crimp height target, minimum, or maximum listed on the sheet does not match the validated spec.</span>
+    </div>
+    <div class="option-item">
+      <span class="option-name">Wrong wire range or AWG</span>
+      <span class="option-desc">Wire gauge or cross-section listed on the document doesn't match what is being run or what the terminal supports.</span>
+    </div>
+    <div class="option-item">
+      <span class="option-name">Incorrect applicator or tooling number</span>
+      <span class="option-desc">The applicator T-number or die/locator reference on the sheet points to the wrong tool.</span>
+    </div>
+    <div class="option-item">
+      <span class="option-name">Missing information</span>
+      <span class="option-desc">A required field is blank — shut height, pull force, wire type, etc.</span>
+    </div>
+    <div class="option-item">
+      <span class="option-name">Document not found</span>
+      <span class="option-desc">No setup sheet exists for this terminal / wire combination and one needs to be created.</span>
+    </div>
+    <div class="option-item">
+      <span class="option-name">Other — describe below</span>
+      <span class="option-desc">None of the above. Describe the discrepancy in detail.</span>
+    </div>
+  </div>
+
+  <div class="options-label">Priority Guide</div>
+  <div class="option-list">
+    <div class="option-item priority-row">
+      <span class="option-name"><span class="priority-dot" style="background:#e74c3c"></span>High</span>
+      <span class="option-desc">Error is causing active production defects or an operator cannot run without a corrected document.</span>
+    </div>
+    <div class="option-item priority-row">
+      <span class="option-name"><span class="priority-dot" style="background:#27ae60"></span>Normal</span>
+      <span class="option-desc">Discrepancy found during review; not blocking current production. Update at next revision cycle.</span>
+    </div>
+  </div>
+
+  <div class="tips">
+    <div class="tips-title">Tips — Setup Sheet tickets</div>
+    <ul>
+      <li>Include both the document reference number AND the terminal part number — searching by either should pull up the same file in engineering.</li>
+      <li>If the sheet has the wrong crimp height, include what the sheet says AND what the correct value should be (from a validated run or master spec).</li>
+      <li>A photo of the wrong section circled is faster than any written description.</li>
+      <li>If the document simply doesn't exist yet, set priority based on when that terminal is next scheduled to run.</li>
+    </ul>
+  </div>
+
+</div>
+
+<script>
+  function show(id, btn) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    btn.classList.add('active');
+  }
+</script>
+
+</body>
+</html>
