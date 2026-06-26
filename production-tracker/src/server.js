@@ -25,6 +25,19 @@ async function start() {
     } catch (e) { res.status(409).json({ error: 'Customer already exists' }); }
   });
 
+  // Bulk import customers — one name per line
+  app.post('/api/customers/bulk', (req, res) => {
+    const { names } = req.body;
+    if (!Array.isArray(names)) return res.status(400).json({ error: 'names array required' });
+    const ins = db.prepare('INSERT OR IGNORE INTO customers (name) VALUES (?)');
+    const bulk = db.transaction(() => {
+      let added = 0;
+      names.forEach(n => { const t = (n || '').trim(); if (t) { ins.run(t); added++; } });
+      return added;
+    });
+    res.json({ added: bulk() });
+  });
+
   // ── Parts ──────────────────────────────────────────────────────
   app.get('/api/parts', (req, res) => {
     const { customer_id } = req.query;
@@ -50,6 +63,34 @@ async function start() {
     res.json({ ok: true });
   });
 
+  // Bulk import parts — rows: { customer_name, part_number, description, target_rate }
+  app.post('/api/parts/bulk', (req, res) => {
+    const { rows } = req.body;
+    if (!Array.isArray(rows)) return res.status(400).json({ error: 'rows array required' });
+    const getCustomer  = db.prepare('SELECT id FROM customers WHERE name = ?');
+    const insCustomer  = db.prepare('INSERT OR IGNORE INTO customers (name) VALUES (?)');
+    const insPart      = db.prepare('INSERT OR IGNORE INTO parts (customer_id, part_number, description, target_rate) VALUES (?, ?, ?, ?)');
+    const results = { added: 0, skipped: 0, errors: [] };
+    const bulk = db.transaction(() => {
+      rows.forEach((row, i) => {
+        const custName = (row.customer_name || '').trim();
+        const partNum  = (row.part_number  || '').trim();
+        if (!custName || !partNum) { results.skipped++; return; }
+        // Auto-create customer if needed
+        insCustomer.run(custName);
+        const cust = getCustomer.get(custName);
+        if (!cust) { results.errors.push(`Row ${i+1}: could not find/create customer`); return; }
+        const rate = parseFloat(row.target_rate) || null;
+        try {
+          const r = insPart.run(cust.id, partNum, row.description || null, rate);
+          if (r.changes > 0) results.added++; else results.skipped++;
+        } catch (e) { results.skipped++; }
+      });
+    });
+    bulk();
+    res.json(results);
+  });
+
   // ── Employees ──────────────────────────────────────────────────
   app.get('/api/employees', (req, res) => {
     res.json(db.prepare('SELECT * FROM employees WHERE active=1 ORDER BY name').all());
@@ -68,6 +109,24 @@ async function start() {
     const { active } = req.body;
     db.prepare('UPDATE employees SET active=? WHERE id=?').run(active ? 1 : 0, req.params.id);
     res.json({ ok: true });
+  });
+
+  // Bulk import employees — rows: { name, employee_id }
+  app.post('/api/employees/bulk', (req, res) => {
+    const { rows } = req.body;
+    if (!Array.isArray(rows)) return res.status(400).json({ error: 'rows array required' });
+    const ins = db.prepare('INSERT OR IGNORE INTO employees (name, employee_id) VALUES (?, ?)');
+    const bulk = db.transaction(() => {
+      let added = 0;
+      rows.forEach(r => {
+        const name = (r.name || '').trim();
+        if (!name) return;
+        const res = ins.run(name, r.employee_id || null);
+        if (res.changes > 0) added++;
+      });
+      return added;
+    });
+    res.json({ added: bulk() });
   });
 
   // ── Scrap Reasons ──────────────────────────────────────────────
@@ -94,18 +153,18 @@ async function start() {
       JOIN customers c ON p.customer_id = c.id
       WHERE 1=1`;
     const params = [];
-    if (date_from)   { query += ' AND pl.date >= ?';      params.push(date_from); }
-    if (date_to)     { query += ' AND pl.date <= ?';      params.push(date_to); }
+    if (date_from)   { query += ' AND pl.date >= ?';       params.push(date_from); }
+    if (date_to)     { query += ' AND pl.date <= ?';       params.push(date_to); }
     if (employee_id) { query += ' AND pl.employee_id = ?'; params.push(employee_id); }
-    if (part_id)     { query += ' AND pl.part_id = ?';    params.push(part_id); }
-    if (customer_id) { query += ' AND c.id = ?';          params.push(customer_id); }
+    if (part_id)     { query += ' AND pl.part_id = ?';     params.push(part_id); }
+    if (customer_id) { query += ' AND c.id = ?';           params.push(customer_id); }
     query += ' ORDER BY pl.date DESC, pl.created_at DESC';
     const logs = db.prepare(query).all(...params);
     const scrapQ = db.prepare(`SELECT sl.*, sr.reason FROM scrap_log sl JOIN scrap_reasons sr ON sl.scrap_reason_id = sr.id WHERE sl.production_log_id = ?`);
     logs.forEach(log => {
       log.scrap_detail = scrapQ.all(log.id);
       log.actual_rate  = (log.hours_run && log.hours_run > 0) ? Math.round(log.qty_produced / log.hours_run) : null;
-      log.efficiency   = (log.actual_rate && log.target_rate)  ? Math.round((log.actual_rate / log.target_rate) * 100) : null;
+      log.efficiency   = (log.actual_rate && log.target_rate) ? Math.round((log.actual_rate / log.target_rate) * 100) : null;
     });
     res.json(logs);
   });
