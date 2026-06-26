@@ -73,8 +73,8 @@ async function loadCustomers() {
         <details style="margin-top:20px">
           <summary style="cursor:pointer;font-weight:600;color:#4a5568;padding:8px 0">Bulk Import Parts</summary>
           <div style="margin-top:12px">
-            <p style="font-size:13px;color:#718096;margin-bottom:8px">Format: <code>CustomerName, PartNumber, Description, TargetRate</code><br>Description and TargetRate are optional.</p>
-            <textarea id="bulk-parts" rows="6" style="width:100%;padding:8px;border:1px solid #cbd5e0;border-radius:6px;font-size:13px;font-family:monospace" placeholder="Acme Corp, ABC-1234, Widget A, 150&#10;Acme Corp, ABC-5678, Widget B&#10;Beta Industries, XYZ-001, Bracket, 200"></textarea>
+            <p style="font-size:13px;color:#718096;margin-bottom:8px">Format: <code>CustomerName, PartNumber, Description, TargetRate</code><br>Description and TargetRate are optional. New customers are created automatically.</p>
+            <textarea id="bulk-parts" rows="6" style="width:100%;padding:8px;border:1px solid #cbd5e0;border-radius:6px;font-size:13px;font-family:monospace" placeholder="Acme Corp, ABC-1234, Widget A, 150&#10;New Customer, XYZ-001, Bracket, 200"></textarea>
             <button id="bulk-parts-btn" class="btn btn-primary btn-sm" style="margin-top:8px">Import Parts</button>
           </div>
         </details>
@@ -149,34 +149,36 @@ async function loadCustomers() {
   });
 
   document.getElementById('bulk-parts-btn').addEventListener('click', async () => {
-    const customerMap = {};
-    customers.forEach(c => { customerMap[c.name.toLowerCase()] = c.id; });
-
     const lines = document.getElementById('bulk-parts').value
       .split('\n').map(s => s.trim()).filter(Boolean);
     if (!lines.length) return toast('Nothing to import', 'error');
 
-    const parts = [];
-    const unknown = [];
-    lines.forEach(line => {
+    // Build customer map, auto-create any missing customers
+    const customerMap = {};
+    customers.forEach(c => { customerMap[c.name.toLowerCase()] = c.id; });
+
+    const newCustomerNames = [...new Set(
+      lines.map(l => l.split(',')[0]?.trim()).filter(n => n && !customerMap[n.toLowerCase()])
+    )];
+    for (const name of newCustomerNames) {
+      try {
+        const result = await API.post('/api/customers', { name });
+        customerMap[name.toLowerCase()] = result.id;
+      } catch {}
+    }
+
+    const parts = lines.map(line => {
       const [cName, partNum, desc, rate] = line.split(',').map(s => s.trim());
       const customer_id = customerMap[cName?.toLowerCase()];
-      if (!customer_id) { unknown.push(cName); return; }
-      parts.push({
-        customer_id,
-        part_number: partNum,
-        description: desc || null,
-        target_rate: rate ? parseFloat(rate) : null
-      });
-    });
+      if (!customer_id || !partNum) return null;
+      return { customer_id, part_number: partNum, description: desc || null, target_rate: rate ? parseFloat(rate) : null };
+    }).filter(Boolean);
 
-    if (unknown.length) {
-      toast(`Unknown customers: ${[...new Set(unknown)].join(', ')}`, 'error');
-      return;
-    }
+    if (!parts.length) return toast('No valid rows to import', 'error');
     try {
       const result = await API.post('/api/parts/bulk', { parts });
-      toast(`Imported ${result.added} parts${result.skipped ? `, skipped ${result.skipped} duplicates` : ''}`);
+      const newCustMsg = newCustomerNames.length ? `, created ${newCustomerNames.length} new customer(s)` : '';
+      toast(`Imported ${result.added} parts${result.skipped ? `, skipped ${result.skipped} duplicates` : ''}${newCustMsg}`);
       loadCustomers();
     } catch (err) { toast(err.error || 'Import failed', 'error'); }
   });
