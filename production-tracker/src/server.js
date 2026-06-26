@@ -25,7 +25,21 @@ async function start() {
     } catch (e) { res.status(409).json({ error: 'Customer already exists' }); }
   });
 
-  // Bulk import customers — one name per line
+  app.delete('/api/customers/:id', (req, res) => {
+    // Remove parts, then production logs referencing those parts, then the customer
+    const parts = db.prepare('SELECT id FROM parts WHERE customer_id = ?').all(req.params.id);
+    const del = db.transaction(() => {
+      parts.forEach(p => {
+        db.prepare('DELETE FROM scrap_log WHERE production_log_id IN (SELECT id FROM production_logs WHERE part_id = ?)').run(p.id);
+        db.prepare('DELETE FROM production_logs WHERE part_id = ?').run(p.id);
+      });
+      db.prepare('DELETE FROM parts WHERE customer_id = ?').run(req.params.id);
+      db.prepare('DELETE FROM customers WHERE id = ?').run(req.params.id);
+    });
+    del();
+    res.json({ ok: true });
+  });
+
   app.post('/api/customers/bulk', (req, res) => {
     const { names } = req.body;
     if (!Array.isArray(names)) return res.status(400).json({ error: 'names array required' });
@@ -63,28 +77,33 @@ async function start() {
     res.json({ ok: true });
   });
 
-  // Bulk import parts — rows: { customer_name, part_number, description, target_rate }
+  app.delete('/api/parts/:id', (req, res) => {
+    const del = db.transaction(() => {
+      db.prepare('DELETE FROM scrap_log WHERE production_log_id IN (SELECT id FROM production_logs WHERE part_id = ?)').run(req.params.id);
+      db.prepare('DELETE FROM production_logs WHERE part_id = ?').run(req.params.id);
+      db.prepare('DELETE FROM parts WHERE id = ?').run(req.params.id);
+    });
+    del();
+    res.json({ ok: true });
+  });
+
   app.post('/api/parts/bulk', (req, res) => {
     const { rows } = req.body;
     if (!Array.isArray(rows)) return res.status(400).json({ error: 'rows array required' });
-    const getCustomer  = db.prepare('SELECT id FROM customers WHERE name = ?');
-    const insCustomer  = db.prepare('INSERT OR IGNORE INTO customers (name) VALUES (?)');
-    const insPart      = db.prepare('INSERT OR IGNORE INTO parts (customer_id, part_number, description, target_rate) VALUES (?, ?, ?, ?)');
+    const getCustomer = db.prepare('SELECT id FROM customers WHERE name = ?');
+    const insCustomer = db.prepare('INSERT OR IGNORE INTO customers (name) VALUES (?)');
+    const insPart     = db.prepare('INSERT OR IGNORE INTO parts (customer_id, part_number, description, target_rate) VALUES (?, ?, ?, ?)');
     const results = { added: 0, skipped: 0, errors: [] };
     const bulk = db.transaction(() => {
       rows.forEach((row, i) => {
         const custName = (row.customer_name || '').trim();
         const partNum  = (row.part_number  || '').trim();
         if (!custName || !partNum) { results.skipped++; return; }
-        // Auto-create customer if needed
         insCustomer.run(custName);
         const cust = getCustomer.get(custName);
         if (!cust) { results.errors.push(`Row ${i+1}: could not find/create customer`); return; }
-        const rate = parseFloat(row.target_rate) || null;
-        try {
-          const r = insPart.run(cust.id, partNum, row.description || null, rate);
-          if (r.changes > 0) results.added++; else results.skipped++;
-        } catch (e) { results.skipped++; }
+        const r = insPart.run(cust.id, partNum, row.description || null, parseFloat(row.target_rate) || null);
+        if (r.changes > 0) results.added++; else results.skipped++;
       });
     });
     bulk();
@@ -111,7 +130,11 @@ async function start() {
     res.json({ ok: true });
   });
 
-  // Bulk import employees — rows: { name, employee_id }
+  app.delete('/api/employees/:id', (req, res) => {
+    db.prepare('DELETE FROM employees WHERE id = ?').run(req.params.id);
+    res.json({ ok: true });
+  });
+
   app.post('/api/employees/bulk', (req, res) => {
     const { rows } = req.body;
     if (!Array.isArray(rows)) return res.status(400).json({ error: 'rows array required' });
