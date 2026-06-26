@@ -32,6 +32,15 @@ async function loadCustomers() {
             </tbody>
           </table>
         </div>
+
+        <details style="margin-top:20px">
+          <summary style="cursor:pointer;font-weight:600;color:#4a5568;padding:8px 0">Bulk Import Customers</summary>
+          <div style="margin-top:12px">
+            <p style="font-size:13px;color:#718096;margin-bottom:8px">One customer name per line.</p>
+            <textarea id="bulk-customers" rows="6" style="width:100%;padding:8px;border:1px solid #cbd5e0;border-radius:6px;font-size:13px;font-family:monospace" placeholder="Acme Corp&#10;Beta Industries&#10;Gamma LLC"></textarea>
+            <button id="bulk-customers-btn" class="btn btn-primary btn-sm" style="margin-top:8px">Import Customers</button>
+          </div>
+        </details>
       </div>
 
       <div class="card">
@@ -60,6 +69,15 @@ async function loadCustomers() {
           </div>
           <button type="submit" class="btn btn-primary" style="margin-top:14px">Add Part</button>
         </form>
+
+        <details style="margin-top:20px">
+          <summary style="cursor:pointer;font-weight:600;color:#4a5568;padding:8px 0">Bulk Import Parts</summary>
+          <div style="margin-top:12px">
+            <p style="font-size:13px;color:#718096;margin-bottom:8px">Format: <code>CustomerName, PartNumber, Description, TargetRate</code><br>Description and TargetRate are optional.</p>
+            <textarea id="bulk-parts" rows="6" style="width:100%;padding:8px;border:1px solid #cbd5e0;border-radius:6px;font-size:13px;font-family:monospace" placeholder="Acme Corp, ABC-1234, Widget A, 150&#10;Acme Corp, ABC-5678, Widget B&#10;Beta Industries, XYZ-001, Bracket, 200"></textarea>
+            <button id="bulk-parts-btn" class="btn btn-primary btn-sm" style="margin-top:8px">Import Parts</button>
+          </div>
+        </details>
 
         <div style="margin-top:24px">
           <h2>All Parts</h2>
@@ -118,6 +136,50 @@ async function loadCustomers() {
       loadCustomers();
     } catch (err) { toast(err.error || 'Failed', 'error'); }
   });
+
+  document.getElementById('bulk-customers-btn').addEventListener('click', async () => {
+    const names = document.getElementById('bulk-customers').value
+      .split('\n').map(s => s.trim()).filter(Boolean);
+    if (!names.length) return toast('Nothing to import', 'error');
+    try {
+      const result = await API.post('/api/customers/bulk', { names });
+      toast(`Imported ${result.added} customers${result.skipped ? `, skipped ${result.skipped} duplicates` : ''}`);
+      loadCustomers();
+    } catch (err) { toast(err.error || 'Import failed', 'error'); }
+  });
+
+  document.getElementById('bulk-parts-btn').addEventListener('click', async () => {
+    const customerMap = {};
+    customers.forEach(c => { customerMap[c.name.toLowerCase()] = c.id; });
+
+    const lines = document.getElementById('bulk-parts').value
+      .split('\n').map(s => s.trim()).filter(Boolean);
+    if (!lines.length) return toast('Nothing to import', 'error');
+
+    const parts = [];
+    const unknown = [];
+    lines.forEach(line => {
+      const [cName, partNum, desc, rate] = line.split(',').map(s => s.trim());
+      const customer_id = customerMap[cName?.toLowerCase()];
+      if (!customer_id) { unknown.push(cName); return; }
+      parts.push({
+        customer_id,
+        part_number: partNum,
+        description: desc || null,
+        target_rate: rate ? parseFloat(rate) : null
+      });
+    });
+
+    if (unknown.length) {
+      toast(`Unknown customers: ${[...new Set(unknown)].join(', ')}`, 'error');
+      return;
+    }
+    try {
+      const result = await API.post('/api/parts/bulk', { parts });
+      toast(`Imported ${result.added} parts${result.skipped ? `, skipped ${result.skipped} duplicates` : ''}`);
+      loadCustomers();
+    } catch (err) { toast(err.error || 'Import failed', 'error'); }
+  });
 }
 
 // ── Employees ──────────────────────────────────────────────────
@@ -143,6 +205,15 @@ async function loadEmployees(showInactive = false) {
           </div>
           <button type="submit" class="btn btn-primary" style="margin-top:14px">Add Employee</button>
         </form>
+
+        <details style="margin-top:20px">
+          <summary style="cursor:pointer;font-weight:600;color:#4a5568;padding:8px 0">Bulk Import Employees</summary>
+          <div style="margin-top:12px">
+            <p style="font-size:13px;color:#718096;margin-bottom:8px">One name per line. Optionally add a badge # after a comma.</p>
+            <textarea id="bulk-employees" rows="6" style="width:100%;padding:8px;border:1px solid #cbd5e0;border-radius:6px;font-size:13px;font-family:monospace" placeholder="John Smith&#10;Jane Doe, 1042&#10;Bob Johnson, 2031"></textarea>
+            <button id="bulk-employees-btn" class="btn btn-primary btn-sm" style="margin-top:8px">Import Employees</button>
+          </div>
+        </details>
       </div>
 
       <div class="card">
@@ -165,7 +236,7 @@ async function loadEmployees(showInactive = false) {
                     ? `<button class="btn btn-ghost btn-sm" onclick="deactivateEmp(${e.id})">Deactivate</button>`
                     : `<button class="btn btn-ghost btn-sm" onclick="reactivateEmp(${e.id})">Reactivate</button>`
                   }
-                  <button class="btn btn-danger btn-sm" onclick="deleteEmp(${e.id}, '${e.name.replace(/'/g, "\\'")}')>"}>Delete</button>
+                  <button class="btn btn-danger btn-sm" onclick="deleteEmp(${e.id}, '${e.name.replace(/'/g, "\\'")}')>">Delete</button>
                 </td>
               </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:#999;padding:24px">No employees yet</td></tr>'}
             </tbody>
@@ -209,6 +280,23 @@ async function loadEmployees(showInactive = false) {
       toast('Employee added');
       loadEmployees(showInactive);
     } catch (err) { toast(err.error || 'Failed', 'error'); }
+  });
+
+  document.getElementById('bulk-employees-btn').addEventListener('click', async () => {
+    const lines = document.getElementById('bulk-employees').value
+      .split('\n').map(s => s.trim()).filter(Boolean);
+    if (!lines.length) return toast('Nothing to import', 'error');
+
+    const employees = lines.map(line => {
+      const [name, employee_id] = line.split(',').map(s => s.trim());
+      return { name, employee_id: employee_id || null };
+    });
+
+    try {
+      const result = await API.post('/api/employees/bulk', { employees });
+      toast(`Imported ${result.added} employees${result.skipped ? `, skipped ${result.skipped} duplicates` : ''}`);
+      loadEmployees(showInactive);
+    } catch (err) { toast(err.error || 'Import failed', 'error'); }
   });
 }
 
