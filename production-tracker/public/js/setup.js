@@ -26,7 +26,7 @@ async function loadCustomers() {
                 return `<tr>
                   <td>${c.name}</td>
                   <td><span class="badge badge-blue">${partCount}</span></td>
-                  <td><button class="btn btn-danger btn-sm" onclick="deleteCustomer(${c.id}, '${c.name.replace(/'/g, "\\'")}')>">Delete</button></td>
+                  <td><button class="btn btn-danger btn-sm" onclick="deleteCustomer(${c.id}, '${c.name.replace(/'/g, "\\'")}')" >Delete</button></td>
                 </tr>`;
               }).join('') || '<tr><td colspan="3" style="text-align:center;color:#999;padding:24px">No customers yet</td></tr>'}
             </tbody>
@@ -90,7 +90,7 @@ async function loadCustomers() {
                   <td><span class="badge badge-blue">${p.part_number}</span></td>
                   <td>${p.description || ''}</td>
                   <td>${p.target_rate != null ? p.target_rate + ' pcs/hr' : '—'}</td>
-                  <td><button class="btn btn-danger btn-sm" onclick="deletePart(${p.id}, '${p.part_number.replace(/'/g, "\\'")}')>">Delete</button></td>
+                  <td><button class="btn btn-danger btn-sm" onclick="deletePart(${p.id}, '${p.part_number.replace(/'/g, "\\'")}')" >Delete</button></td>
                 </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;color:#999;padding:24px">No parts yet</td></tr>'}
               </tbody>
             </table>
@@ -236,7 +236,7 @@ async function loadEmployees(showInactive = false) {
                     ? `<button class="btn btn-ghost btn-sm" onclick="deactivateEmp(${e.id})">Deactivate</button>`
                     : `<button class="btn btn-ghost btn-sm" onclick="reactivateEmp(${e.id})">Reactivate</button>`
                   }
-                  <button class="btn btn-danger btn-sm" onclick="deleteEmp(${e.id}, '${e.name.replace(/'/g, "\\'")}')>">Delete</button>
+                  <button class="btn btn-danger btn-sm" onclick="deleteEmp(${e.id}, '${e.name.replace(/'/g, "\\'")}')" >Delete</button>
                 </td>
               </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:#999;padding:24px">No employees yet</td></tr>'}
             </tbody>
