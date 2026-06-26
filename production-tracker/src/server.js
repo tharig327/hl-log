@@ -27,6 +27,17 @@ async function start() {
     }
   });
 
+  app.put('/api/customers/:id', (req, res) => {
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ error: 'Name required' });
+    try {
+      db.prepare('UPDATE customers SET name=? WHERE id=?').run(name.trim(), req.params.id);
+      res.json({ ok: true });
+    } catch (e) {
+      res.status(409).json({ error: 'Customer name already exists' });
+    }
+  });
+
   app.delete('/api/customers/:id', (req, res) => {
     const parts = db.prepare('SELECT id FROM parts WHERE customer_id = ?').all(req.params.id);
     const del = db.transaction(() => {
@@ -81,10 +92,14 @@ async function start() {
   });
 
   app.put('/api/parts/:id', (req, res) => {
-    const { description, target_rate } = req.body;
-    db.prepare('UPDATE parts SET description=?, target_rate=? WHERE id=?')
-      .run(description || null, target_rate || null, req.params.id);
-    res.json({ ok: true });
+    const { customer_id, part_number, description, target_rate } = req.body;
+    try {
+      db.prepare('UPDATE parts SET customer_id=COALESCE(?,customer_id), part_number=COALESCE(?,part_number), description=?, target_rate=? WHERE id=?')
+        .run(customer_id || null, part_number?.trim() || null, description || null, target_rate ?? null, req.params.id);
+      res.json({ ok: true });
+    } catch (e) {
+      res.status(409).json({ error: 'Part number already exists for this customer' });
+    }
   });
 
   app.delete('/api/parts/:id', (req, res) => {
@@ -136,8 +151,17 @@ async function start() {
   });
 
   app.put('/api/employees/:id', (req, res) => {
-    const { active } = req.body;
-    db.prepare('UPDATE employees SET active=? WHERE id=?').run(active ? 1 : 0, req.params.id);
+    const { active, name, employee_id } = req.body;
+    if (active !== undefined) {
+      db.prepare('UPDATE employees SET active=? WHERE id=?').run(active ? 1 : 0, req.params.id);
+    } else {
+      if (!name) return res.status(400).json({ error: 'Name required' });
+      try {
+        db.prepare('UPDATE employees SET name=?, employee_id=? WHERE id=?').run(name.trim(), employee_id || null, req.params.id);
+      } catch (e) {
+        return res.status(409).json({ error: 'Employee name already exists' });
+      }
+    }
     res.json({ ok: true });
   });
 

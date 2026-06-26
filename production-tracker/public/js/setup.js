@@ -1,3 +1,61 @@
+// ── Shared modal ───────────────────────────────────────────────
+function showModal({ title, fields, onSave }) {
+  document.getElementById('edit-modal')?.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'edit-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:1000';
+
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:12px;padding:28px;width:100%;max-width:440px;box-shadow:0 20px 60px rgba(0,0,0,.2)">
+      <h2 style="margin:0 0 20px;font-size:18px;color:#1a202c">${title}</h2>
+      <div id="modal-fields">
+        ${fields.map(f => `
+          <div class="form-group" style="margin-bottom:14px">
+            <label style="display:block;font-size:13px;font-weight:600;color:#4a5568;margin-bottom:4px">${f.label}${f.required ? ' *' : ''}</label>
+            ${f.type === 'select'
+              ? `<select id="mf-${f.key}" style="width:100%;padding:8px 10px;border:1px solid #cbd5e0;border-radius:6px;font-size:14px">
+                  ${f.options.map(o => `<option value="${o.value}" ${o.value == f.value ? 'selected' : ''}>${o.label}</option>`).join('')}
+                 </select>`
+              : `<input id="mf-${f.key}" type="${f.type || 'text'}" value="${f.value ?? ''}" placeholder="${f.placeholder || ''}"
+                   style="width:100%;padding:8px 10px;border:1px solid #cbd5e0;border-radius:6px;font-size:14px;box-sizing:border-box" ${f.required ? 'required' : ''} />`
+            }
+          </div>`).join('')}
+      </div>
+      <div id="modal-err" style="color:#e53e3e;font-size:13px;margin-bottom:10px;display:none"></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
+        <button id="modal-cancel" class="btn btn-ghost">Cancel</button>
+        <button id="modal-save" class="btn btn-primary">Save</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  const close = () => modal.remove();
+  document.getElementById('modal-cancel').onclick = close;
+  modal.addEventListener('click', e => { if (e.target === modal) close(); });
+
+  document.getElementById('modal-save').onclick = async () => {
+    const vals = {};
+    fields.forEach(f => {
+      const el = document.getElementById(`mf-${f.key}`);
+      vals[f.key] = el.value.trim();
+    });
+    const errEl = document.getElementById('modal-err');
+    errEl.style.display = 'none';
+    try {
+      await onSave(vals);
+      close();
+    } catch (err) {
+      errEl.textContent = err.error || 'Save failed';
+      errEl.style.display = 'block';
+    }
+  };
+
+  setTimeout(() => document.getElementById(`mf-${fields[0].key}`)?.focus(), 50);
+}
+
 // ── Customers & Parts ──────────────────────────────────────────
 async function loadCustomers() {
   const page = document.getElementById('page-customers');
@@ -26,7 +84,10 @@ async function loadCustomers() {
                 return `<tr>
                   <td>${c.name}</td>
                   <td><span class="badge badge-blue">${partCount}</span></td>
-                  <td><button class="btn btn-danger btn-sm" onclick="deleteCustomer(${c.id}, '${c.name.replace(/'/g, "\\'")}')" >Delete</button></td>
+                  <td style="display:flex;gap:6px">
+                    <button class="btn btn-ghost btn-sm" onclick="editCustomer(${c.id}, '${c.name.replace(/'/g, "\\'")}')" >Edit</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteCustomer(${c.id}, '${c.name.replace(/'/g, "\\'")}')" >Delete</button>
+                  </td>
                 </tr>`;
               }).join('') || '<tr><td colspan="3" style="text-align:center;color:#999;padding:24px">No customers yet</td></tr>'}
             </tbody>
@@ -90,7 +151,10 @@ async function loadCustomers() {
                   <td><span class="badge badge-blue">${p.part_number}</span></td>
                   <td>${p.description || ''}</td>
                   <td>${p.target_rate != null ? p.target_rate + ' pcs/hr' : '—'}</td>
-                  <td><button class="btn btn-danger btn-sm" onclick="deletePart(${p.id}, '${p.part_number.replace(/'/g, "\\'")}')" >Delete</button></td>
+                  <td style="display:flex;gap:6px">
+                    <button class="btn btn-ghost btn-sm" onclick="editPart(${p.id}, ${p.customer_id}, '${p.part_number.replace(/'/g, "\\'")}', '${(p.description||'').replace(/'/g, "\\'")}', ${p.target_rate ?? 'null'})" >Edit</button>
+                    <button class="btn btn-danger btn-sm" onclick="deletePart(${p.id}, '${p.part_number.replace(/'/g, "\\'")}')" >Delete</button>
+                  </td>
                 </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;color:#999;padding:24px">No parts yet</td></tr>'}
               </tbody>
             </table>
@@ -99,6 +163,41 @@ async function loadCustomers() {
       </div>
     </div>
   `;
+
+  window.editCustomer = function(id, name) {
+    showModal({
+      title: 'Edit Customer',
+      fields: [{ key: 'name', label: 'Customer Name', value: name, required: true }],
+      onSave: async vals => {
+        await API.put(`/api/customers/${id}`, { name: vals.name });
+        toast('Customer updated');
+        loadCustomers();
+      }
+    });
+  };
+
+  window.editPart = function(id, customerId, partNumber, description, targetRate) {
+    showModal({
+      title: 'Edit Part',
+      fields: [
+        { key: 'customer_id', label: 'Customer', type: 'select', value: customerId, required: true,
+          options: customers.map(c => ({ value: c.id, label: c.name })) },
+        { key: 'part_number', label: 'Part Number', value: partNumber, required: true },
+        { key: 'description', label: 'Description', value: description },
+        { key: 'target_rate', label: 'Target Rate (pcs/hr)', type: 'number', value: targetRate ?? '', placeholder: '0' }
+      ],
+      onSave: async vals => {
+        await API.put(`/api/parts/${id}`, {
+          customer_id: parseInt(vals.customer_id),
+          part_number: vals.part_number,
+          description: vals.description || null,
+          target_rate: vals.target_rate !== '' ? parseFloat(vals.target_rate) : null
+        });
+        toast('Part updated');
+        loadCustomers();
+      }
+    });
+  };
 
   window.deleteCustomer = async function(id, name) {
     if (!confirm(`Delete "${name}" and ALL its parts and production history?`)) return;
@@ -153,7 +252,6 @@ async function loadCustomers() {
       .split('\n').map(s => s.trim()).filter(Boolean);
     if (!lines.length) return toast('Nothing to import', 'error');
 
-    // Build customer map, auto-create any missing customers
     const customerMap = {};
     customers.forEach(c => { customerMap[c.name.toLowerCase()] = c.id; });
 
@@ -234,6 +332,7 @@ async function loadEmployees(showInactive = false) {
                 <td>${e.employee_id || '—'}</td>
                 <td><span class="badge ${e.active ? 'badge-green' : 'badge-red'}">${e.active ? 'Active' : 'Inactive'}</span></td>
                 <td style="display:flex;gap:6px;flex-wrap:wrap">
+                  <button class="btn btn-ghost btn-sm" onclick="editEmp(${e.id}, '${e.name.replace(/'/g, "\\'")}', '${(e.employee_id||'').replace(/'/g, "\\'")}')" >Edit</button>
                   ${e.active
                     ? `<button class="btn btn-ghost btn-sm" onclick="deactivateEmp(${e.id})">Deactivate</button>`
                     : `<button class="btn btn-ghost btn-sm" onclick="reactivateEmp(${e.id})">Reactivate</button>`
@@ -249,6 +348,21 @@ async function loadEmployees(showInactive = false) {
   `;
 
   document.getElementById('toggle-inactive').addEventListener('click', () => loadEmployees(!showInactive));
+
+  window.editEmp = function(id, name, employeeId) {
+    showModal({
+      title: 'Edit Employee',
+      fields: [
+        { key: 'name', label: 'Name', value: name, required: true },
+        { key: 'employee_id', label: 'Employee ID (badge #)', value: employeeId }
+      ],
+      onSave: async vals => {
+        await API.put(`/api/employees/${id}`, { name: vals.name, employee_id: vals.employee_id || null });
+        toast('Employee updated');
+        loadEmployees(showInactive);
+      }
+    });
+  };
 
   window.deactivateEmp = async function(id) {
     if (!confirm('Deactivate this employee?')) return;
