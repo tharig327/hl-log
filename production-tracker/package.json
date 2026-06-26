@@ -1,0 +1,14 @@
+{
+  "name": "production-tracker",
+  "version": "1.0.0",
+  "description": "HL Manufacturing production tracking system",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node src/server.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^9.4.3",
+    "express": "^4.18.2"
+  }
+}

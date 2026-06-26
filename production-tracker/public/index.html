@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HL Manufacturing — Production Tracker</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <nav class="sidebar">
+    <div class="logo">
+      <span class="logo-hl">HL</span>
+      <span class="logo-text">Production Tracker</span>
+    </div>
+    <ul>
+      <li><a href="#" data-page="dashboard" class="active">Dashboard</a></li>
+      <li><a href="#" data-page="log">Log Production</a></li>
+      <li><a href="#" data-page="history">History</a></li>
+      <li><a href="#" data-page="reports">Reports</a></li>
+      <li class="divider"></li>
+      <li><a href="#" data-page="customers">Customers &amp; Parts</a></li>
+      <li><a href="#" data-page="employees">Employees</a></li>
+      <li><a href="#" data-page="settings">Scrap Reasons</a></li>
+    </ul>
+  </nav>
+  <main class="content">
+    <div id="page-dashboard" class="page"></div>
+    <div id="page-log" class="page hidden"></div>
+    <div id="page-history" class="page hidden"></div>
+    <div id="page-reports" class="page hidden"></div>
+    <div id="page-customers" class="page hidden"></div>
+    <div id="page-employees" class="page hidden"></div>
+    <div id="page-settings" class="page hidden"></div>
+  </main>
+  <div id="toast" class="toast hidden"></div>
+  <script src="js/api.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/log.js"></script>
+  <script src="js/history.js"></script>
+  <script src="js/reports.js"></script>
+  <script src="js/setup.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
