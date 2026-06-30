@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>IQMS SQL Runner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --titlebar:#f3e9e3;
+    --titlebar-border:#d8c9c0;
+    --toolbar:#f0f0f0;
+    --face:#ece9e4;
+    --grid-header:#dde6f0;
+    --grid-header-border:#9fb3c8;
+    --grid-line:#d9d9d9;
+    --select-blue:#1e72d6;
+    --link-blue:#1b4fb0;
+    --text:#1f1f1f;
+    --muted:#5a5a5a;
+    --btn-green:#1c8a3c;
+    --btn-red:#c23b2e;
+    --btn-blue:#1e72d6;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:#7d7d7d; color:var(--text);
+    font-family:'Segoe UI','Barlow',sans-serif;
+    min-height:100vh; padding:24px;
+    font-size:13px;
+  }
+  .window{
+    max-width:1200px; margin:0 auto;
+    background:#fff; border:1px solid #6b6b6b;
+    box-shadow:0 8px 24px rgba(0,0,0,.35);
+  }
+  .titlebar{
+    background:linear-gradient(to bottom,var(--titlebar),#ecdcd3);
+    border-bottom:1px solid var(--titlebar-border);
+    padding:6px 10px; display:flex; align-items:center; gap:8px;
+  }
+  .titlebar .icon{
+    width:16px; height:16px; background:#1b4fb0; border-radius:2px;
+    display:inline-block;
+  }
+  .titlebar .title{font-weight:600; font-size:13px; color:#222;}
+  .toolbar{
+    background:var(--toolbar); border-bottom:1px solid #ccc;
+    padding:8px 10px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  }
+  textarea{
+    flex:1; min-width:260px;
+    background:#fff; color:var(--text); border:1px solid #9c9c9c;
+    padding:6px 8px; font-family:'Consolas','Share Tech Mono',monospace;
+    font-size:13px; line-height:1.4; min-height:34px; resize:vertical;
+  }
+  input[type=text]{
+    background:#fff; color:var(--text); border:1px solid #9c9c9c;
+    padding:6px 8px; font-family:'Consolas','Share Tech Mono',monospace; font-size:12px;
+  }
+  select{
+    background:#fff; color:var(--text); border:1px solid #9c9c9c;
+    padding:6px 8px; font-family:'Consolas','Share Tech Mono',monospace; font-size:12px;
+  }
+  label{font-size:11px; color:var(--muted);}
+  .checkrow{display:flex; align-items:center; gap:5px; font-size:12px; color:var(--muted);}
+  button{
+    border:1px solid #b9b9b9; border-radius:3px;
+    padding:6px 14px; font-weight:600;
+    font-size:12px; cursor:pointer; background:#f5f5f5; color:#222;
+  }
+  button:hover{background:#e8e8e8;}
+  button:disabled{color:#999; cursor:not-allowed;}
+  button.run{background:#fff;}
+  .status{font-family:'Consolas',monospace; font-size:11.5px; padding:4px 10px; background:#fff8e6; border-bottom:1px solid #e7d9a8; color:#7a5c00;}
+  .status.err{background:#fdeceb; color:var(--btn-red); border-bottom:1px solid #f0c4be;}
+  .status.ok{background:#eaf6ec; color:var(--btn-green); border-bottom:1px solid #c7e6cc;}
+  .status:empty{display:none;}
+  table{border-collapse:collapse; width:100%; font-size:12.5px; font-family:'Segoe UI',sans-serif;}
+  th{
+    background:var(--grid-header); color:#15315c; text-align:left; padding:6px 10px;
+    border:1px solid var(--grid-header-border); font-weight:600;
+    position:sticky; top:0; white-space:nowrap;
+  }
+  td{padding:5px 10px; border:1px solid var(--grid-line); white-space:nowrap;}
+  tbody tr:hover td{background:#eef4fb;}
+  tbody tr.selected td{background:var(--select-blue); color:#fff;}
+  .table-wrap{overflow:auto; max-height:62vh; border-top:1px solid #ccc;}
+  .meta{display:flex; justify-content:space-between; color:var(--muted); font-size:11.5px; padding:5px 10px; background:var(--toolbar); border-top:1px solid #ccc;}
+  .empty{color:var(--muted); padding:24px; text-align:center; font-size:12.5px;}
+  .statusbar{
+    background:var(--toolbar); border-top:1px solid #ccc;
+    padding:7px 10px; display:flex; justify-content:flex-end; gap:8px;
+  }
+  .statusbar button.select{background:#fff; color:var(--btn-green); border-color:#bcdcc2;}
+  .statusbar button.cancel{background:#fff; color:var(--btn-red); border-color:#f0c4be;}
+
+  .builder{
+    background:#f7f9fb; border-bottom:1px solid #ccc; padding:12px 10px;
+  }
+  .builder-row{
+    display:flex; gap:10px; align-items:flex-end; margin-bottom:8px; flex-wrap:wrap;
+  }
+  .builder-field{display:flex; flex-direction:column; gap:3px; flex:1; min-width:140px;}
+  .builder-field label{font-size:11px; color:var(--muted);}
+  .builder-field input, .builder-field select{
+    background:#fff; border:1px solid #9c9c9c; padding:6px 8px;
+    font-family:'Consolas',monospace; font-size:12px;
+  }
+  .builder-label-row{font-size:11.5px; color:#15315c; font-weight:600;}
+  .hint{font-weight:400; color:#9a9a9a;}
+  .cond-row{
+    display:flex; gap:6px; align-items:center; margin-bottom:6px;
+  }
+  .cond-row select, .cond-row input{
+    background:#fff; border:1px solid #9c9c9c; padding:5px 7px;
+    font-family:'Consolas',monospace; font-size:12px;
+  }
+  .cond-row .cond-field{flex:1.4; min-width:120px;}
+  .cond-row .cond-op{flex:1; min-width:110px;}
+  .cond-row .cond-val{flex:1.6; min-width:120px;}
+  .cond-row .cond-join{flex:0 0 70px;}
+  .cond-row button.remove{
+    background:#fdeceb; color:var(--btn-red); border-color:#f0c4be;
+    padding:5px 9px; font-size:11px;
+  }
+  .join-row{
+    display:flex; gap:6px; align-items:center; margin-bottom:6px;
+  }
+  .join-row select, .join-row input{
+    background:#fff; border:1px solid #9c9c9c; padding:5px 7px;
+    font-family:'Consolas',monospace; font-size:12px;
+  }
+  .join-row .join-type{flex:0 0 100px;}
+  .join-row .join-table{flex:1.3; min-width:110px;}
+  .join-row .join-alias{flex:0 0 60px;}
+  .join-row .join-on{flex:2; min-width:160px;}
+  .join-row .join-eq{flex:0 0 18px; text-align:center; color:var(--muted); font-size:12px;}
+  .join-row button.remove{
+    background:#fdeceb; color:var(--btn-red); border-color:#f0c4be;
+    padding:5px 9px; font-size:11px;
+  }
+</style>
+</head>
+<body>
+
+<div class="window">
+  <div class="titlebar">
+    <span class="icon"></span>
+    <span class="title">IQMS SQL Runner</span>
+  </div>
+
+  <div class="toolbar">
+    <textarea id="sqlInput" placeholder="SELECT * FROM ARINVT WHERE ROWNUM <= 50">SELECT * FROM ARINVT WHERE ROWNUM &lt;= 50</textarea>
+    <button id="runBtn" class="run" onclick="runQuery()">🔍 Run Query</button>
+    <button onclick="toggleBuilder()">🛠 Query Builder</button>
+  </div>
+  <div class="toolbar" style="padding-top:0; border-top:none;">
+    <label>Proxy URL</label>
+    <input type="text" id="proxyUrl" value="http://TYLER.hl.local:3001/query" size="42">
+    <span class="checkrow"><input type="checkbox" id="exactMatch"> Exact Match</span>
+  </div>
+
+  <div class="toolbar" style="padding-top:0; border-top:none;">
+    <label>Saved</label>
+    <select id="savedSelect" onchange="loadSaved()" style="min-width:220px;">
+      <option value="">— Select a saved query —</option>
+    </select>
+    <button onclick="saveCurrent()">💾 Save</button>
+    <button onclick="renameSaved()">✎ Rename</button>
+    <button onclick="deleteSaved()">🗑 Delete</button>
+    <button onclick="exportSaved()">⬇ Export</button>
+    <button onclick="document.getElementById('importFile').click()">⬆ Import</button>
+    <input type="file" id="importFile" accept="application/json" style="display:none;" onchange="importSaved(event)">
+  </div>
+
+  <div id="builderPanel" class="builder" style="display:none;">
+    <div class="builder-row">
+      <div class="builder-field">
+        <label>Table</label>
+        <input type="text" id="b_table" placeholder="ARINVT">
+      </div>
+      <div class="builder-field" style="max-width:90px;">
+        <label>Alias</label>
+        <input type="text" id="b_alias" placeholder="t1">
+      </div>
+      <div class="builder-field" style="flex:2;">
+        <label>Columns <span class="hint">(comma-separated, blank = *)</span></label>
+        <input type="text" id="b_columns" placeholder="t1.ITEM_NUMBER, t2.DESCRIPTION">
+      </div>
+    </div>
+
+    <div class="builder-row">
+      <label class="builder-label-row">Joins <span class="hint">(optional — link other tables in)</span></label>
+    </div>
+    <div id="b_joins"></div>
+    <div class="builder-row">
+      <button type="button" onclick="addJoin()">+ Add Join</button>
+    </div>
+
+    <div class="builder-row">
+      <label class="builder-label-row">Where conditions</label>
+    </div>
+    <div id="b_conditions"></div>
+    <div class="builder-row">
+      <button type="button" onclick="addCondition()">+ Add Condition</button>
+    </div>
+
+    <div class="builder-row">
+      <div class="builder-field">
+        <label>Order by</label>
+        <input type="text" id="b_orderby" placeholder="ITEM_NUMBER">
+      </div>
+      <div class="builder-field" style="max-width:120px;">
+        <label>Direction</label>
+        <select id="b_orderdir">
+          <option value="">—</option>
+          <option value="ASC">ASC</option>
+          <option value="DESC">DESC</option>
+        </select>
+      </div>
+      <div class="builder-field" style="max-width:120px;">
+        <label>Row limit</label>
+        <input type="text" id="b_limit" placeholder="100">
+      </div>
+    </div>
+
+    <div class="builder-row" style="justify-content:flex-end;">
+      <button type="button" onclick="clearBuilder()">↺ Clear</button>
+      <button type="button" onclick="toggleBuilder()">Close</button>
+      <button type="button" class="run" onclick="buildSql()">⚙ Build SQL</button>
+    </div>
+  </div>
+
+  <div class="status" id="statusLine"></div>
+
+  <div class="table-wrap" id="resultsWrap">
+    <div class="empty">No results yet. Enter SQL above and run.</div>
+  </div>
+  <div class="meta" id="metaLine" style="display:none;"></div>
+
+  <div class="statusbar">
+    <button class="select" onclick="alert('Hook this up to whatever selecting a row should do.')">✔ Select</button>
+    <button class="cancel" onclick="sqlInput.value=''; resultsWrap.innerHTML='<div class=\'empty\'>No results yet. Enter SQL above and run.</div>'; metaLine.style.display='none'; statusLine.textContent='';">✘ Cancel</button>
+  </div>
+</div>
+
+<script>
+const sqlInput = document.getElementById('sqlInput');
+const runBtn = document.getElementById('runBtn');
+const statusLine = document.getElementById('statusLine');
+const metaLine = document.getElementById('metaLine');
+const resultsWrap = document.getElementById('resultsWrap');
+const savedSelect = document.getElementById('savedSelect');
+
+sqlInput.addEventListener('keydown', (e) => {
+  if (e.ctrlKey && e.key === 'Enter') runQuery();
+});
+
+function setStatus(msg, cls) {
+  statusLine.textContent = msg;
+  statusLine.className = 'status' + (cls ? ' ' + cls : '');
+}
+
+// ---- Saved queries (stored locally in this browser) ----
+const SAVE_KEY = 'iqms_sql_runner_saved_queries';
+
+function getSavedQueries() {
+  try {
+    return JSON.parse(localStorage.getItem(SAVE_KEY) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function setSavedQueries(list) {
+  localStorage.setItem(SAVE_KEY, JSON.stringify(list));
+}
+
+function refreshSavedDropdown(selectName) {
+  const list = getSavedQueries();
+  savedSelect.innerHTML = '<option value="">— Select a saved query —</option>';
+  list.forEach(item => {
+    const opt = document.createElement('option');
+    opt.value = item.name;
+    opt.textContent = item.name;
+    savedSelect.appendChild(opt);
+  });
+  if (selectName) savedSelect.value = selectName;
+}
+
+function saveCurrent() {
+  const sql = sqlInput.value.trim();
+  if (!sql) { setStatus('Nothing to save — write a query first.', 'err'); return; }
+  const defaultName = savedSelect.value || '';
+  const name = prompt('Save query as:', defaultName);
+  if (!name) return;
+  const list = getSavedQueries();
+  const existingIdx = list.findIndex(q => q.name === name);
+  if (existingIdx >= 0) {
+    if (!confirm('"' + name + '" already exists. Overwrite it?')) return;
+    list[existingIdx].sql = sql;
+  } else {
+    list.push({ name, sql });
+  }
+  setSavedQueries(list);
+  refreshSavedDropdown(name);
+  setStatus('Saved "' + name + '".', 'ok');
+}
+
+function loadSaved() {
+  const name = savedSelect.value;
+  if (!name) return;
+  const list = getSavedQueries();
+  const item = list.find(q => q.name === name);
+  if (item) {
+    sqlInput.value = item.sql;
+    setStatus('Loaded "' + name + '".', 'ok');
+  }
+}
+
+function renameSaved() {
+  const name = savedSelect.value;
+  if (!name) { setStatus('Select a saved query to rename first.', 'err'); return; }
+  const newName = prompt('Rename "' + name + '" to:', name);
+  if (!newName || newName === name) return;
+  const list = getSavedQueries();
+  if (list.some(q => q.name === newName)) { setStatus('A saved query named "' + newName + '" already exists.', 'err'); return; }
+  const item = list.find(q => q.name === name);
+  if (item) item.name = newName;
+  setSavedQueries(list);
+  refreshSavedDropdown(newName);
+  setStatus('Renamed to "' + newName + '".', 'ok');
+}
+
+function deleteSaved() {
+  const name = savedSelect.value;
+  if (!name) { setStatus('Select a saved query to delete first.', 'err'); return; }
+  if (!confirm('Delete "' + name + '"?')) return;
+  const list = getSavedQueries().filter(q => q.name !== name);
+  setSavedQueries(list);
+  refreshSavedDropdown();
+  setStatus('Deleted "' + name + '".', 'ok');
+}
+
+function exportSaved() {
+  const list = getSavedQueries();
+  if (list.length === 0) { setStatus('No saved queries to export.', 'err'); return; }
+  const blob = new Blob([JSON.stringify(list, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0, 10);
+  a.href = URL.createObjectURL(blob);
+  a.download = 'iqms-saved-queries-' + stamp + '.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setStatus('Exported ' + list.length + ' saved quer' + (list.length === 1 ? 'y' : 'ies') + '.', 'ok');
+}
+
+function importSaved(event) {
+  const file = event.target.files[0];
+  event.target.value = ''; // allow re-selecting the same file later
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    let incoming;
+    try {
+      incoming = JSON.parse(reader.result);
+      if (!Array.isArray(incoming)) throw new Error('not an array');
+    } catch {
+      setStatus('Import failed: file is not a valid saved-queries JSON export.', 'err');
+      return;
+    }
+
+    const valid = incoming.filter(q => q && typeof q.name === 'string' && typeof q.sql === 'string');
+    if (valid.length === 0) {
+      setStatus('Import failed: no valid entries found in file.', 'err');
+      return;
+    }
+
+    const current = getSavedQueries();
+    let added = 0, skipped = 0, overwritten = 0;
+    const mergeOverwrite = confirm(
+      valid.length + ' quer' + (valid.length === 1 ? 'y' : 'ies') + ' found in file.\n\n' +
+      'Click OK to overwrite any existing entries with the same name.\n' +
+      'Click Cancel to keep your existing entries and skip duplicates.'
+    );
+
+    valid.forEach(item => {
+      const idx = current.findIndex(q => q.name === item.name);
+      if (idx >= 0) {
+        if (mergeOverwrite) { current[idx].sql = item.sql; overwritten++; }
+        else { skipped++; }
+      } else {
+        current.push({ name: item.name, sql: item.sql });
+        added++;
+      }
+    });
+
+    setSavedQueries(current);
+    refreshSavedDropdown();
+    setStatus('Import complete: ' + added + ' added, ' + overwritten + ' overwritten, ' + skipped + ' skipped.', 'ok');
+  };
+  reader.onerror = () => setStatus('Import failed: could not read the file.', 'err');
+  reader.readAsText(file);
+}
+
+refreshSavedDropdown();
+
+// ---- Query Builder ----
+const builderPanel = document.getElementById('builderPanel');
+const condContainer = document.getElementById('b_conditions');
+let condCounter = 0;
+
+function toggleBuilder() {
+  const showing = builderPanel.style.display !== 'none';
+  if (showing) {
+    builderPanel.style.display = 'none';
+  } else {
+    builderPanel.style.display = 'block';
+    if (condContainer.children.length === 0) addCondition();
+  }
+}
+
+function addJoin() {
+  const joinContainer = document.getElementById('b_joins');
+  const id = 'join_' + (++condCounter);
+  const row = document.createElement('div');
+  row.className = 'join-row';
+  row.id = id;
+  row.innerHTML =
+    '<select class="join-type">' +
+      '<option value="INNER JOIN">INNER JOIN</option>' +
+      '<option value="LEFT JOIN">LEFT JOIN</option>' +
+      '<option value="RIGHT JOIN">RIGHT JOIN</option>' +
+      '<option value="FULL JOIN">FULL JOIN</option>' +
+    '</select>' +
+    '<input type="text" class="join-table" placeholder="OTHER_TABLE">' +
+    '<input type="text" class="join-alias" placeholder="t2">' +
+    '<span style="font-size:11px;color:var(--muted);">ON</span>' +
+    '<input type="text" class="join-on" placeholder="t1.COL = t2.COL">' +
+    '<button type="button" class="remove" onclick="removeJoin(\'' + id + '\')">✕</button>';
+  joinContainer.appendChild(row);
+}
+
+function removeJoin(id) {
+  const row = document.getElementById(id);
+  if (row) row.remove();
+}
+
+function addCondition() {
+  condCounter++;
+  const id = 'cond_' + condCounter;
+  const row = document.createElement('div');
+  row.className = 'cond-row';
+  row.id = id;
+  row.innerHTML =
+    '<select class="cond-join">' +
+      '<option value="AND">AND</option>' +
+      '<option value="OR">OR</option>' +
+    '</select>' +
+    '<input type="text" class="cond-field" placeholder="COLUMN">' +
+    '<select class="cond-op">' +
+      '<option value="=">=</option>' +
+      '<option value="!=">!=</option>' +
+      '<option value=">">&gt;</option>' +
+      '<option value="<">&lt;</option>' +
+      '<option value=">=">&gt;=</option>' +
+      '<option value="<=">&lt;=</option>' +
+      '<option value="LIKE">LIKE</option>' +
+      '<option value="IS NULL">IS NULL</option>' +
+      '<option value="IS NOT NULL">IS NOT NULL</option>' +
+      '<option value="IN">IN</option>' +
+    '</select>' +
+    '<input type="text" class="cond-val" placeholder="value">' +
+    '<button type="button" class="remove" onclick="removeCondition(\'' + id + '\')">✕</button>';
+
+  // first condition row has no real join, hide the join select
+  if (condContainer.children.length === 0) {
+    row.querySelector('.cond-join').style.visibility = 'hidden';
+  }
+
+  const valInput = row.querySelector('.cond-val');
+  const opSelect = row.querySelector('.cond-op');
+  opSelect.addEventListener('change', () => {
+    const noVal = opSelect.value === 'IS NULL' || opSelect.value === 'IS NOT NULL';
+    valInput.style.display = noVal ? 'none' : '';
+  });
+
+  condContainer.appendChild(row);
+}
+
+function removeCondition(id) {
+  const row = document.getElementById(id);
+  if (row) row.remove();
+  // re-hide join on whichever row is now first
+  const first = condContainer.querySelector('.cond-row');
+  if (first) first.querySelector('.cond-join').style.visibility = 'hidden';
+}
+
+function sqlQuoteValue(raw) {
+  const v = raw.trim();
+  if (v === '') return "''";
+  // numeric literal — leave unquoted
+  if (/^-?\d+(\.\d+)?$/.test(v)) return v;
+  // already wrapped in quotes/parens (e.g. user typed their own IN list or function)
+  if (/^\(.*\)$/.test(v) || /^'.*'$/.test(v)) return v;
+  return "'" + v.replace(/'/g, "''") + "'";
+}
+
+function buildSql() {
+  const table = document.getElementById('b_table').value.trim();
+  if (!table) { setStatus('Enter a table name in the builder first.', 'err'); return; }
+  const alias = document.getElementById('b_alias').value.trim();
+
+  const colsRaw = document.getElementById('b_columns').value.trim();
+  const columns = colsRaw ? colsRaw.split(',').map(c => c.trim()).filter(Boolean).join(', ') : '*';
+
+  let sql = 'SELECT ' + columns + '\nFROM ' + table + (alias ? ' ' + alias : '');
+
+  const joinRows = Array.from(document.getElementById('b_joins').querySelectorAll('.join-row'));
+  joinRows.forEach(row => {
+    const type = row.querySelector('.join-type').value;
+    const jTable = row.querySelector('.join-table').value.trim();
+    const jAlias = row.querySelector('.join-alias').value.trim();
+    const onCond = row.querySelector('.join-on').value.trim();
+    if (!jTable || !onCond) return;
+    sql += '\n' + type + ' ' + jTable + (jAlias ? ' ' + jAlias : '') + ' ON ' + onCond;
+  });
+
+  const condRows = Array.from(condContainer.querySelectorAll('.cond-row'));
+  const clauses = [];
+  condRows.forEach((row, idx) => {
+    const field = row.querySelector('.cond-field').value.trim();
+    const op = row.querySelector('.cond-op').value;
+    const valRaw = row.querySelector('.cond-val').value;
+    const join = row.querySelector('.cond-join').value;
+    if (!field) return;
+
+    let clause;
+    if (op === 'IS NULL' || op === 'IS NOT NULL') {
+      clause = field + ' ' + op;
+    } else if (op === 'IN') {
+      const items = valRaw.split(',').map(v => sqlQuoteValue(v)).join(', ');
+      clause = field + ' IN (' + items + ')';
+    } else if (op === 'LIKE') {
+      clause = field + ' LIKE ' + sqlQuoteValue(valRaw);
+    } else {
+      clause = field + ' ' + op + ' ' + sqlQuoteValue(valRaw);
+    }
+
+    clauses.push((idx === 0 ? '' : join + ' ') + clause);
+  });
+
+  if (clauses.length > 0) {
+    sql += '\nWHERE ' + clauses.join('\n  ');
+  }
+
+  const orderBy = document.getElementById('b_orderby').value.trim();
+  const orderDir = document.getElementById('b_orderdir').value;
+  if (orderBy) {
+    sql += '\nORDER BY ' + orderBy + (orderDir ? ' ' + orderDir : '');
+  }
+
+  const limit = document.getElementById('b_limit').value.trim();
+  if (limit && /^\d+$/.test(limit)) {
+    sql = clauses.length > 0
+      ? sql.replace(/\nWHERE /, '\nWHERE ROWNUM <= ' + limit + '\n  AND ')
+      : sql + '\nWHERE ROWNUM <= ' + limit;
+  }
+
+  sqlInput.value = sql + ';';
+  setStatus('SQL built from query builder.', 'ok');
+  toggleBuilder();
+}
+
+function clearBuilder() {
+  document.getElementById('b_table').value = '';
+  document.getElementById('b_alias').value = '';
+  document.getElementById('b_columns').value = '';
+  document.getElementById('b_joins').innerHTML = '';
+  condContainer.innerHTML = '';
+  addCondition();
+  document.getElementById('b_orderby').value = '';
+  document.getElementById('b_orderdir').value = '';
+  document.getElementById('b_limit').value = '';
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+// Matches oracle_proxy.py's /query route: {columns: [...], rows: [[...], ...]}
+// or {error: "..."} on failure.
+function parseProxyJson(data) {
+  const headers = data.columns || [];
+  const rows = data.rows || [];
+  return { headers, rows };
+}
+
+async function runQuery() {
+  const sql = sqlInput.value.trim();
+  const url = document.getElementById('proxyUrl').value.trim();
+  if (!sql) { setStatus('Enter a SQL statement first.', 'err'); return; }
+  if (!url) { setStatus('Enter the proxy URL.', 'err'); return; }
+
+  runBtn.disabled = true;
+  setStatus('Running…', '');
+  resultsWrap.innerHTML = '<div class="empty">Querying…</div>';
+  metaLine.style.display = 'none';
+
+  const started = performance.now();
+  try {
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sql })
+    });
+
+    const data = await resp.json();
+
+    if (!resp.ok || data.error) {
+      setStatus(data.error || ('HTTP ' + resp.status), 'err');
+      resultsWrap.innerHTML = '<div class="empty">Query failed. See status above.</div>';
+      return;
+    }
+
+    const { headers, rows } = parseProxyJson(data);
+
+    if (headers.length === 0) {
+      setStatus('Query ran but returned no data.', 'ok');
+      resultsWrap.innerHTML = '<div class="empty">No rows returned.</div>';
+      return;
+    }
+
+    let html = '<table><thead><tr>';
+    headers.forEach(h => html += '<th>' + escapeHtml(h) + '</th>');
+    html += '</tr></thead><tbody>';
+    rows.forEach((r, ri) => {
+      html += '<tr data-row="' + ri + '"' + (ri === 0 ? ' class="selected"' : '') + '>';
+      headers.forEach((_, i) => html += '<td>' + escapeHtml(r[i] !== undefined ? r[i] : '') + '</td>');
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+    resultsWrap.innerHTML = html;
+
+    resultsWrap.querySelectorAll('tbody tr').forEach(tr => {
+      tr.addEventListener('click', () => {
+        resultsWrap.querySelectorAll('tbody tr').forEach(t => t.classList.remove('selected'));
+        tr.classList.add('selected');
+      });
+    });
+
+    const ms = Math.round(performance.now() - started);
+    metaLine.style.display = 'flex';
+    metaLine.innerHTML = '<span>' + rows.length + ' row(s), ' + headers.length + ' column(s)</span><span>' + ms + ' ms</span>';
+    setStatus('Success.', 'ok');
+
+  } catch (err) {
+    setStatus('Request failed: ' + err.message + ' (check proxy is reachable and CORS is allowed)', 'err');
+    resultsWrap.innerHTML = '<div class="empty">No connection to proxy.</div>';
+  } finally {
+    runBtn.disabled = false;
+  }
+}
+</script>
+
+</body>
+</html>
