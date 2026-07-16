@@ -19,6 +19,12 @@ app.use(session({
 
 app.use(express.static(path.join(__dirname, '../../')));
 
+// Redirect old /t/ path to t1.html
+app.get('/t/', (req, res) => {
+  const q = req.query.ticket ? '?ticket=' + req.query.ticket : '';
+  res.redirect('/t1.html' + q);
+});
+
 function touch() {
   db.prepare("UPDATE meta SET value = CURRENT_TIMESTAMP WHERE key = 'updated_at'").run();
 }
