@@ -104,14 +104,18 @@ async function importGist() {
   const appEnvelope = await parseFileRaw('hl_applicator_data.json');
   if (appEnvelope && !Array.isArray(appEnvelope)) {
     const custs = appEnvelope.customers || appEnvelope.customersList || [];
+    console.log('Customers in Gist:', JSON.stringify(custs));
     if (custs.length) {
-      const stmt = db.prepare(`INSERT OR IGNORE INTO customers (id,name,active) VALUES (?,?,1)`);
+      db.exec('DELETE FROM customers');
+      const stmt = db.prepare(`INSERT INTO customers (id,name,active) VALUES (?,?,1)`);
       custs.forEach((c,i) => stmt.run(parseInt(c.id||i+1), String(c.name||c)));
       console.log(`Imported ${custs.length} customers`);
     }
     const conts = appEnvelope.contacts || [];
+    console.log('Contacts in Gist:', JSON.stringify(conts));
     if (conts.length) {
-      const stmt = db.prepare(`INSERT OR IGNORE INTO contacts (id,name,email,active) VALUES (?,?,?,1)`);
+      db.exec('DELETE FROM contacts');
+      const stmt = db.prepare(`INSERT INTO contacts (id,name,email,active) VALUES (?,?,?,1)`);
       conts.forEach((c,i) => stmt.run(parseInt(c.id||i+1), String(c.name), c.email||null));
       console.log(`Imported ${conts.length} contacts`);
     }
