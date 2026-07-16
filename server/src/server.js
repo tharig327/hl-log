@@ -4,7 +4,7 @@ const session = require('express-session');
 const path = require('path');
 const createDb = require('./db');
 const multer = require('multer');
-const XLSX = require('xlsx');
+const ExcelJS = require('exceljs');
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20*1024*1024 } });
 
 const db = createDb();
@@ -799,16 +799,35 @@ app.post('/api/maintenance/equipment/:eqId/spares/:spareId', requireAuth, (req, 
 });
 
 // POST /api/maintenance/import-csp — one-time CSP spreadsheet import (supervisor only)
-app.post('/api/maintenance/import-csp', requireAuth, upload.single('file'), (req, res) => {
+app.post('/api/maintenance/import-csp', requireAuth, upload.single('file'), async (req, res) => {
   if (req.session.userRole !== 'supervisor') return res.status(403).json({ error: 'Supervisor only' });
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
-  let wb;
-  try { wb = XLSX.read(req.file.buffer, { type: 'buffer' }); }
+  const wb = new ExcelJS.Workbook();
+  try { await wb.xlsx.load(req.file.buffer); }
   catch(e) { return res.status(400).json({ error: 'Could not parse xlsx: ' + e.message }); }
 
-  const sheetName = wb.SheetNames.find(n => n.toLowerCase().includes('csp')) || wb.SheetNames[0];
-  const rows = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { defval: null });
+  // Find the CSP sheet
+  let ws = wb.worksheets.find(s => s.name.toLowerCase().includes('csp')) || wb.worksheets[0];
+  if (!ws) return res.status(400).json({ error: 'No worksheet found' });
+
+  // Convert to array of plain objects using first row as header
+  const headers = [];
+  ws.getRow(1).eachCell((cell, col) => { headers[col] = String(cell.value||'').trim(); });
+  const rows = [];
+  ws.eachRow((row, rowNum) => {
+    if (rowNum === 1) return;
+    const obj = {};
+    row.eachCell((cell, col) => {
+      if (headers[col]) {
+        let v = cell.value;
+        if (v && typeof v === 'object' && v.richText) v = v.richText.map(r=>r.text).join('');
+        if (v && typeof v === 'object' && v.text) v = v.text;
+        obj[headers[col]] = v ?? null;
+      }
+    });
+    rows.push(obj);
+  });
 
   // Supplier canonical map (dirty → clean)
   const supplierMap = {
