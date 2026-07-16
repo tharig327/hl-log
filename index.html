@@ -1732,7 +1732,9 @@ function shareTicket(sec,id){
   if(!e||!e.ticketNum){ toast('No ticket number on this entry','#cc4444'); return; }
   const base=window.location.origin;
   const url=base+'/t1.html?ticket='+e.ticketNum;
-  navigator.clipboard.writeText(url).then(()=>toast('Ticket link copied')).catch(()=>prompt('Copy this link:',url));
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(url).then(()=>toast('Ticket link copied')).catch(()=>prompt('Copy this link:',url));
+  } else { prompt('Copy this link:',url); }
 }
 
 // ── CONTACTS ──
