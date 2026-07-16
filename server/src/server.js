@@ -346,24 +346,31 @@ async function syncEquipment(db) {
 
 // IQMS sync — PM schedules
 async function syncPmSchedules(db) {
-  // v_pmjob_list confirmed: ID,PMEQMT_ID,TASKNO,DESCRIP,WO_OPEN,INCOMPLETE,
-  // TOTAL_UNITS,WO_CREATE_THRESHOLD,HOURS4TSK,NUMPEOPLE,PERFORM_EVERY (31 cols, Y/N booleans)
-  const sql = `SELECT id iqms_id, pmeqmt_id, taskno, descrip,
-    perform_every, total_units, wo_create_threshold, hours4tsk, numpeople,
-    wo_open, incomplete
+  // v_pmjob_list confirmed columns (31 total, Y/N booleans for wo_open/incomplete/archived)
+  const sql = `SELECT id iqms_id, pmeqmt_id, pmtasks_id, taskno, descrip,
+    perform_every, uom, act_every, total_units, wo_create_threshold,
+    hours4tsk, numpeople,
+    TO_CHAR(scheduled_since,'YYYY-MM-DD') scheduled_since,
+    TO_CHAR(last_closed_wo,'YYYY-MM-DD') last_closed_wo,
+    wo_open, incomplete, archived
     FROM v_pmjob_list`;
   const data = await iqmsQuery(sql);
   const rows = rowsToObjects(data);
   const ins = db.prepare(`INSERT OR REPLACE INTO pm_schedule
-    (iqms_id,pmeqmt_id,taskno,descrip,perform_every,total_units,
-     wo_create_threshold,hours4tsk,numpeople,wo_open,incomplete,synced_at)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP)`);
+    (iqms_id,pmeqmt_id,pmtasks_id,taskno,descrip,perform_every,uom,act_every,
+     total_units,wo_create_threshold,hours4tsk,numpeople,
+     scheduled_since,last_closed_wo,wo_open,incomplete,archived,synced_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP)`);
   function yn(v) { return (v==='Y'||v===1) ? 1 : 0; }
   db.transaction(() => {
     db.prepare('DELETE FROM pm_schedule').run();
-    rows.forEach(r => ins.run(r.iqms_id, r.pmeqmt_id, r.taskno, r.descrip,
-      r.perform_every, r.total_units, r.wo_create_threshold,
-      r.hours4tsk, r.numpeople, yn(r.wo_open), yn(r.incomplete)));
+    rows.forEach(r => ins.run(
+      r.iqms_id, r.pmeqmt_id, r.pmtasks_id, r.taskno, r.descrip,
+      r.perform_every, r.uom, r.act_every,
+      r.total_units, r.wo_create_threshold, r.hours4tsk, r.numpeople,
+      r.scheduled_since, r.last_closed_wo,
+      yn(r.wo_open), yn(r.incomplete), yn(r.archived)
+    ));
   })();
   return rows.length;
 }
