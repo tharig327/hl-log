@@ -40,6 +40,14 @@ async function importGist() {
   const files = gist.files || {};
   console.log('Files found in Gist:', Object.keys(files).join(', ') || '(none)');
 
+  async function parseFileRaw(name) {
+    const f = files[name];
+    if (!f) return null;
+    let content = f.content;
+    if (f.truncated && f.raw_url) content = await httpGet(f.raw_url, { 'User-Agent': 'floorsync-migrate', 'Authorization': `token ${token}` });
+    try { return JSON.parse(content); } catch { return null; }
+  }
+
   async function parseFile(name) {
     const f = files[name];
     if (!f) return null;
@@ -90,6 +98,41 @@ async function importGist() {
     const stmt = db.prepare(`INSERT OR IGNORE INTO customers (id,name,active) VALUES (?,?,1)`);
     customers.forEach((c,i) => stmt.run(c.id||i+1, c.name));
     console.log(`Imported ${customers.length} customers`);
+  }
+
+  // Extract customers/contacts from hl_applicator_data.json envelope
+  const appEnvelope = await parseFileRaw('hl_applicator_data.json');
+  if (appEnvelope && !Array.isArray(appEnvelope)) {
+    const custs = appEnvelope.customers || appEnvelope.customersList || [];
+    if (custs.length) {
+      const stmt = db.prepare(`INSERT OR IGNORE INTO customers (id,name,active) VALUES (?,?,1)`);
+      custs.forEach((c,i) => stmt.run(c.id||i+1, c.name||c));
+      console.log(`Imported ${custs.length} customers from hl_applicator_data.json`);
+    }
+    const conts = appEnvelope.contacts || [];
+    if (conts.length) {
+      const stmt = db.prepare(`INSERT OR IGNORE INTO contacts (id,name,email,active) VALUES (?,?,?,1)`);
+      conts.forEach((c,i) => stmt.run(c.id||i+1, c.name, c.email||null));
+      console.log(`Imported ${conts.length} contacts from hl_applicator_data.json`);
+    }
+    // Also check meta file
+    const metaEnv = await parseFileRaw('hl_applicator_meta.json');
+    if (metaEnv && !Array.isArray(metaEnv)) {
+      const mc = metaEnv.customers || metaEnv.customersList || [];
+      if (mc.length) {
+        const stmt = db.prepare(`INSERT OR IGNORE INTO customers (id,name,active) VALUES (?,?,1)`);
+        mc.forEach((c,i) => stmt.run(c.id||i+1, c.name||c));
+        console.log(`Imported ${mc.length} customers from hl_applicator_meta.json`);
+      }
+      const mco = metaEnv.contacts || [];
+      if (mco.length) {
+        const stmt = db.prepare(`INSERT OR IGNORE INTO contacts (id,name,email,active) VALUES (?,?,?,1)`);
+        mco.forEach((c,i) => stmt.run(c.id||i+1, c.name, c.email||null));
+        console.log(`Imported ${mco.length} contacts from hl_applicator_meta.json`);
+      }
+    }
+    // Print all top-level keys so we can see what's available
+    console.log('Keys in hl_applicator_data.json:', Object.keys(appEnvelope).join(', '));
   }
 
   // Applicator entries
