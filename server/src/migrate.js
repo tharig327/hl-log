@@ -106,33 +106,15 @@ async function importGist() {
     const custs = appEnvelope.customers || appEnvelope.customersList || [];
     if (custs.length) {
       const stmt = db.prepare(`INSERT OR IGNORE INTO customers (id,name,active) VALUES (?,?,1)`);
-      custs.forEach((c,i) => stmt.run(c.id||i+1, c.name||c));
-      console.log(`Imported ${custs.length} customers from hl_applicator_data.json`);
+      custs.forEach((c,i) => stmt.run(parseInt(c.id||i+1), String(c.name||c)));
+      console.log(`Imported ${custs.length} customers`);
     }
     const conts = appEnvelope.contacts || [];
     if (conts.length) {
       const stmt = db.prepare(`INSERT OR IGNORE INTO contacts (id,name,email,active) VALUES (?,?,?,1)`);
-      conts.forEach((c,i) => stmt.run(c.id||i+1, c.name, c.email||null));
-      console.log(`Imported ${conts.length} contacts from hl_applicator_data.json`);
+      conts.forEach((c,i) => stmt.run(parseInt(c.id||i+1), String(c.name), c.email||null));
+      console.log(`Imported ${conts.length} contacts`);
     }
-    // Also check meta file
-    const metaEnv = await parseFileRaw('hl_applicator_meta.json');
-    if (metaEnv && !Array.isArray(metaEnv)) {
-      const mc = metaEnv.customers || metaEnv.customersList || [];
-      if (mc.length) {
-        const stmt = db.prepare(`INSERT OR IGNORE INTO customers (id,name,active) VALUES (?,?,1)`);
-        mc.forEach((c,i) => stmt.run(c.id||i+1, c.name||c));
-        console.log(`Imported ${mc.length} customers from hl_applicator_meta.json`);
-      }
-      const mco = metaEnv.contacts || [];
-      if (mco.length) {
-        const stmt = db.prepare(`INSERT OR IGNORE INTO contacts (id,name,email,active) VALUES (?,?,?,1)`);
-        mco.forEach((c,i) => stmt.run(c.id||i+1, c.name, c.email||null));
-        console.log(`Imported ${mco.length} contacts from hl_applicator_meta.json`);
-      }
-    }
-    // Print all top-level keys so we can see what's available
-    console.log('Keys in hl_applicator_data.json:', Object.keys(appEnvelope).join(', '));
   }
 
   // Applicator entries
