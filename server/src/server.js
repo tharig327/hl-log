@@ -253,7 +253,9 @@ app.post('/api/tickets', (req, res) => {
 });
 
 app.get('/api/tickets/:num', (req, res) => {
-  const row = db.prepare('SELECT * FROM applicator_entries WHERE ticket_num=?').get(req.params.num);
+  const num = req.params.num;
+  const full = num.startsWith('TKT-') ? num : 'TKT-' + num;
+  const row = db.prepare('SELECT * FROM applicator_entries WHERE ticket_num=? OR ticket_num=?').get(full, num);
   if (!row) return res.status(404).json({ error: 'Not found' });
   res.json(rowToApplicator(row));
 });
