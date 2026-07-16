@@ -48,7 +48,15 @@ async function importGist() {
       console.log(`  ${name} is truncated — fetching raw...`);
       content = await httpGet(f.raw_url, { 'User-Agent': 'floorsync-migrate', 'Authorization': `token ${token}` });
     }
-    try { return JSON.parse(content); } catch { return null; }
+    try {
+      const p = JSON.parse(content);
+      // Data may be wrapped: {issues:[...]}, {entries:[...]}, etc.
+      if (Array.isArray(p)) return p;
+      if (p && Array.isArray(p.issues))   return p.issues;
+      if (p && Array.isArray(p.entries))  return p.entries;
+      if (p && Array.isArray(p.data))     return p.data;
+      return p;
+    } catch { return null; }
   }
 
   // Users
@@ -82,15 +90,6 @@ async function importGist() {
     const stmt = db.prepare(`INSERT OR IGNORE INTO customers (id,name,active) VALUES (?,?,1)`);
     customers.forEach((c,i) => stmt.run(c.id||i+1, c.name));
     console.log(`Imported ${customers.length} customers`);
-  }
-
-  // Debug: show structure of applicator file
-  const appRaw = files['hl_applicator_data.json'];
-  if (appRaw) {
-    let content = appRaw.content;
-    if (appRaw.truncated && appRaw.raw_url) content = await httpGet(appRaw.raw_url, { 'User-Agent': 'floorsync-migrate', 'Authorization': `token ${token}` });
-    console.log('hl_applicator_data.json truncated:', appRaw.truncated, 'content length:', (content||'').length);
-    try { const p = JSON.parse(content); console.log('parsed type:', Array.isArray(p)?'array ('+p.length+')':typeof p, Array.isArray(p)?'':JSON.stringify(p).slice(0,200)); } catch(e) { console.log('parse error:', e.message, 'raw:', (content||'').slice(0,200)); }
   }
 
   // Applicator entries
