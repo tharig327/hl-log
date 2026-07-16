@@ -1909,8 +1909,8 @@ function buildReceiptHTML(entry, sec){
   const statusText = {done:'Resolved',inprog:'In Progress',waiting:'Waiting on Parts',open:'Open'}[entry.status]||'Open';
   const date = new Date(entry.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
   const time = new Date(entry.date).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});
-  const base = 'https://tharig327.github.io/hl-log';
-  const ticketUrl = entry.ticketNum ? base+'/t/?ticket='+entry.ticketNum : null;
+  const base = window.location.origin;
+  const ticketUrl = entry.ticketNum ? base+'/t1.html?ticket='+entry.ticketNum : null;
   const tkt = entry.ticketNum || '--';
   const qrId = 'receipt-qr-'+Date.now();
 
@@ -1953,7 +1953,7 @@ function buildReceiptHTML(entry, sec){
     <div class="receipt-row"><span class="receipt-row-label">Date</span><span class="receipt-row-val">${date}</span></div>
     <div class="receipt-row"><span class="receipt-row-label">Time</span><span class="receipt-row-val">${time}</span></div>
     <hr class="receipt-divider">
-    ${ticketUrl ? `<div class="receipt-qr" id="${qrId}"></div><div class="receipt-footer">Scan to check ticket status<br><strong>tharig327.github.io/hl-log/t/</strong></div>` : `<div class="receipt-footer">tharig327.github.io/hl-log/t/</div>`}`;
+    ${ticketUrl ? `<div class="receipt-qr" id="${qrId}"></div><div class="receipt-footer">Scan to check ticket status<br><strong>${window.location.host}/t1.html</strong></div>` : `<div class="receipt-footer">${window.location.host}/t1.html</div>`}`;
 
   return { html, qrId, ticketUrl };
 }
