@@ -255,6 +255,22 @@ app.get('/api/tickets/:num', (req, res) => {
   res.json(rowToApplicator(row));
 });
 
+// Public read-only endpoints for ticket portal (no auth required)
+app.get('/api/public/entries/:section', (req, res) => {
+  const sec = req.params.section;
+  const tables = { applicator: 'applicator_entries', machine: 'machine_entries', setup: 'setup_entries' };
+  if (!tables[sec]) return res.status(400).json({ error: 'Invalid section' });
+  const rows = db.prepare(`SELECT * FROM ${tables[sec]} WHERE status != 'done' ORDER BY date ASC`).all();
+  const fn = { applicator: rowToApplicator, machine: rowToMachine, setup: rowToSetup }[sec];
+  res.json(rows.map(fn));
+});
+
+app.get('/api/public/queue/:section', (req, res) => {
+  const sec = req.params.section;
+  const row = db.prepare('SELECT order_json FROM queue_order WHERE section=?').get(sec);
+  res.json(row ? JSON.parse(row.order_json) : []);
+});
+
 // Notify queue
 app.post('/api/notify', requireAuth, (req, res) => {
   db.prepare('INSERT INTO notify_queue (payload) VALUES (?)').run(JSON.stringify(req.body));

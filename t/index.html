@@ -690,12 +690,12 @@ async function loadOpenTickets(){
   el.innerHTML = '<div class="spinner"></div>';
   try{
     const [applicator, machine, setup, qa, qm, qs] = await Promise.all([
-      fetch('/api/entries/applicator').then(r=>r.json()),
-      fetch('/api/entries/machine').then(r=>r.json()),
-      fetch('/api/entries/setup').then(r=>r.json()),
-      fetch('/api/queue/applicator').then(r=>r.json()),
-      fetch('/api/queue/machine').then(r=>r.json()),
-      fetch('/api/queue/setup').then(r=>r.json()),
+      fetch('/api/public/entries/applicator').then(r=>r.json()),
+      fetch('/api/public/entries/machine').then(r=>r.json()),
+      fetch('/api/public/entries/setup').then(r=>r.json()),
+      fetch('/api/public/queue/applicator').then(r=>r.json()),
+      fetch('/api/public/queue/machine').then(r=>r.json()),
+      fetch('/api/public/queue/setup').then(r=>r.json()),
     ]);
     const queues = {applicator: qa||[], machine: qm||[], setup: qs||[]};
 
@@ -989,8 +989,8 @@ if(!tkt){ result.innerHTML='<div class="err-box">Please enter your ticket number
     let queueOrder=[], active=[];
     try{
       const [qr,er]=await Promise.all([
-        fetch('/api/queue/'+foundSec).then(x=>x.json()),
-        fetch('/api/entries/'+foundSec).then(x=>x.json())
+        fetch('/api/public/queue/'+foundSec).then(x=>x.json()),
+        fetch('/api/public/entries/'+foundSec).then(x=>x.json())
       ]);
       queueOrder=Array.isArray(qr)?qr:[];
       active=(Array.isArray(er)?er:[]).filter(e=>e.status==='open'||e.status==='inprog');
