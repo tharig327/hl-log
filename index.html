@@ -956,10 +956,14 @@ async function handlePin(){
     const h=await sha256(pinBuffer);
     const users=[{name:'Tyler',pinHash:h,pin_hash:h,role:'supervisor',active:1}];
     lsSet('hl_users',JSON.stringify(users));
-    try{ await fetch('/api/auth/setup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'Tyler',pin_hash:h,role:'supervisor'})}); }catch(e){}
+    try{
+      const sr=await fetch('/api/auth/setup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'Tyler',pin_hash:h,role:'supervisor'})});
+      if(!sr.ok){ const e=await sr.json().catch(()=>({})); throw new Error(e.error||sr.status); }
+    }catch(e){ setPinLoading(''); $('pinError').textContent='Setup failed: '+e.message; dotError(); pinBuffer=''; return; }
     setPinLoading('Loading…');
-    try{ await apiCall('POST','/api/auth/login',{pin_hash:h}); }catch(e){}
-    await loadFromGist(); doUnlock('Tyler'); return;
+    try{ await apiCall('POST','/api/auth/login',{pin_hash:h}); }catch(e){ setPinLoading(''); $('pinError').textContent='Login failed: '+e.message; dotError(); pinBuffer=''; return; }
+    try{ await loadFromGist(); }catch(e){}
+    doUnlock('Tyler'); return;
   }
   const h=await sha256(pinBuffer);
   let users=[]; try{ users=JSON.parse(lsGet('hl_users')||'[]'); }catch(e){}
