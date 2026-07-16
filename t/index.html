@@ -689,14 +689,27 @@ async function loadOpenTickets(){
   const el = document.getElementById('openTicketsList');
   el.innerHTML = '<div class="spinner"></div>';
   try{
-    const g = await gistAPI('GET','gists/'+GIST_ID);
-    const applicator = g.files[DATA_FILE] ? JSON.parse(g.files[DATA_FILE].content).issues||[] : [];
-    const machine    = g.files[MACH_FILE] ? JSON.parse(g.files[MACH_FILE].content).issues||[] : [];
-    const setup      = g.files[SETUP_FILE]? JSON.parse(g.files[SETUP_FILE].content).issues||[] : [];
-    const queues = {};
-    ['applicator','machine','setup'].forEach(sec=>{ const f=g.files[QUEUE_FILES[sec]]; queues[sec]=f?JSON.parse(f.content):[]; });
+    const [applicator, machine, setup, qa, qm, qs] = await Promise.all([
+      fetch('/api/entries/applicator').then(r=>r.json()),
+      fetch('/api/entries/machine').then(r=>r.json()),
+      fetch('/api/entries/setup').then(r=>r.json()),
+      fetch('/api/queue/applicator').then(r=>r.json()),
+      fetch('/api/queue/machine').then(r=>r.json()),
+      fetch('/api/queue/setup').then(r=>r.json()),
+    ]);
+    const queues = {applicator: qa||[], machine: qm||[], setup: qs||[]};
 
-    // Build ordered active list per section then merge
+    function norm(e, sec){
+      return {
+        ...e,
+        ticketNum: e.ticketNum||e.ticket_num,
+        submittedBy: e.submittedBy||e.submitted_by,
+        by: e.by||e.by_user,
+        date: e.date ? new Date(e.date).getTime() : 0,
+        issueType: sec
+      };
+    }
+
     function orderedActive(items, order){
       const active = items.filter(e=>e.status==='open'||e.status==='inprog'||e.status==='waiting');
       const ordered = [];
@@ -705,9 +718,9 @@ async function loadOpenTickets(){
       return ordered;
     }
 
-    const aItems = orderedActive([...applicator], queues.applicator).map((e,i)=>({...e,_sec:'applicator',_pos:i+1}));
-    const mItems = orderedActive([...machine],    queues.machine).map((e,i)=>({...e,_sec:'machine',   _pos:i+1}));
-    const sItems = orderedActive([...setup],      queues.setup).map((e,i)=>({...e,_sec:'setup',      _pos:i+1}));
+    const aItems = orderedActive((applicator||[]).map(e=>norm(e,'applicator')), queues.applicator).map((e,i)=>({...e,_sec:'applicator',_pos:i+1}));
+    const mItems = orderedActive((machine||[]).map(e=>norm(e,'machine')),       queues.machine).map((e,i)=>({...e,_sec:'machine',   _pos:i+1}));
+    const sItems = orderedActive((setup||[]).map(e=>norm(e,'setup')),           queues.setup).map((e,i)=>({...e,_sec:'setup',      _pos:i+1}));
 
     window._openTicketsData = {aItems, mItems, sItems};
     renderOpenTickets(window._openTicketsData);
