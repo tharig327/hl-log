@@ -952,21 +952,36 @@ const digits=input.replace(/[^0-9]/g,'');
 const tkt=input.startsWith('S-')?'S-'+digits:digits?'TKT-'+digits:'';
 const result=document.getElementById('statusResult');
 if(!tkt){ result.innerHTML='<div class="err-box">Please enter your ticket number.</div>'; return; }
-if(!/^(TKT-\d{4}|S-\d+)$/.test(tkt)){ result.innerHTML='<div class="err-box">Please enter a valid ticket number (e.g. TKT-0042 or S-12).</div>'; return; }
   result.innerHTML='<div class="spinner"></div>';
   try{
-    const allData=await loadAllData();
-    // Search all three sections
-    let entry=null, foundSec=null;
-    for(const [sec,key] of [['applicator','applicator'],['machine','machine'],['setup','setup']]){
-      const found=allData[key].issues.find(e=>e.ticketNum===tkt);
-      if(found){ entry=found; foundSec=sec; break; }
-    }
-    if(!entry){ result.innerHTML=`<div class="err-box"><i class="ti ti-ticket-off" style="font-size:16px;display:block;margin-bottom:6px"></i>Ticket <strong>${tkt}</strong> not found.<br><span style="font-size:11px;opacity:.8">Double-check the number and try again.</span></div>`; return; }
+    const r=await fetch('/api/tickets/'+encodeURIComponent(tkt));
+    if(r.status===404){ result.innerHTML=`<div class="err-box"><i class="ti ti-ticket-off" style="font-size:16px;display:block;margin-bottom:6px"></i>Ticket <strong>${tkt}</strong> not found.<br><span style="font-size:11px;opacity:.8">Double-check the number and try again.</span></div>`; return; }
+    if(!r.ok) throw new Error('Server error '+r.status);
+    const raw=await r.json();
+    // Normalise field names from DB snake_case to camelCase for display
+    const entry={
+      id: raw.id, status: raw.status, priority: raw.priority,
+      apn: raw.apn, press: raw.press, terminal: raw.terminal, wire: raw.wire,
+      machine: raw.machine, desc: raw.desc, result: raw.result,
+      issue: raw.issue, notes: raw.notes, customer: raw.customer,
+      ticketNum: raw.ticketNum||raw.ticket_num,
+      submittedBy: raw.submittedBy||raw.submitted_by,
+      by: raw.by||raw.by_user,
+      date: raw.date ? new Date(raw.date).getTime() : Date.now(),
+      photos: raw.photos||[]
+    };
+    const foundSec = raw.apn!==undefined ? 'applicator' : raw.machine!==undefined ? 'machine' : 'setup';
 
-    // ETA calculation using queue order
-    const queueOrder=allData.queues[foundSec]||[];
-    const active=allData[foundSec].issues.filter(e=>e.status==='open'||e.status==='inprog');
+    // ETA: fetch queue for position estimate
+    let queueOrder=[], active=[];
+    try{
+      const [qr,er]=await Promise.all([
+        fetch('/api/queue/'+foundSec).then(x=>x.json()),
+        fetch('/api/entries/'+foundSec).then(x=>x.json())
+      ]);
+      queueOrder=Array.isArray(qr)?qr:[];
+      active=(Array.isArray(er)?er:[]).filter(e=>e.status==='open'||e.status==='inprog');
+    }catch(e){}
     const orderedIds=[];
     queueOrder.forEach(id=>{ if(active.find(e=>e.id===id)) orderedIds.push(id); });
     active.forEach(e=>{ if(!orderedIds.includes(e.id)) orderedIds.push(e.id); });
