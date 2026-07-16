@@ -313,57 +313,57 @@ async function syncEquipment(db) {
   const sql = `SELECT e.id iqms_id, e.eqno, e.class, e.descrip, e.model, e.serialno,
     TO_CHAR(e.inst_date,'YYYY-MM-DD') inst_date,
     e.total_units, e.uom, e.location,
-    l.descrip loc_desc,
-    e.critical, e.out_of_service,
+    e.locations_id, e.critical, e.out_of_service,
     TO_CHAR(e.service_date_out,'YYYY-MM-DD') service_date_out,
     TO_CHAR(e.service_date_in,'YYYY-MM-DD') service_date_in,
     TO_CHAR(e.last_prod_date,'YYYY-MM-DD') last_prod_date,
-    a.company owner, e.vendor_id, e.mfgcell_id,
-    ep.eplant_id, ep.name eplant_name
+    e.eplant_id, e.vendor_id, e.mfgcell_id,
+    e.glacct_id, e.labor_glacct_id,
+    a.company owner
     FROM pmeqmt e
-    LEFT JOIN locations l ON l.id = e.location
     LEFT JOIN arcusto a ON a.id = e.arcusto_id
-    LEFT JOIN eplant ep ON ep.id = e.eplant_id
-    WHERE e.archived = 0`;
+    WHERE NVL(e.pk_hide, 0) = 0`;
   const data = await iqmsQuery(sql);
   const rows = rowsToObjects(data);
   const ins = db.prepare(`INSERT OR REPLACE INTO equipment
     (iqms_id,eqno,class,descrip,model,serialno,inst_date,total_units,uom,location,
-     loc_desc,critical,out_of_service,service_date_out,service_date_in,last_prod_date,
-     owner,vendor_id,mfgcell_id,eplant_id,eplant_name,synced_at)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP)`);
+     critical,out_of_service,service_date_out,service_date_in,last_prod_date,
+     eplant_id,vendor_id,mfgcell_id,owner,synced_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP)`);
+  function yn(v) { return (v==='Y'||v===1||v==='1') ? 1 : 0; }
   db.transaction(() => {
     db.prepare('DELETE FROM equipment').run();
-    rows.forEach(r => ins.run(r.iqms_id,r.eqno,r.class,r.descrip,r.model,r.serialno,
-      r.inst_date,r.total_units,r.uom,r.location,r.loc_desc,r.critical?1:0,
-      r.out_of_service?1:0,r.service_date_out,r.service_date_in,r.last_prod_date,
-      r.owner,r.vendor_id,r.mfgcell_id,r.eplant_id,r.eplant_name));
+    rows.forEach(r => ins.run(
+      r.iqms_id, r.eqno, r.class, r.descrip, r.model, r.serialno,
+      r.inst_date, r.total_units, r.uom, r.location,
+      yn(r.critical), yn(r.out_of_service),
+      r.service_date_out, r.service_date_in, r.last_prod_date,
+      r.eplant_id, r.vendor_id, r.mfgcell_id, r.owner
+    ));
   })();
   return rows.length;
 }
 
 // IQMS sync — PM schedules
 async function syncPmSchedules(db) {
-  const sql = `SELECT id iqms_id, pmeqmt_id, pmtasks_id, taskno, descrip,
-    perform_every, uom, total_units,
-    TO_CHAR(scheduled_since,'YYYY-MM-DD') scheduled_since,
-    wo_create_threshold, hours4tsk, numpeople,
-    TO_CHAR(last_closed_wo,'YYYY-MM-DD') last_closed_wo,
-    act_every, wo_open, incomplete, archived
-    FROM v_pmjob_list WHERE archived = 0`;
+  // v_pmjob_list confirmed: ID,PMEQMT_ID,TASKNO,DESCRIP,WO_OPEN,INCOMPLETE,
+  // TOTAL_UNITS,WO_CREATE_THRESHOLD,HOURS4TSK,NUMPEOPLE,PERFORM_EVERY (31 cols, Y/N booleans)
+  const sql = `SELECT id iqms_id, pmeqmt_id, taskno, descrip,
+    perform_every, total_units, wo_create_threshold, hours4tsk, numpeople,
+    wo_open, incomplete
+    FROM v_pmjob_list`;
   const data = await iqmsQuery(sql);
   const rows = rowsToObjects(data);
   const ins = db.prepare(`INSERT OR REPLACE INTO pm_schedule
-    (iqms_id,pmeqmt_id,pmtasks_id,taskno,descrip,perform_every,uom,total_units,
-     scheduled_since,wo_create_threshold,hours4tsk,numpeople,last_closed_wo,
-     act_every,wo_open,incomplete,archived,synced_at)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP)`);
+    (iqms_id,pmeqmt_id,taskno,descrip,perform_every,total_units,
+     wo_create_threshold,hours4tsk,numpeople,wo_open,incomplete,synced_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP)`);
+  function yn(v) { return (v==='Y'||v===1) ? 1 : 0; }
   db.transaction(() => {
     db.prepare('DELETE FROM pm_schedule').run();
-    rows.forEach(r => ins.run(r.iqms_id,r.pmeqmt_id,r.pmtasks_id,r.taskno,r.descrip,
-      r.perform_every,r.uom,r.total_units,r.scheduled_since,r.wo_create_threshold,
-      r.hours4tsk,r.numpeople,r.last_closed_wo,r.act_every,
-      r.wo_open?1:0,r.incomplete?1:0,r.archived?1:0));
+    rows.forEach(r => ins.run(r.iqms_id, r.pmeqmt_id, r.taskno, r.descrip,
+      r.perform_every, r.total_units, r.wo_create_threshold,
+      r.hours4tsk, r.numpeople, yn(r.wo_open), yn(r.incomplete)));
   })();
   return rows.length;
 }
@@ -446,15 +446,16 @@ app.post('/api/maintenance/sync', requireAuth, async (req, res) => {
   if (req.session.userRole !== 'supervisor') return res.status(403).json({ error: 'Supervisor only' });
   const { targets = ['equipment','pm_schedules','pm_templates','wo_history'] } = req.body;
   const results = {};
-  try {
-    if (targets.includes('equipment'))    results.equipment    = await syncEquipment(db);
-    if (targets.includes('pm_schedules')) results.pm_schedules = await syncPmSchedules(db);
-    if (targets.includes('pm_templates')) results.pm_templates = await syncPmTemplates(db);
-    if (targets.includes('wo_history'))   results.wo_history   = await syncWoHistory(db);
-    res.json({ ok: true, synced: results, at: new Date().toISOString() });
-  } catch(e) {
-    res.status(502).json({ error: e.message });
+  const errors = {};
+  async function trySync(key, fn) {
+    try { results[key] = await fn(); }
+    catch(e) { errors[key] = e.message; }
   }
+  if (targets.includes('equipment'))    await trySync('equipment',    () => syncEquipment(db));
+  if (targets.includes('pm_schedules')) await trySync('pm_schedules', () => syncPmSchedules(db));
+  if (targets.includes('pm_templates')) await trySync('pm_templates', () => syncPmTemplates(db));
+  if (targets.includes('wo_history'))   await trySync('wo_history',   () => syncWoHistory(db));
+  res.json({ ok: true, synced: results, errors, at: new Date().toISOString() });
 });
 
 // GET /api/maintenance/sync/status
