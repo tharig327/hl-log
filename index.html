@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -299,22 +298,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="splash-sub">Loading…</div>
 </div>
 
-<!-- SETUP -->
-<div class="screen" id="setupScreen">
-  <div class="card">
-    <div class="card-logo">H&L</div>
-    <div class="card-title">Setup</div>
-    <div class="card-sub">Paste your GitHub token to connect this device.<br>It stays on this device only — never uploaded.</div>
-    <div class="setup-field">
-      <label>GitHub Personal Access Token (gist scope)</label>
-      <input type="password" id="setupToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" spellcheck="false">
-      <div class="setup-hint">Generate at github.com → Settings → Developer settings → Personal access tokens → Tokens (classic). Check the <strong style="color:var(--hl-text2)">gist</strong> scope only.</div>
-    </div>
-    <div class="setup-err" id="setupErr"></div>
-    <button class="btn-full" onclick="doSetup()"><i class="ti ti-plug-connected"></i> Connect</button>
-  </div>
-</div>
-
 <!-- PIN -->
 <div class="screen" id="pinScreen">
   <div class="card" style="max-width:320px;text-align:center">
@@ -336,7 +319,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="pin-loading" id="pinLoading"></div>
     <div style="margin-top:1rem;display:flex;flex-direction:column;gap:6px">
       <button class="btn" style="width:100%;justify-content:center;font-size:11px;color:var(--hl-text2)" onclick="resetPinCache()"><i class="ti ti-refresh" style="font-size:12px"></i> Sync PIN from Gist</button>
-      <button class="btn" style="width:100%;justify-content:center;font-size:11px;color:var(--hl-text3)" onclick="showSetup()"><i class="ti ti-settings" style="font-size:12px"></i> Change token / reset</button>
     </div>
   </div>
 </div>
@@ -836,17 +818,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 
 <script>
-// ── FILES ──
-const DATA_FILE  = 'hl_applicator_data.json';   // legacy applicator (issues+contacts)
-const MACH_FILE  = 'hl_machine_data.json';
-const SETUP_FILE = 'hl_setup_data.json';
-const META_FILE  = 'hl_applicator_meta.json';
-const QUEUE_FILES = {
-  applicator: 'hl_queue_order.json',
-  machine:    'hl_queue_machine.json',
-  setup:      'hl_queue_setup.json'
-};
-const NOTIFY_FILE  = 'hl_notify_queue.json';
 const INACTIVITY = 30 * 60 * 1000;
 let overdueDays = 3;
 
@@ -857,7 +828,7 @@ const state = {
   machine:    { entries:[], queue:[] },
   setup:      { entries:[], queue:[] }
 };
-let contacts = [], customersList = [], gistId = null;
+let contacts = [], customersList = [];
 let editId = null, editSection = null, editCId = null;
 let notifyId = null, notifySection = null;
 let selectedRecipients = new Set();
@@ -878,94 +849,54 @@ async function sha256(str){
 function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; }}
 function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){}}
 function lsDel(k){ try{ localStorage.removeItem(k); }catch(e){}}
-function getToken(){ return lsGet('hl_token'); }
+async function apiCall(method, path, body){
+  const r = await fetch(path, {
+    method,
+    headers: body ? { 'Content-Type': 'application/json' } : {},
+    body: body ? JSON.stringify(body) : undefined,
+    credentials: 'same-origin'
+  });
+  if(r.status === 401){ lockApp(); throw new Error('Session expired'); }
+  if(!r.ok) throw new Error('API error ' + r.status);
+  return r.json();
+}
 
 // ── SCREENS ──
 function showScreen(id){
-  ['setupScreen','pinScreen'].forEach(s=>$(s).classList.remove('active'));
+  ['pinScreen'].forEach(s=>$(s).classList.remove('active'));
   $('app').style.display='none';
   if(id==='app') $('app').style.display='block';
   else $(id).classList.add('active');
 }
-function showSetup(){ if(window._splashReady) window._splashReady(); lockApp(true); $('setupToken').value=''; $('setupErr').textContent=''; showScreen('setupScreen'); }
 
-async function doSetup(){
-  const token=$('setupToken').value.trim(); $('setupErr').textContent='';
-  if(!token.startsWith('ghp_')&&!token.startsWith('github_pat_')){ $('setupErr').textContent='Paste a valid GitHub token starting with ghp_'; return; }
-  const btn=document.querySelector('#setupScreen .btn-full');
-  btn.disabled=true; btn.innerHTML='<i class="ti ti-loader spin"></i> Connecting…';
-  try{
-    const r=await fetch('https://api.github.com/gists?per_page=1',{headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}});
-    if(!r.ok) throw new Error('Token invalid ('+r.status+')');
-    lsSet('hl_token',token);
-    btn.disabled=false; btn.innerHTML='<i class="ti ti-plug-connected"></i> Connect';
-    showScreen('pinScreen'); if(window._splashReady) window._splashReady(); await initPinScreen();
-  }catch(e){ btn.disabled=false; btn.innerHTML='<i class="ti ti-plug-connected"></i> Connect'; $('setupErr').textContent=e.message||'Could not connect'; }
-}
-
-// ── GIST ──
-async function gistAPI(method,path,body){
-  const token=getToken(); if(!token) throw new Error('No token');
-  const r=await fetch('https://api.github.com/'+path,{method,headers:{'Authorization':'token '+token,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},body:body?JSON.stringify(body):undefined});
-  if(!r.ok) throw new Error('GitHub '+r.status);
-  return r.json();
-}
-async function ensureGist(){
-  if(gistId) return gistId;
-  const cached=lsGet('hl_gist_id');
-  if(cached){ try{ await gistAPI('GET','gists/'+cached); gistId=cached; return gistId; }catch(e){ lsDel('hl_gist_id'); } }
-  const list=await gistAPI('GET','gists?per_page=100');
-  const found=list.find(g=>g.files&&(g.files[DATA_FILE]||g.files[META_FILE]));
-  if(found){ gistId=found.id; lsSet('hl_gist_id',gistId); return gistId; }
-  const created=await gistAPI('POST','gists',{description:'H&L FloorSync',public:false,files:{
-    [DATA_FILE]:{content:JSON.stringify({issues:[],contacts:[]},null,2)},
-    [MACH_FILE]:{content:JSON.stringify({issues:[]},null,2)},
-    [SETUP_FILE]:{content:JSON.stringify({issues:[]},null,2)},
-    [META_FILE]:{content:JSON.stringify({pinHash:null},null,2)},
-    [QUEUE_FILES.applicator]:{content:'[]'},
-    [QUEUE_FILES.machine]:{content:'[]'},
-    [QUEUE_FILES.setup]:{content:'[]'}
-  }});
-  gistId=created.id; lsSet('hl_gist_id',gistId); return gistId;
-}
-async function writeGist(files){ const id=await ensureGist(); await gistAPI('PATCH','gists/'+id,{files}); }
-async function pushMeta(users){ try{ await writeGist({[META_FILE]:{content:JSON.stringify({users},null,2)}}); }catch(e){ console.error('pushMeta failed',e); } }
+async function pushMeta(users){ try{ await apiCall('PUT','/api/auth/users',users); }catch(e){ console.error('pushMeta failed',e); } }
 async function pushAll(silent=true){
   setSyncStatus('syncing');
   try{
-    await writeGist({
-[DATA_FILE]:{content:JSON.stringify({
-  issues:state.applicator.entries,
-  contacts:contacts,
-  customers:customersList
-},null,2)},
-      [MACH_FILE]:{content:JSON.stringify({issues:state.machine.entries},null,2)},
-      [SETUP_FILE]:{content:JSON.stringify({issues:state.setup.entries},null,2)},
-      [QUEUE_FILES.applicator]:{content:JSON.stringify(state.applicator.queue,null,2)},
-      [QUEUE_FILES.machine]:{content:JSON.stringify(state.machine.queue,null,2)},
-      [QUEUE_FILES.setup]:{content:JSON.stringify(state.setup.queue,null,2)}
-    });
-    saveLocal(); setSyncStatus('ok');
-    if(!silent) toast('Synced to GitHub');
-  }catch(e){ setSyncStatus('error'); if(!silent) toast('Sync failed','#cc4444'); }
+    await Promise.all([
+      apiCall('PUT','/api/entries/applicator', state.applicator.entries),
+      apiCall('PUT','/api/entries/machine',    state.machine.entries),
+      apiCall('PUT','/api/entries/setup',      state.setup.entries),
+      apiCall('PUT','/api/queue/applicator',   state.applicator.queue),
+      apiCall('PUT','/api/queue/machine',      state.machine.queue),
+      apiCall('PUT','/api/queue/setup',        state.setup.queue),
+      apiCall('PUT','/api/contacts',           contacts),
+      apiCall('PUT','/api/customers',          customersList),
+    ]);
+    setSyncStatus('ok');
+  }catch(e){ if(!silent) toast('Sync failed: '+e.message,'#cc4444'); setSyncStatus('err'); }
 }
 async function pushSection(sec){
-  const fileMap = {
-    applicator: DATA_FILE,
-    machine: MACH_FILE,
-    setup: SETUP_FILE
-  };
-  const files = {};
-  if(sec==='applicator') files[DATA_FILE]={content:JSON.stringify({
-  issues:state.applicator.entries,
-  contacts:contacts,
-  customers:customersList
-},null,2)};
-  else files[fileMap[sec]]={content:JSON.stringify({issues:state[sec].entries},null,2)};
-  files[QUEUE_FILES[sec]]={content:JSON.stringify(state[sec].queue,null,2)};
   setSyncStatus('syncing');
-  try{ await writeGist(files); saveLocal(); setSyncStatus('ok'); }
-  catch(e){ setSyncStatus('error'); }
+  try{
+    await Promise.all([
+      apiCall('PUT','/api/entries/'+sec, state[sec].entries),
+      apiCall('PUT','/api/queue/'+sec,   state[sec].queue),
+      sec==='applicator' ? apiCall('PUT','/api/contacts', contacts) : Promise.resolve(),
+      sec==='applicator' ? apiCall('PUT','/api/customers', customersList) : Promise.resolve(),
+    ]);
+    saveLocal(); setSyncStatus('ok');
+  }catch(e){ setSyncStatus('err'); }
 }
 function setSyncStatus(s){
   const el=$('syncStatus');
@@ -998,26 +929,16 @@ function loadLocal(){
 }
 async function loadFromGist(){
   try{
-    const id=await ensureGist();
-    const token=getToken();
-    const r=await fetch('https://api.github.com/gists/'+id,{headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}});
-    const g=await r.json();
-    lastGistUpdatedAt=g.updated_at;
-    // Applicator
-    if(g.files[DATA_FILE]){
-  const d=JSON.parse(g.files[DATA_FILE].content);
-  state.applicator.entries=d.issues||[];
-  if(d.contacts) contacts=d.contacts;
-  if(d.customers) customersList=d.customers;
-}
-    // Machine
-    if(g.files[MACH_FILE]){ const d=JSON.parse(g.files[MACH_FILE].content); state.machine.entries=d.issues||[]; }
-    // Setup
-    if(g.files[SETUP_FILE]){ const d=JSON.parse(g.files[SETUP_FILE].content); state.setup.entries=d.issues||[]; }
-    // Queues
-    ['applicator','machine','setup'].forEach(sec=>{ const f=g.files[QUEUE_FILES[sec]]; if(f) state[sec].queue=JSON.parse(f.content)||[]; });
-    // Meta
-    if(g.files[META_FILE]){ const m=JSON.parse(g.files[META_FILE].content); if(m.users) lsSet('hl_users',JSON.stringify(m.users)); else if(m.pinHash){ const users=[{name:'Tyler',pinHash:m.pinHash}]; lsSet('hl_users',JSON.stringify(users)); } }
+    const d = await apiCall('GET','/api/data');
+    state.applicator.entries = d.applicator || [];
+    state.machine.entries    = d.machine    || [];
+    state.setup.entries      = d.setup      || [];
+    if(d.queue){
+      ['applicator','machine','setup'].forEach(sec=>{ if(d.queue[sec]) state[sec].queue = d.queue[sec]; });
+    }
+    if(d.contacts)  contacts      = d.contacts;
+    if(d.customers) customersList = d.customers;
+    lastGistUpdatedAt = null;
     saveLocal();
   }catch(e){ loadLocal(); }
 }
@@ -1033,43 +954,48 @@ async function handlePin(){
   if(pinMode==='setup2'){
     if(pinBuffer!==pinSetupFirst){ $('pinError').textContent='PINs do not match'; dotError(); pinBuffer=''; pinSetupFirst=''; pinMode='setup1'; setTimeout(()=>{ $('pinTitle').textContent='Set a PIN'; $('pinSub').textContent='Choose a 4-digit PIN'; },800); return; }
     const h=await sha256(pinBuffer);
-    const users=[{name:'Tyler',pinHash:h}];
+    const users=[{name:'Tyler',pinHash:h,pin_hash:h,role:'supervisor',active:1}];
     lsSet('hl_users',JSON.stringify(users));
-    await pushMeta(users); await loadFromGist(); doUnlock('Tyler'); return;
+    try{ await fetch('/api/auth/setup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'Tyler',pin_hash:h,role:'supervisor'})}); }catch(e){}
+    setPinLoading('Loading…');
+    try{ await apiCall('POST','/api/auth/login',{pin_hash:h}); }catch(e){}
+    await loadFromGist(); doUnlock('Tyler'); return;
   }
   const h=await sha256(pinBuffer);
-  // Check local cache first — instant, no network lag
-  let users=[];
-  try{ users=JSON.parse(lsGet('hl_users')||'[]'); }catch(e){}
-  const matchedLocal=users.find(u=>u.pinHash===h);
+  let users=[]; try{ users=JSON.parse(lsGet('hl_users')||'[]'); }catch(e){}
+  const matchedLocal=users.find(u=>(u.pinHash||u.pin_hash)===h);
   if(matchedLocal){
     lsSet('hl_user_name',matchedLocal.name);
-    setPinLoading('Loading…'); await loadFromGist(); fixTicketNums(); setPinLoading('');
-    doUnlock(matchedLocal.name);
-    ensureGist().then(id=>fetch('https://api.github.com/gists/'+id,{headers:{'Authorization':'token '+getToken(),'Accept':'application/vnd.github.v3+json'}}))
-      .then(r=>r.json()).then(g=>{ if(g.files&&g.files[META_FILE]){ const m=JSON.parse(g.files[META_FILE].content); if(m.users) lsSet('hl_users',JSON.stringify(m.users)); } }).catch(()=>{});
-    return;
+    setPinLoading('Loading…');
+    try{ await apiCall('POST','/api/auth/login',{pin_hash:h}); }catch(e){ setPinLoading(''); $('pinError').textContent='Server error'; dotError(); pinBuffer=''; return; }
+    await loadFromGist(); fixTicketNums(); setPinLoading('');
+    doUnlock(matchedLocal.name); return;
   }
-  // Not in local cache — fetch from Gist
   setPinLoading('Checking…');
   try{
-    const r=await fetch('https://api.github.com/gists/'+(await ensureGist()),{headers:{'Authorization':'token '+getToken(),'Accept':'application/vnd.github.v3+json'}});
-    const g=await r.json();
-    if(g.files[META_FILE]){
-      const m=JSON.parse(g.files[META_FILE].content);
-      if(m.users){ users=m.users; lsSet('hl_users',JSON.stringify(users)); }
-      else if(m.pinHash){ users=[{name:'Tyler',pinHash:m.pinHash}]; await pushMeta(users); lsSet('hl_users',JSON.stringify(users)); }
+    const r=await fetch('/api/auth/users');
+    if(r.ok){
+      const serverUsers=await r.json();
+      if(serverUsers.length){ lsSet('hl_users',JSON.stringify(serverUsers.map(u=>({...u,pinHash:u.pin_hash})))); users=serverUsers; }
     }
   }catch(e){}
   if(!users.length){ pinSetupFirst=pinBuffer; pinBuffer=''; updateDots(); $('pinTitle').textContent='Confirm PIN'; $('pinSub').textContent='Re-enter your new PIN'; setPinLoading(''); pinMode='setup2'; return; }
-  const matched=users.find(u=>u.pinHash===h);
-  if(matched){ lsSet('hl_user_name',matched.name); setPinLoading('Loading…'); await loadFromGist(); setPinLoading(''); doUnlock(matched.name); }
-  else{ setPinLoading(''); $('pinError').textContent='Incorrect PIN'; dotError(); pinBuffer=''; }
+  const matched=users.find(u=>(u.pinHash||u.pin_hash)===h);
+  if(matched){
+    lsSet('hl_user_name',matched.name);
+    setPinLoading('Loading…');
+    try{ await apiCall('POST','/api/auth/login',{pin_hash:h}); }catch(e){ setPinLoading(''); $('pinError').textContent='Server error'; dotError(); pinBuffer=''; return; }
+    await loadFromGist(); setPinLoading(''); doUnlock(matched.name);
+  } else{ setPinLoading(''); $('pinError').textContent='Incorrect PIN'; dotError(); pinBuffer=''; }
 }
 async function resetPinCache(){
   setPinLoading('Syncing PIN…'); $('pinError').textContent=''; pinBuffer=''; updateDots();
-  try{ lsDel('hl_users'); const id=await ensureGist(); const r=await fetch('https://api.github.com/gists/'+id,{headers:{'Authorization':'token '+getToken(),'Accept':'application/vnd.github.v3+json'}}); const g=await r.json(); if(g.files[META_FILE]){ const m=JSON.parse(g.files[META_FILE].content); if(m.users&&m.users.length){ lsSet('hl_users',JSON.stringify(m.users)); setPinLoading('Synced — enter your PIN'); } else if(m.pinHash){ const users=[{name:'Tyler',pinHash:m.pinHash}]; lsSet('hl_users',JSON.stringify(users)); setPinLoading('Synced — enter your PIN'); } else setPinLoading('No users set yet'); } }
-  catch(e){ setPinLoading('Could not reach Gist'); }
+  try{
+    lsDel('hl_users');
+    const serverUsers = await apiCall('GET','/api/auth/users');
+    if(serverUsers.length){ lsSet('hl_users',JSON.stringify(serverUsers.map(u=>({...u,pinHash:u.pin_hash})))); setPinLoading('Synced — enter your PIN'); }
+    else setPinLoading('No users set yet');
+  }catch(e){ setPinLoading('Could not reach server'); }
   setTimeout(()=>setPinLoading(''),3000);
 }
 async function initPinScreen(){
@@ -1077,14 +1003,10 @@ async function initPinScreen(){
   if(cached&&JSON.parse(cached).length){ pinMode='unlock'; return; }
   try{
     setPinLoading('Connecting…');
-    const id=await ensureGist();
-    const r=await fetch('https://api.github.com/gists/'+id,{headers:{'Authorization':'token '+getToken(),'Accept':'application/vnd.github.v3+json'}});
-    const g=await r.json();
-    if(g.files[META_FILE]){
-      const m=JSON.parse(g.files[META_FILE].content);
-      if(m.users&&m.users.length){ lsSet('hl_users',JSON.stringify(m.users)); setPinLoading(''); pinMode='unlock'; }
-      else if(m.pinHash){ const users=[{name:'Tyler',pinHash:m.pinHash}]; lsSet('hl_users',JSON.stringify(users)); await pushMeta(users); setPinLoading(''); pinMode='unlock'; }
-      else{ setPinLoading(''); $('pinTitle').textContent='Set a PIN'; $('pinSub').textContent='Choose a 4-digit PIN'; pinMode='setup1'; }
+    const serverUsers = await apiCall('GET','/api/auth/users');
+    if(serverUsers.length){
+      lsSet('hl_users',JSON.stringify(serverUsers.map(u=>({...u,pinHash:u.pin_hash}))));
+      setPinLoading(''); pinMode='unlock';
     } else{ setPinLoading(''); $('pinTitle').textContent='Set a PIN'; $('pinSub').textContent='Choose a 4-digit PIN'; pinMode='setup1'; }
   }catch(e){ setPinLoading('Offline — enter PIN'); pinMode='unlock'; }
 }
@@ -1128,9 +1050,19 @@ function doUnlock(userName){ if(window._splashReady) window._splashReady();
 function lockApp(silent=false){ clearTimeout(inactivityTimer); stopPolling(); sessionStorage.removeItem('hl_s'); const b=$('loggedInBadge'); if(b) b.style.display='none'; showScreen('pinScreen'); pinBuffer=''; updateDots(); $('pinTitle').textContent='Enter PIN'; $('pinSub').textContent='H&L FloorSync'; $('pinError').textContent=''; setPinLoading(''); pinMode='unlock'; }
 async function initApp(){
   const saved=parseInt(lsGet('hl_overdue_days')||'',10); if(saved&&saved>=1) overdueDays=saved;
-  const token=getToken(); if(!token){ showScreen('setupScreen'); return; }
   showScreen('pinScreen');
-  if(sessionStorage.getItem('hl_s')==='1'){ loadLocal(); doUnlock(lsGet('hl_user_name')||''); loadFromGist().then(()=>{ fixTicketNums(); renderAll(); setSyncStatus('ok'); }).catch(()=>{}); return; }
+  if(sessionStorage.getItem('hl_s')==='1'){
+    try{
+      const me = await fetch('/api/auth/me');
+      if(me.ok){
+        const u = await me.json();
+        loadLocal(); doUnlock(u.name||lsGet('hl_user_name')||'');
+        loadFromGist().then(()=>{ fixTicketNums(); renderAll(); setSyncStatus('ok'); }).catch(()=>{});
+        return;
+      }
+    }catch(e){}
+    sessionStorage.removeItem('hl_s');
+  }
   await initPinScreen();
 }
 
@@ -1565,8 +1497,8 @@ function moveQueue(sec,id,dir){
 async function saveQueueOrder(sec){
   state[sec].queue=getActiveQueue(sec).ordered.map(e=>e.id);
   setSyncStatus('syncing');
-  try{ await writeGist({[QUEUE_FILES[sec]]:{content:JSON.stringify(state[sec].queue,null,2)}}); saveLocal(); setSyncStatus('ok'); toast('Queue order saved'); const h=$(sec+'QHint'); if(h){ h.textContent='Drag items to set your work order'; h.style.color=''; } renderQueueTab(sec); }
-  catch(e){ setSyncStatus('error'); }
+  try{ await apiCall('PUT','/api/queue/'+sec, state[sec].queue); saveLocal(); setSyncStatus('ok'); toast('Queue order saved'); const h=$(sec+'QHint'); if(h){ h.textContent='Drag items to set your work order'; h.style.color=''; } renderQueueTab(sec); }
+  catch(e){ setSyncStatus('err'); }
 }
 
 // ── MODALS ──
@@ -1752,14 +1684,7 @@ async function sendNotify(){
 
   try{
     // Load existing queue, append, save back
-    const id=await ensureGist();
-    let queue=[];
-    try{
-      const g=await gistAPI('GET','gists/'+id);
-      if(g.files[NOTIFY_FILE]) queue=JSON.parse(g.files[NOTIFY_FILE].content)||[];
-    }catch(e2){}
-    queue.push(notification);
-    await writeGist({[NOTIFY_FILE]:{content:JSON.stringify(queue,null,2)}});
+    await apiCall('POST','/api/notify', notification);
     closeNotifyModal();
     toast('Notification queued — email will send within 60 seconds');
   }catch(err){
@@ -1866,23 +1791,12 @@ let pollTimer=null, lastGistUpdatedAt=null, isEditing=false;
 async function pollForChanges(){
   if($('app').style.display==='none'||isEditing) return;
   try{
-    const id=await ensureGist(); const token=getToken();
-    const r=await fetch('https://api.github.com/gists/'+id,{headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}});
-    if(!r.ok) return;
-    const g=await r.json();
-    if(lastGistUpdatedAt&&g.updated_at!==lastGistUpdatedAt){
-      if(g.files[DATA_FILE]){
-  const d=JSON.parse(g.files[DATA_FILE].content);
-  state.applicator.entries=d.issues||[];
-  if(d.contacts) contacts=d.contacts;
-  if(d.customers) customersList=d.customers;
-}
-      if(g.files[MACH_FILE]){ const d=JSON.parse(g.files[MACH_FILE].content); state.machine.entries=d.issues||[]; }
-      if(g.files[SETUP_FILE]){ const d=JSON.parse(g.files[SETUP_FILE].content); state.setup.entries=d.issues||[]; }
-      ['applicator','machine','setup'].forEach(sec=>{ const f=g.files[QUEUE_FILES[sec]]; if(f) state[sec].queue=JSON.parse(f.content)||[]; });
+    const d = await apiCall('GET','/api/sync/ping');
+    if(lastGistUpdatedAt && d.updatedAt !== lastGistUpdatedAt){
+      await loadFromGist();
       saveLocal(); renderAll(); setSyncStatus('ok'); showPollToast();
     }
-    lastGistUpdatedAt=g.updated_at;
+    lastGistUpdatedAt = d.updatedAt;
   }catch(e){}
 }
 function showPollToast(){
@@ -1899,7 +1813,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   });
 });
 
-$('setupToken').addEventListener('keydown',e=>{ if(e.key==='Enter') doSetup(); });
+
 document.addEventListener('keydown',function(e){
   const pa=document.getElementById('pinScreen').classList.contains('active');
   if(!pa) return;
@@ -2076,22 +1990,7 @@ names.forEach(n=>{
 }
 }
 async function pushCustomers(){
-  const id = await ensureGist();
-  const g = await gistAPI('GET','gists/'+id);
-
-  let current = {issues:[], contacts:[], customers:[]};
-
-  if(g.files[DATA_FILE]){
-    current = JSON.parse(g.files[DATA_FILE].content);
-  }
-
-  current.customers = customersList;
-
-  await writeGist({
-    [DATA_FILE]: {
-      content: JSON.stringify(current, null, 2)
-    }
-  });
+  try{ await apiCall('PUT','/api/customers', customersList); }catch(e){ console.error('pushCustomers failed',e); }
 }
 </script>
 <script>
