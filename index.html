@@ -1007,20 +1007,14 @@ async function handlePin(){
   }
   setPinLoading('Checking…');
   try{
-    const r=await fetch('/api/auth/users');
-    if(r.ok){
-      const serverUsers=await r.json();
-      if(serverUsers.length){ lsSet('hl_users',JSON.stringify(serverUsers.map(u=>({...u,pinHash:u.pin_hash})))); users=serverUsers; }
+    const loginRes = await apiCall('POST','/api/auth/login',{pin_hash:h});
+    if(loginRes && loginRes.ok && loginRes.user){
+      lsSet('hl_user_name', loginRes.user.name);
+      await loadFromGist(); fixTicketNums(); setPinLoading('');
+      doUnlock(loginRes.user.name); return;
     }
   }catch(e){}
-  if(!users.length){ pinSetupFirst=pinBuffer; pinBuffer=''; updateDots(); $('pinTitle').textContent='Confirm PIN'; $('pinSub').textContent='Re-enter your new PIN'; setPinLoading(''); pinMode='setup2'; return; }
-  const matched=users.find(u=>(u.pinHash||u.pin_hash)===h);
-  if(matched){
-    lsSet('hl_user_name',matched.name);
-    setPinLoading('Loading…');
-    try{ await apiCall('POST','/api/auth/login',{pin_hash:h}); }catch(e){ setPinLoading(''); $('pinError').textContent='Server error'; dotError(); pinBuffer=''; return; }
-    await loadFromGist(); setPinLoading(''); doUnlock(matched.name);
-  } else{ setPinLoading(''); $('pinError').textContent='Incorrect PIN'; dotError(); pinBuffer=''; }
+  setPinLoading(''); $('pinError').textContent='Incorrect PIN'; dotError(); pinBuffer='';
 }
 async function resetPinCache(){
   setPinLoading('Syncing PIN…'); $('pinError').textContent=''; pinBuffer=''; updateDots();
