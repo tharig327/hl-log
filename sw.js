@@ -1,4 +1,4 @@
-const CACHE = 'hl-floorsync-v5';
+const CACHE = 'hl-floorsync-v6';
 
 const ASSETS = [
   './',
@@ -32,8 +32,8 @@ self.addEventListener('activate', e=>{
 self.addEventListener('fetch', e=>{
   const url = new URL(e.request.url);
 
-  // GitHub API → always network
-  if(url.hostname==='api.github.com'){
+  // API calls → always network
+  if(url.pathname.startsWith('/api/')){
     e.respondWith(fetch(e.request).catch(()=>
       new Response('{"error":"offline"}',{headers:{'Content-Type':'application/json'}})
     ));

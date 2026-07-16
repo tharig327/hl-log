@@ -1,321 +1,262 @@
+'use strict';
 const express = require('express');
+const session = require('express-session');
 const path = require('path');
 const createDb = require('./db');
 
+const db = createDb();
 const app = express();
 const PORT = process.env.PORT || 3000;
+const SESSION_SECRET = process.env.SESSION_SECRET || 'hl-floorsync-secret-change-me';
 
-app.use(express.json());
-app.use(express.static(path.join(__dirname, '../public')));
+app.use(express.json({ limit: '10mb' }));
+app.use(session({
+  secret: SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: { httpOnly: true, sameSite: 'lax', maxAge: 8 * 60 * 60 * 1000 }
+}));
 
-async function start() {
-  const db = await createDb();
+app.use(express.static(path.join(__dirname, '../../')));
 
-  // ── Customers ──────────────────────────────────────────────────
-  app.get('/api/customers', (req, res) => {
-    res.json(db.prepare('SELECT * FROM customers ORDER BY name').all());
-  });
-
-  app.post('/api/customers', (req, res) => {
-    const { name } = req.body;
-    if (!name) return res.status(400).json({ error: 'Name required' });
-    try {
-      const result = db.prepare('INSERT INTO customers (name) VALUES (?)').run(name.trim());
-      res.json({ id: result.lastInsertRowid, name: name.trim() });
-    } catch (e) {
-      res.status(409).json({ error: 'Customer already exists' });
-    }
-  });
-
-  app.put('/api/customers/:id', (req, res) => {
-    const { name } = req.body;
-    if (!name) return res.status(400).json({ error: 'Name required' });
-    try {
-      db.prepare('UPDATE customers SET name=? WHERE id=?').run(name.trim(), req.params.id);
-      res.json({ ok: true });
-    } catch (e) {
-      res.status(409).json({ error: 'Customer name already exists' });
-    }
-  });
-
-  app.delete('/api/customers/:id', (req, res) => {
-    const parts = db.prepare('SELECT id FROM parts WHERE customer_id = ?').all(req.params.id);
-    const del = db.transaction(() => {
-      parts.forEach(p => {
-        db.prepare('DELETE FROM scrap_log WHERE production_log_id IN (SELECT id FROM production_logs WHERE part_id = ?)').run(p.id);
-        db.prepare('DELETE FROM production_logs WHERE part_id = ?').run(p.id);
-      });
-      db.prepare('DELETE FROM parts WHERE customer_id = ?').run(req.params.id);
-      db.prepare('DELETE FROM customers WHERE id = ?').run(req.params.id);
-    });
-    del();
-    res.json({ ok: true });
-  });
-
-  app.post('/api/customers/bulk', (req, res) => {
-    const { names } = req.body;
-    if (!Array.isArray(names) || names.length === 0) return res.status(400).json({ error: 'names array required' });
-    const insert = db.transaction(() => {
-      let added = 0, skipped = 0;
-      names.forEach(name => {
-        const trimmed = name.trim();
-        if (!trimmed) return;
-        try { db.prepare('INSERT INTO customers (name) VALUES (?)').run(trimmed); added++; }
-        catch { skipped++; }
-      });
-      return { added, skipped };
-    });
-    res.json(insert());
-  });
-
-  // ── Parts ──────────────────────────────────────────────────────
-  app.get('/api/parts', (req, res) => {
-    const { customer_id } = req.query;
-    let query = `SELECT p.*, c.name as customer_name FROM parts p JOIN customers c ON p.customer_id = c.id`;
-    const params = [];
-    if (customer_id) { query += ' WHERE p.customer_id = ?'; params.push(customer_id); }
-    query += ' ORDER BY c.name, p.part_number';
-    res.json(db.prepare(query).all(...params));
-  });
-
-  app.post('/api/parts', (req, res) => {
-    const { customer_id, part_number, description, target_rate } = req.body;
-    if (!customer_id || !part_number) return res.status(400).json({ error: 'customer_id and part_number required' });
-    try {
-      const result = db.prepare(
-        'INSERT INTO parts (customer_id, part_number, description, target_rate) VALUES (?, ?, ?, ?)'
-      ).run(customer_id, part_number.trim(), description || null, target_rate || null);
-      res.json({ id: result.lastInsertRowid });
-    } catch (e) {
-      res.status(409).json({ error: 'Part already exists for this customer' });
-    }
-  });
-
-  app.put('/api/parts/:id', (req, res) => {
-    const { customer_id, part_number, description, target_rate } = req.body;
-    try {
-      db.prepare('UPDATE parts SET customer_id=COALESCE(?,customer_id), part_number=COALESCE(?,part_number), description=?, target_rate=? WHERE id=?')
-        .run(customer_id || null, part_number?.trim() || null, description || null, target_rate ?? null, req.params.id);
-      res.json({ ok: true });
-    } catch (e) {
-      res.status(409).json({ error: 'Part number already exists for this customer' });
-    }
-  });
-
-  app.delete('/api/parts/:id', (req, res) => {
-    const del = db.transaction(() => {
-      db.prepare('DELETE FROM scrap_log WHERE production_log_id IN (SELECT id FROM production_logs WHERE part_id = ?)').run(req.params.id);
-      db.prepare('DELETE FROM production_logs WHERE part_id = ?').run(req.params.id);
-      db.prepare('DELETE FROM parts WHERE id = ?').run(req.params.id);
-    });
-    del();
-    res.json({ ok: true });
-  });
-
-  app.post('/api/parts/bulk', (req, res) => {
-    const { parts } = req.body;
-    if (!Array.isArray(parts) || parts.length === 0) return res.status(400).json({ error: 'parts array required' });
-    const insert = db.transaction(() => {
-      let added = 0, skipped = 0;
-      parts.forEach(({ customer_id, part_number, description, target_rate }) => {
-        if (!customer_id || !part_number) { skipped++; return; }
-        try {
-          db.prepare('INSERT INTO parts (customer_id, part_number, description, target_rate) VALUES (?, ?, ?, ?)')
-            .run(customer_id, part_number.trim(), description || null, target_rate || null);
-          added++;
-        } catch { skipped++; }
-      });
-      return { added, skipped };
-    });
-    res.json(insert());
-  });
-
-  // ── Employees ──────────────────────────────────────────────────
-  app.get('/api/employees', (req, res) => {
-    const includeInactive = req.query.include_inactive === '1';
-    const rows = includeInactive
-      ? db.prepare('SELECT * FROM employees ORDER BY active DESC, name').all()
-      : db.prepare('SELECT * FROM employees WHERE active=1 ORDER BY name').all();
-    res.json(rows);
-  });
-
-  app.post('/api/employees', (req, res) => {
-    const { name, employee_id } = req.body;
-    if (!name) return res.status(400).json({ error: 'Name required' });
-    try {
-      const result = db.prepare('INSERT INTO employees (name, employee_id) VALUES (?, ?)').run(name.trim(), employee_id || null);
-      res.json({ id: result.lastInsertRowid });
-    } catch (e) {
-      res.status(409).json({ error: 'Employee already exists' });
-    }
-  });
-
-  app.put('/api/employees/:id', (req, res) => {
-    const { active, name, employee_id } = req.body;
-    if (active !== undefined) {
-      db.prepare('UPDATE employees SET active=? WHERE id=?').run(active ? 1 : 0, req.params.id);
-    } else {
-      if (!name) return res.status(400).json({ error: 'Name required' });
-      try {
-        db.prepare('UPDATE employees SET name=?, employee_id=? WHERE id=?').run(name.trim(), employee_id || null, req.params.id);
-      } catch (e) {
-        return res.status(409).json({ error: 'Employee name already exists' });
-      }
-    }
-    res.json({ ok: true });
-  });
-
-  app.delete('/api/employees/:id', (req, res) => {
-    db.prepare('DELETE FROM employees WHERE id=?').run(req.params.id);
-    res.json({ ok: true });
-  });
-
-  app.post('/api/employees/bulk', (req, res) => {
-    const { employees } = req.body;
-    if (!Array.isArray(employees) || employees.length === 0) return res.status(400).json({ error: 'employees array required' });
-    const insert = db.transaction(() => {
-      let added = 0, skipped = 0;
-      employees.forEach(({ name, employee_id }) => {
-        if (!name) { skipped++; return; }
-        try { db.prepare('INSERT INTO employees (name, employee_id) VALUES (?, ?)').run(name.trim(), employee_id || null); added++; }
-        catch { skipped++; }
-      });
-      return { added, skipped };
-    });
-    res.json(insert());
-  });
-
-  // ── Scrap Reasons ───────────────────────────────────────────────
-  app.get('/api/scrap-reasons', (req, res) => {
-    res.json(db.prepare('SELECT * FROM scrap_reasons ORDER BY reason').all());
-  });
-
-  app.post('/api/scrap-reasons', (req, res) => {
-    const { reason } = req.body;
-    if (!reason) return res.status(400).json({ error: 'Reason required' });
-    try {
-      const result = db.prepare('INSERT INTO scrap_reasons (reason) VALUES (?)').run(reason.trim());
-      res.json({ id: result.lastInsertRowid });
-    } catch (e) {
-      res.status(409).json({ error: 'Reason already exists' });
-    }
-  });
-
-  // ── Production Logs ─────────────────────────────────────────────
-  app.get('/api/production', (req, res) => {
-    const { date_from, date_to, employee_id, part_id, customer_id } = req.query;
-    let query = `
-      SELECT pl.*, e.name as employee_name, p.part_number, p.target_rate,
-             c.name as customer_name, c.id as customer_id
-      FROM production_logs pl
-      JOIN employees e ON pl.employee_id = e.id
-      JOIN parts p ON pl.part_id = p.id
-      JOIN customers c ON p.customer_id = c.id
-      WHERE 1=1
-    `;
-    const params = [];
-    if (date_from)   { query += ' AND pl.date >= ?';       params.push(date_from); }
-    if (date_to)     { query += ' AND pl.date <= ?';       params.push(date_to); }
-    if (employee_id) { query += ' AND pl.employee_id = ?'; params.push(employee_id); }
-    if (part_id)     { query += ' AND pl.part_id = ?';     params.push(part_id); }
-    if (customer_id) { query += ' AND c.id = ?';           params.push(customer_id); }
-    query += ' ORDER BY pl.date DESC, pl.created_at DESC';
-    const logs = db.prepare(query).all(...params);
-
-    const scrapQuery = db.prepare(`
-      SELECT sl.*, sr.reason FROM scrap_log sl
-      JOIN scrap_reasons sr ON sl.scrap_reason_id = sr.id
-      WHERE sl.production_log_id = ?
-    `);
-    logs.forEach(log => {
-      log.scrap_detail = scrapQuery.all(log.id);
-      log.actual_rate = (log.hours_run && log.hours_run > 0)
-        ? Math.round(log.qty_produced / log.hours_run) : null;
-      log.efficiency = (log.actual_rate && log.target_rate)
-        ? Math.round((log.actual_rate / log.target_rate) * 100) : null;
-    });
-    res.json(logs);
-  });
-
-  app.post('/api/production', (req, res) => {
-    const { date, shift, employee_id, part_id, qty_produced, qty_scrap, hours_run, notes, scrap_detail } = req.body;
-    if (!date || !employee_id || !part_id || qty_produced == null)
-      return res.status(400).json({ error: 'date, employee_id, part_id, qty_produced required' });
-
-    const insert = db.transaction(() => {
-      const result = db.prepare(`
-        INSERT INTO production_logs (date, shift, employee_id, part_id, qty_produced, qty_scrap, hours_run, notes)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(date, shift || 'Day', employee_id, part_id, qty_produced, qty_scrap || 0, hours_run || null, notes || null);
-
-      const logId = result.lastInsertRowid;
-      if (scrap_detail && scrap_detail.length > 0) {
-        const insertScrap = db.prepare('INSERT INTO scrap_log (production_log_id, scrap_reason_id, qty) VALUES (?, ?, ?)');
-        scrap_detail.forEach(({ scrap_reason_id, qty }) => {
-          if (scrap_reason_id && qty > 0) insertScrap.run(logId, scrap_reason_id, qty);
-        });
-      }
-      return logId;
-    });
-
-    res.json({ id: insert() });
-  });
-
-  app.delete('/api/production/:id', (req, res) => {
-    db.prepare('DELETE FROM scrap_log WHERE production_log_id=?').run(req.params.id);
-    db.prepare('DELETE FROM production_logs WHERE id=?').run(req.params.id);
-    res.json({ ok: true });
-  });
-
-  // ── Reports ─────────────────────────────────────────────────────
-  app.get('/api/reports/summary', (req, res) => {
-    const { date_from, date_to } = req.query;
-    const from = date_from || new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
-    const to   = date_to   || new Date().toISOString().slice(0, 10);
-
-    const byPart = db.prepare(`
-      SELECT c.name as customer, p.part_number, p.target_rate,
-             SUM(pl.qty_produced) as total_produced,
-             SUM(pl.qty_scrap) as total_scrap,
-             SUM(pl.hours_run) as total_hours,
-             COUNT(pl.id) as run_count
-      FROM production_logs pl
-      JOIN parts p ON pl.part_id = p.id
-      JOIN customers c ON p.customer_id = c.id
-      WHERE pl.date BETWEEN ? AND ?
-      GROUP BY p.id ORDER BY c.name, p.part_number
-    `).all(from, to);
-
-    byPart.forEach(row => {
-      row.scrap_pct = row.total_produced > 0
-        ? ((row.total_scrap / (row.total_produced + row.total_scrap)) * 100).toFixed(1) : '0.0';
-      row.actual_rate = row.total_hours > 0 ? Math.round(row.total_produced / row.total_hours) : null;
-      row.efficiency = (row.actual_rate && row.target_rate)
-        ? Math.round((row.actual_rate / row.target_rate) * 100) : null;
-    });
-
-    const byEmployee = db.prepare(`
-      SELECT e.name as employee, SUM(pl.qty_produced) as total_produced,
-             SUM(pl.qty_scrap) as total_scrap, SUM(pl.hours_run) as total_hours
-      FROM production_logs pl
-      JOIN employees e ON pl.employee_id = e.id
-      WHERE pl.date BETWEEN ? AND ?
-      GROUP BY e.id ORDER BY total_produced DESC
-    `).all(from, to);
-
-    const byScrap = db.prepare(`
-      SELECT sr.reason, SUM(sl.qty) as total
-      FROM scrap_log sl
-      JOIN scrap_reasons sr ON sl.scrap_reason_id = sr.id
-      JOIN production_logs pl ON sl.production_log_id = pl.id
-      WHERE pl.date BETWEEN ? AND ?
-      GROUP BY sr.id ORDER BY total DESC
-    `).all(from, to);
-
-    res.json({ byPart, byEmployee, byScrap, from, to });
-  });
-
-  app.listen(PORT, () => console.log(`Production Tracker running at http://localhost:${PORT}`));
+function touch() {
+  db.prepare("UPDATE meta SET value = CURRENT_TIMESTAMP WHERE key = 'updated_at'").run();
 }
 
-start();
+function requireAuth(req, res, next) {
+  if (req.session && req.session.userId) return next();
+  res.status(401).json({ error: 'Not authenticated' });
+}
+
+function parsePhotos(val) {
+  try { return JSON.parse(val || '[]'); } catch { return []; }
+}
+
+function rowToApplicator(r) {
+  return { id: r.id, apn: r.apn, press: r.press, terminal: r.terminal, wire: r.wire,
+    customer: r.customer, issue: r.issue, notes: r.notes, status: r.status,
+    priority: r.priority, by: r.by_user, ticketNum: r.ticket_num,
+    submittedBy: r.submitted_by, photos: parsePhotos(r.photos),
+    date: r.date, createdAt: r.created_at, updatedAt: r.updated_at };
+}
+
+function rowToMachine(r) {
+  return { id: r.id, machine: r.machine, desc: r.desc, result: r.result,
+    customer: r.customer, status: r.status, by: r.by_user,
+    ticketNum: r.ticket_num, photos: parsePhotos(r.photos),
+    date: r.date, createdAt: r.created_at, updatedAt: r.updated_at };
+}
+
+function rowToSetup(r) {
+  return { id: r.id, terminal: r.terminal, awg: r.awg, issue: r.issue, doc: r.doc,
+    notes: r.notes, customer: r.customer, status: r.status, by: r.by_user,
+    ticketNum: r.ticket_num, photos: parsePhotos(r.photos),
+    date: r.date, createdAt: r.created_at, updatedAt: r.updated_at };
+}
+
+const SECTION_TABLE = { applicator: 'applicator_entries', machine: 'machine_entries', setup: 'setup_entries' };
+
+const UPSERT_SQL = {
+  applicator: `INSERT INTO applicator_entries
+    (id,apn,press,terminal,wire,customer,issue,notes,status,priority,by_user,ticket_num,submitted_by,photos,date)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    ON CONFLICT(id) DO UPDATE SET apn=excluded.apn,press=excluded.press,terminal=excluded.terminal,
+    wire=excluded.wire,customer=excluded.customer,issue=excluded.issue,notes=excluded.notes,
+    status=excluded.status,priority=excluded.priority,by_user=excluded.by_user,
+    ticket_num=excluded.ticket_num,submitted_by=excluded.submitted_by,photos=excluded.photos,
+    date=excluded.date,updated_at=CURRENT_TIMESTAMP`,
+  machine: `INSERT INTO machine_entries
+    (id,machine,desc,result,customer,status,by_user,ticket_num,photos,date)
+    VALUES (?,?,?,?,?,?,?,?,?,?)
+    ON CONFLICT(id) DO UPDATE SET machine=excluded.machine,desc=excluded.desc,result=excluded.result,
+    customer=excluded.customer,status=excluded.status,by_user=excluded.by_user,
+    ticket_num=excluded.ticket_num,photos=excluded.photos,date=excluded.date,updated_at=CURRENT_TIMESTAMP`,
+  setup: `INSERT INTO setup_entries
+    (id,terminal,awg,issue,doc,notes,customer,status,by_user,ticket_num,photos,date)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+    ON CONFLICT(id) DO UPDATE SET terminal=excluded.terminal,awg=excluded.awg,issue=excluded.issue,
+    doc=excluded.doc,notes=excluded.notes,customer=excluded.customer,status=excluded.status,
+    by_user=excluded.by_user,ticket_num=excluded.ticket_num,photos=excluded.photos,
+    date=excluded.date,updated_at=CURRENT_TIMESTAMP`
+};
+
+function upsertRow(section, stmt, e) {
+  if (section === 'applicator') {
+    stmt.run(e.id,e.apn||null,e.press||null,e.terminal||null,e.wire||null,e.customer||null,
+      e.issue||null,e.notes||null,e.status||'open',e.priority||'normal',e.by||null,
+      e.ticketNum||null,e.submittedBy||null,JSON.stringify(e.photos||[]),e.date||null);
+  } else if (section === 'machine') {
+    stmt.run(e.id,e.machine||null,e.desc||null,e.result||null,e.customer||null,
+      e.status||'open',e.by||null,e.ticketNum||null,JSON.stringify(e.photos||[]),e.date||null);
+  } else {
+    stmt.run(e.id,e.terminal||null,e.awg||null,e.issue||null,e.doc||null,e.notes||null,
+      e.customer||null,e.status||'open',e.by||null,e.ticketNum||null,
+      JSON.stringify(e.photos||[]),e.date||null);
+  }
+}
+
+// Auth
+app.post('/api/auth/login', (req, res) => {
+  const { pin_hash } = req.body;
+  if (!pin_hash) return res.status(400).json({ error: 'pin_hash required' });
+  const user = db.prepare('SELECT * FROM users WHERE pin_hash = ? AND active = 1').get(pin_hash);
+  if (!user) return res.status(401).json({ error: 'Invalid PIN' });
+  req.session.userId = user.id;
+  req.session.userName = user.name;
+  req.session.userRole = user.role;
+  res.json({ ok: true, user: { id: user.id, name: user.name, role: user.role } });
+});
+
+app.post('/api/auth/logout', (req, res) => {
+  req.session.destroy(() => res.json({ ok: true }));
+});
+
+app.get('/api/auth/me', (req, res) => {
+  if (!req.session || !req.session.userId) return res.status(401).json({ error: 'Not authenticated' });
+  res.json({ id: req.session.userId, name: req.session.userName, role: req.session.userRole });
+});
+
+app.get('/api/auth/users', (req, res) => {
+  res.json(db.prepare('SELECT id,name,role,active FROM users ORDER BY name').all());
+});
+
+app.put('/api/auth/users', requireAuth, (req, res) => {
+  const users = req.body;
+  if (!Array.isArray(users)) return res.status(400).json({ error: 'Array expected' });
+  const stmt = db.prepare(`INSERT INTO users (name,pin_hash,role,active) VALUES (?,?,?,?)
+    ON CONFLICT(name) DO UPDATE SET pin_hash=excluded.pin_hash,role=excluded.role,active=excluded.active`);
+  db.transaction(() => users.forEach(u => stmt.run(u.name,u.pin_hash||u.pinHash,u.role||'tech',u.active==null?1:u.active)))();
+  touch();
+  res.json({ ok: true });
+});
+
+app.post('/api/auth/setup', (req, res) => {
+  const count = db.prepare('SELECT COUNT(*) as n FROM users').get().n;
+  if (count > 0) return res.status(403).json({ error: 'Already set up' });
+  const { name, pin_hash, role } = req.body;
+  if (!name || !pin_hash) return res.status(400).json({ error: 'name and pin_hash required' });
+  db.prepare('INSERT INTO users (name,pin_hash,role) VALUES (?,?,?)').run(name,pin_hash,role||'supervisor');
+  res.json({ ok: true });
+});
+
+// All data snapshot
+app.get('/api/data', requireAuth, (req, res) => {
+  const applicator = db.prepare('SELECT * FROM applicator_entries ORDER BY date DESC').all().map(rowToApplicator);
+  const machine    = db.prepare('SELECT * FROM machine_entries ORDER BY date DESC').all().map(rowToMachine);
+  const setup      = db.prepare('SELECT * FROM setup_entries ORDER BY date DESC').all().map(rowToSetup);
+  const qRows      = db.prepare('SELECT * FROM queue_order').all();
+  const queue      = {};
+  qRows.forEach(r => { try { queue[r.section] = JSON.parse(r.order_json); } catch { queue[r.section] = []; } });
+  const contacts   = db.prepare('SELECT * FROM contacts WHERE active = 1 ORDER BY name').all();
+  const customers  = db.prepare('SELECT * FROM customers WHERE active = 1 ORDER BY name').all();
+  res.json({ applicator, machine, setup, queue, contacts, customers });
+});
+
+// Entries bulk-replace
+app.put('/api/entries/:section', requireAuth, (req, res) => {
+  const { section } = req.params;
+  if (!SECTION_TABLE[section]) return res.status(404).json({ error: 'Unknown section' });
+  const entries = req.body;
+  if (!Array.isArray(entries)) return res.status(400).json({ error: 'Array expected' });
+  const table = SECTION_TABLE[section];
+  const stmt = db.prepare(UPSERT_SQL[section]);
+  const ids = entries.map(e => e.id).filter(Boolean);
+  db.transaction(() => {
+    if (ids.length > 0) {
+      db.prepare(`DELETE FROM ${table} WHERE id NOT IN (${ids.map(()=>'?').join(',')})`).run(...ids);
+    } else {
+      db.prepare(`DELETE FROM ${table}`).run();
+    }
+    entries.forEach(e => upsertRow(section, stmt, e));
+  })();
+  touch();
+  res.json({ ok: true });
+});
+
+app.delete('/api/entries/:section/:id', requireAuth, (req, res) => {
+  const { section, id } = req.params;
+  if (!SECTION_TABLE[section]) return res.status(404).json({ error: 'Unknown section' });
+  db.prepare(`DELETE FROM ${SECTION_TABLE[section]} WHERE id = ?`).run(id);
+  touch();
+  res.json({ ok: true });
+});
+
+// Queue order
+app.put('/api/queue/:section', requireAuth, (req, res) => {
+  const { section } = req.params;
+  if (!SECTION_TABLE[section]) return res.status(404).json({ error: 'Unknown section' });
+  if (!Array.isArray(req.body)) return res.status(400).json({ error: 'Array expected' });
+  db.prepare('UPDATE queue_order SET order_json=?,updated_at=CURRENT_TIMESTAMP WHERE section=?')
+    .run(JSON.stringify(req.body), section);
+  touch();
+  res.json({ ok: true });
+});
+
+// Contacts / customers
+app.put('/api/contacts', requireAuth, (req, res) => {
+  const rows = req.body;
+  if (!Array.isArray(rows)) return res.status(400).json({ error: 'Array expected' });
+  const stmt = db.prepare(`INSERT INTO contacts (id,name,email,active) VALUES (?,?,?,?)
+    ON CONFLICT(id) DO UPDATE SET name=excluded.name,email=excluded.email,active=excluded.active`);
+  const ids = rows.map(c=>c.id).filter(Boolean);
+  db.transaction(() => {
+    if (ids.length) db.prepare(`DELETE FROM contacts WHERE id NOT IN (${ids.map(()=>'?').join(',')})`).run(...ids);
+    else db.prepare('DELETE FROM contacts').run();
+    rows.forEach(c => stmt.run(c.id,c.name,c.email||null,c.active==null?1:c.active));
+  })();
+  touch();
+  res.json({ ok: true });
+});
+
+app.put('/api/customers', requireAuth, (req, res) => {
+  const rows = req.body;
+  if (!Array.isArray(rows)) return res.status(400).json({ error: 'Array expected' });
+  const stmt = db.prepare(`INSERT INTO customers (id,name,active) VALUES (?,?,?)
+    ON CONFLICT(id) DO UPDATE SET name=excluded.name,active=excluded.active`);
+  const ids = rows.map(c=>c.id).filter(Boolean);
+  db.transaction(() => {
+    if (ids.length) db.prepare(`DELETE FROM customers WHERE id NOT IN (${ids.map(()=>'?').join(',')})`).run(...ids);
+    else db.prepare('DELETE FROM customers').run();
+    rows.forEach(c => stmt.run(c.id,c.name,c.active==null?1:c.active));
+  })();
+  touch();
+  res.json({ ok: true });
+});
+
+// Public ticket endpoints (no auth)
+app.post('/api/tickets', (req, res) => {
+  const { apn, press, terminal, wire, customer, issue, notes, submittedBy } = req.body;
+  const id = Date.now();
+  const ticketNum = 'TKT-' + String(id).slice(-6);
+  db.prepare(`INSERT INTO applicator_entries
+    (id,apn,press,terminal,wire,customer,issue,notes,status,priority,ticket_num,submitted_by,date)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+    .run(id,apn||null,press||null,terminal||null,wire||null,customer||null,
+      issue||null,notes||null,'open','normal',ticketNum,submittedBy||null,id);
+  const qRow = db.prepare("SELECT order_json FROM queue_order WHERE section='applicator'").get();
+  let q = []; try { q = JSON.parse(qRow.order_json||'[]'); } catch {}
+  q.push(id);
+  db.prepare("UPDATE queue_order SET order_json=? WHERE section='applicator'").run(JSON.stringify(q));
+  touch();
+  res.json({ ok: true, ticketNum, id });
+});
+
+app.get('/api/tickets/:num', (req, res) => {
+  const row = db.prepare('SELECT * FROM applicator_entries WHERE ticket_num=?').get(req.params.num);
+  if (!row) return res.status(404).json({ error: 'Not found' });
+  res.json(rowToApplicator(row));
+});
+
+// Notify queue
+app.post('/api/notify', requireAuth, (req, res) => {
+  db.prepare('INSERT INTO notify_queue (payload) VALUES (?)').run(JSON.stringify(req.body));
+  res.json({ ok: true });
+});
+
+// Sync ping
+app.get('/api/sync/ping', requireAuth, (req, res) => {
+  const row = db.prepare("SELECT value FROM meta WHERE key='updated_at'").get();
+  res.json({ updatedAt: row ? row.value : null });
+});
+
+app.listen(PORT, () => console.log(`FloorSync listening on port ${PORT}`));
