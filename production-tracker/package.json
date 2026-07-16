@@ -1,14 +1,17 @@
 {
-  "name": "production-tracker",
-  "version": "1.0.0",
-  "description": "HL Manufacturing production tracking system",
+  "name": "floorsync",
+  "version": "2.0.0",
+  "description": "H&L FloorSync — Issue Log backend",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "node src/server.js"
+    "dev": "node src/server.js",
+    "migrate": "node src/migrate.js"
   },
   "dependencies": {
-    "sql.js": "^1.12.0",
-    "express": "^4.18.2"
+    "better-sqlite3": "^9.4.3",
+    "express": "^4.18.2",
+    "express-session": "^1.18.0",
+    "nodemailer": "^6.9.9"
   }
 }
