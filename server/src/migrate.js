@@ -84,6 +84,15 @@ async function importGist() {
     console.log(`Imported ${customers.length} customers`);
   }
 
+  // Debug: show structure of applicator file
+  const appRaw = files['hl_applicator_data.json'];
+  if (appRaw) {
+    let content = appRaw.content;
+    if (appRaw.truncated && appRaw.raw_url) content = await httpGet(appRaw.raw_url, { 'User-Agent': 'floorsync-migrate', 'Authorization': `token ${token}` });
+    console.log('hl_applicator_data.json truncated:', appRaw.truncated, 'content length:', (content||'').length);
+    try { const p = JSON.parse(content); console.log('parsed type:', Array.isArray(p)?'array ('+p.length+')':typeof p, Array.isArray(p)?'':JSON.stringify(p).slice(0,200)); } catch(e) { console.log('parse error:', e.message, 'raw:', (content||'').slice(0,200)); }
+  }
+
   // Applicator entries
   const applicator = await parseFile('hl_applicator_data.json') || await parseFile('applicator.json');
   if (Array.isArray(applicator)) {
