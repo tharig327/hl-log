@@ -67,20 +67,21 @@ async function importGist() {
     } catch { return null; }
   }
 
-  // Users
+  // Users — always wipe and re-import so changes in Gist take effect
+  db.exec('DELETE FROM users');
   const users = await parseFile('users.json');
   if (Array.isArray(users)) {
-    const stmt = db.prepare(`INSERT OR IGNORE INTO users (name,pin_hash,role,active) VALUES (?,?,?,1)`);
+    const stmt = db.prepare(`INSERT INTO users (name,pin_hash,role,active) VALUES (?,?,?,1)`);
     users.forEach(u => stmt.run(u.name||u.n, u.pin_hash||u.pinHash||u.p, u.role||'tech'));
     console.log(`Imported ${users.length} users`);
   } else {
     const meta = await parseFile('hl_applicator_meta.json');
     if (meta && Array.isArray(meta.users)) {
-      const stmt = db.prepare(`INSERT OR IGNORE INTO users (name,pin_hash,role,active) VALUES (?,?,?,1)`);
+      const stmt = db.prepare(`INSERT INTO users (name,pin_hash,role,active) VALUES (?,?,?,1)`);
       meta.users.forEach(u => stmt.run(u.name||u.n, u.pinHash||u.pin_hash||u.p, u.role||'supervisor'));
       console.log(`Imported ${meta.users.length} users from hl_applicator_meta.json`);
     } else if (meta && meta.pinHash) {
-      db.prepare(`INSERT OR IGNORE INTO users (name,pin_hash,role,active) VALUES (?,?,?,1)`)
+      db.prepare(`INSERT INTO users (name,pin_hash,role,active) VALUES (?,?,?,1)`)
         .run(meta.name||'Tyler', meta.pinHash, 'supervisor');
       console.log('Imported 1 user from hl_applicator_meta.json');
     }
