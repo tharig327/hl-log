@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FloorSync — Maintenance</title>
+<style>
+:root{--bg:#0f1117;--surf:#1a1d27;--surf2:#22263a;--border:#2d3148;--text:#e2e8f0;--sub:#8892a4;--blue:#4f7cff;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--orange:#f97316;--radius:8px;--font:'Inter',system-ui,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;min-height:100vh}
+a{color:var(--blue);text-decoration:none}
+button{cursor:pointer;font-family:inherit;font-size:14px;border:none;border-radius:var(--radius);padding:7px 14px;transition:.15s}
+.btn{background:var(--surf2);color:var(--text);border:1px solid var(--border)}
+.btn:hover{border-color:var(--blue)}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{filter:brightness(1.15)}
+.btn-danger{background:var(--red);color:#fff}
+.btn-sm{padding:4px 10px;font-size:12px}
+input,select,textarea{background:var(--surf2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:inherit;font-size:14px;padding:7px 10px;width:100%;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--blue)}
+label{display:block;margin-bottom:4px;color:var(--sub);font-size:12px}
+.card{background:var(--surf);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.gap2{gap:16px}
+.ml-auto{margin-left:auto}
+.badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;white-space:nowrap}
+.badge-open{background:#1e3a5f;color:#93c5fd}
+.badge-inprog{background:#1c3a2a;color:var(--green)}
+.badge-complete{background:#1f2d1a;color:#86efac}
+.badge-closed{background:#1a1a2e;color:var(--sub)}
+.badge-high{background:#3d1a1a;color:var(--red)}
+.badge-med{background:#2d2010;color:var(--yellow)}
+.badge-low{background:#1a2d1a;color:var(--green)}
+.badge-critical{background:#3d1a1a;color:var(--red)}
+.badge-pm{background:#1e3a5f;color:#93c5fd}
+.badge-repair{background:#2d2010;color:var(--yellow)}
+.badge-breakdown{background:#3d1a1a;color:var(--red)}
+.tag{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;background:var(--surf2);color:var(--sub);border:1px solid var(--border)}
+.warn{color:var(--yellow)}
+.err{color:var(--red)}
+.ok{color:var(--green)}
+
+/* Nav */
+#nav{background:var(--surf);border-bottom:1px solid var(--border);padding:0 20px;display:flex;gap:0;align-items:center}
+.nav-brand{font-weight:700;font-size:15px;padding:14px 16px 14px 0;color:var(--text);border-right:1px solid var(--border);margin-right:8px}
+.nav-brand a{color:inherit;text-decoration:none}
+.nav-tab{padding:14px 16px;color:var(--sub);cursor:pointer;border-bottom:2px solid transparent;transition:.15s;font-size:13px;font-weight:500;white-space:nowrap}
+.nav-tab:hover{color:var(--text)}
+.nav-tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+.nav-user{margin-left:auto;color:var(--sub);font-size:12px;padding:14px 0}
+
+/* Layout */
+#app{max-width:1200px;margin:0 auto;padding:20px}
+.section{display:none}
+.section.active{display:block}
+
+/* Table */
+.tbl-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;background:var(--surf)}
+th{background:var(--surf2);color:var(--sub);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;padding:10px 14px;text-align:left;white-space:nowrap}
+td{padding:10px 14px;border-top:1px solid var(--border);vertical-align:middle}
+tr:hover td{background:rgba(79,124,255,.05)}
+.clickable{cursor:pointer}
+
+/* Detail panel (side panel feel) */
+.detail-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;display:none}
+.detail-overlay.open{display:flex;justify-content:flex-end}
+.detail-panel{width:min(680px,100%);height:100%;background:var(--surf);border-left:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column}
+.detail-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center;position:sticky;top:0;background:var(--surf);z-index:10}
+.detail-body{padding:20px;flex:1}
+.detail-section{margin-bottom:24px}
+.detail-section h3{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--sub);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+
+/* Checklist */
+.chk-item{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border)}
+.chk-item:last-child{border-bottom:none}
+.chk-box{width:24px;height:24px;border:2px solid var(--border);border-radius:6px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:.15s;margin-top:2px}
+.chk-box:hover{border-color:var(--blue)}
+.chk-box.done{background:var(--green);border-color:var(--green);color:#fff}
+.chk-box.na{background:var(--surf2);border-color:var(--border);color:var(--sub)}
+.chk-text{flex:1}
+.chk-text .text{margin-bottom:2px}
+.chk-text .meta{font-size:11px;color:var(--sub)}
+.chk-critical{width:4px;border-radius:2px;align-self:stretch;background:var(--red);flex-shrink:0}
+
+/* Spares */
+.spare-row{display:flex;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)}
+.spare-row:last-child{border-bottom:none}
+.spare-bin{font-family:monospace;font-size:12px;background:var(--surf2);padding:2px 8px;border-radius:4px;min-width:36px;text-align:center}
+.stock-ok{color:var(--green)}
+.stock-low{color:var(--yellow)}
+.stock-out{color:var(--red)}
+
+/* Filter bar */
+.filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.filter-bar input,.filter-bar select{width:auto;flex:1;min-width:140px}
+
+/* Modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:24px;width:min(520px,95vw);max-height:90vh;overflow-y:auto}
+.modal h2{font-size:16px;margin-bottom:16px}
+.form-group{margin-bottom:14px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* Dashboard tiles */
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:24px}
+.tile{background:var(--surf);border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center}
+.tile .num{font-size:32px;font-weight:700;margin-bottom:4px}
+.tile .lbl{font-size:12px;color:var(--sub)}
+.tile.red .num{color:var(--red)}
+.tile.yellow .num{color:var(--yellow)}
+.tile.green .num{color:var(--green)}
+.tile.blue .num{color:var(--blue)}
+
+/* Toast */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#22263a;border:1px solid var(--border);border-radius:8px;padding:10px 20px;font-size:13px;z-index:999;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap}
+#toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<div id="nav">
+  <div class="nav-brand"><a href="/">FloorSync</a></div>
+  <div class="nav-tab active" data-tab="dashboard">Dashboard</div>
+  <div class="nav-tab" data-tab="equipment">Equipment</div>
+  <div class="nav-tab" data-tab="workorders">Work Orders</div>
+  <div class="nav-tab" data-tab="spares">Critical Spares</div>
+  <div class="nav-tab" data-tab="admin" id="adminTab" style="display:none">Admin</div>
+  <div class="nav-user" id="navUser"></div>
+</div>
+
+<div id="app">
+
+<!-- DASHBOARD -->
+<div class="section active" id="tab-dashboard">
+  <div class="tiles" id="dashTiles">
+    <div class="tile red"><div class="num" id="dOverdue">—</div><div class="lbl">PM Overdue</div></div>
+    <div class="tile yellow"><div class="num" id="dDueSoon">—</div><div class="lbl">Due in 7 Days</div></div>
+    <div class="tile blue"><div class="num" id="dOpenWO">—</div><div class="lbl">Open Work Orders</div></div>
+    <div class="tile red"><div class="num" id="dBelowMin">—</div><div class="lbl">Spares Below Min</div></div>
+  </div>
+
+  <div class="row gap2" style="margin-bottom:16px">
+    <h2 style="font-size:15px">PM Due / Coming Up</h2>
+    <button class="btn btn-sm ml-auto" onclick="loadDashboard()">Refresh</button>
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Equipment</th><th>Task</th><th>UOM</th><th>Due In</th><th>Meter</th><th></th></tr></thead>
+      <tbody id="pmDueBody"></tbody>
+    </table>
+  </div>
+
+  <div style="margin-top:24px" class="row gap2">
+    <h2 style="font-size:15px">Spares Below Minimum</h2>
+  </div>
+  <div class="tbl-wrap" style="margin-top:12px">
+    <table>
+      <thead><tr><th>Bin</th><th>Description</th><th>On Hand</th><th>Min</th><th>Supplier</th><th></th></tr></thead>
+      <tbody id="belowMinBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- EQUIPMENT -->
+<div class="section" id="tab-equipment">
+  <div class="row" style="margin-bottom:16px">
+    <h2 style="font-size:15px">Equipment</h2>
+    <span id="eqCount" style="color:var(--sub);font-size:12px"></span>
+    <div class="ml-auto row">
+      <button class="btn btn-sm" onclick="loadEquipment()">Refresh</button>
+    </div>
+  </div>
+  <div class="filter-bar">
+    <input id="eqSearch" placeholder="Search equipment…" oninput="renderEquipment()">
+    <select id="eqCritical" onchange="renderEquipment()">
+      <option value="">All</option>
+      <option value="1">Critical Only</option>
+      <option value="0">Non-critical</option>
+    </select>
+    <select id="eqOOS" onchange="renderEquipment()">
+      <option value="">Any Status</option>
+      <option value="0">In Service</option>
+      <option value="1">Out of Service</option>
+    </select>
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Eq No</th><th>Description</th><th>Class</th><th>Location</th><th>Critical</th><th>Open WOs</th><th>Spares</th></tr></thead>
+      <tbody id="equipBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- WORK ORDERS -->
+<div class="section" id="tab-workorders">
+  <div class="row" style="margin-bottom:16px">
+    <h2 style="font-size:15px">Work Orders</h2>
+    <div class="ml-auto row">
+      <button class="btn btn-sm btn-primary" onclick="openCreateWO()">+ Create WO</button>
+      <button class="btn btn-sm" onclick="loadWorkOrders()">Refresh</button>
+    </div>
+  </div>
+  <div class="filter-bar">
+    <input id="woSearch" placeholder="Search WOs…" oninput="renderWorkOrders()">
+    <select id="woStatus" onchange="renderWorkOrders()">
+      <option value="">All Status</option>
+      <option value="open">Open</option>
+      <option value="in_progress">In Progress</option>
+      <option value="complete">Complete</option>
+      <option value="closed">Closed</option>
+    </select>
+    <select id="woType" onchange="renderWorkOrders()">
+      <option value="">All Types</option>
+      <option value="PM">PM</option>
+      <option value="repair">Repair</option>
+      <option value="breakdown">Breakdown</option>
+    </select>
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>WO #</th><th>Equipment</th><th>Type</th><th>Status</th><th>Priority</th><th>Assigned</th><th>Created</th></tr></thead>
+      <tbody id="woBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- SPARES -->
+<div class="section" id="tab-spares">
+  <div class="row" style="margin-bottom:16px">
+    <h2 style="font-size:15px">Critical Spares</h2>
+    <span id="spareCount" style="color:var(--sub);font-size:12px"></span>
+    <div class="ml-auto row">
+      <button class="btn btn-sm" onclick="loadSpares()">Refresh</button>
+    </div>
+  </div>
+  <div class="filter-bar">
+    <input id="spareSearch" placeholder="Search spares…" oninput="renderSpares()">
+    <select id="spareCat" onchange="renderSpares()">
+      <option value="">All Categories</option>
+      <option value="F">F – Filters</option>
+      <option value="W">W</option><option value="M">M</option>
+      <option value="P">P</option><option value="A">A</option>
+      <option value="G">G</option><option value="T">T</option>
+      <option value="C">C</option><option value="D">D</option><option value="H">H</option>
+    </select>
+    <select id="spareStock" onchange="renderSpares()">
+      <option value="">All Stock</option>
+      <option value="low">Below Min</option>
+      <option value="ok">OK</option>
+    </select>
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Bin</th><th>Description</th><th>Part #</th><th>On Hand</th><th>Min</th><th>Supplier</th><th>Equipment</th></tr></thead>
+      <tbody id="spareBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div class="section" id="tab-admin">
+  <h2 style="font-size:15px;margin-bottom:16px">Admin — IQMS Sync &amp; Import</h2>
+  <div class="card" style="margin-bottom:16px">
+    <h3 style="margin-bottom:12px;font-size:13px">IQMS Sync Status</h3>
+    <div id="syncStatus" style="color:var(--sub);font-size:13px">Loading…</div>
+    <div class="row" style="margin-top:14px;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-sm btn-primary" onclick="runSync(['equipment'])">Sync Equipment</button>
+      <button class="btn btn-sm btn-primary" onclick="runSync(['pm_schedules'])">Sync PM Schedules</button>
+      <button class="btn btn-sm btn-primary" onclick="runSync(['pm_templates'])">Sync PM Templates</button>
+      <button class="btn btn-sm btn-primary" onclick="runSync(['wo_history'])">Sync WO History</button>
+      <button class="btn btn-sm" onclick="runSync(['equipment','pm_schedules','pm_templates','wo_history'])">Sync All</button>
+    </div>
+    <div id="syncResult" style="margin-top:10px;font-size:12px;color:var(--sub)"></div>
+  </div>
+  <div class="card">
+    <h3 style="margin-bottom:12px;font-size:13px">CSP Spreadsheet Import</h3>
+    <p style="color:var(--sub);font-size:13px;margin-bottom:12px">Upload <code>New_csp.xlsx</code> to import critical spares into the database. This is a one-time migration — the spreadsheet is retired after import.</p>
+    <input type="file" id="cspFile" accept=".xlsx" style="margin-bottom:12px">
+    <button class="btn btn-sm btn-primary" onclick="importCSP()">Import Spares</button>
+    <div id="importResult" style="margin-top:10px;font-size:12px;color:var(--sub)"></div>
+  </div>
+</div>
+
+</div><!-- #app -->
+
+<!-- DETAIL OVERLAYS -->
+<div class="detail-overlay" id="eqOverlay" onclick="closeDetail('eq')">
+  <div class="detail-panel" onclick.stop id="eqPanel" onclick="event.stopPropagation()">
+    <div class="detail-header">
+      <button class="btn btn-sm" onclick="closeDetail('eq')">← Back</button>
+      <span id="eqPanelTitle" style="font-weight:600;flex:1"></span>
+      <button class="btn btn-sm btn-primary" onclick="openCreateWO(currentEqId)">+ Work Order</button>
+    </div>
+    <div class="detail-body" id="eqPanelBody"></div>
+  </div>
+</div>
+
+<div class="detail-overlay" id="woOverlay" onclick="closeDetail('wo')">
+  <div class="detail-panel" onclick="event.stopPropagation()">
+    <div class="detail-header">
+      <button class="btn btn-sm" onclick="closeDetail('wo')">← Back</button>
+      <span id="woPanelTitle" style="font-weight:600;flex:1"></span>
+      <div class="row" style="gap:6px" id="woPanelActions"></div>
+    </div>
+    <div class="detail-body" id="woPanelBody"></div>
+  </div>
+</div>
+
+<div class="detail-overlay" id="spareOverlay" onclick="closeDetail('spare')">
+  <div class="detail-panel" onclick="event.stopPropagation()">
+    <div class="detail-header">
+      <button class="btn btn-sm" onclick="closeDetail('spare')">← Back</button>
+      <span id="sparePanelTitle" style="font-weight:600;flex:1"></span>
+    </div>
+    <div class="detail-body" id="sparePanelBody"></div>
+  </div>
+</div>
+
+<!-- CREATE WO MODAL -->
+<div class="modal-bg" id="createWOModal">
+  <div class="modal">
+    <h2>Create Work Order</h2>
+    <div class="form-group">
+      <label>Equipment *</label>
+      <select id="woEqSelect"><option value="">Select equipment…</option></select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Type</label>
+        <select id="woTypeNew">
+          <option value="repair">Repair</option>
+          <option value="breakdown">Breakdown</option>
+          <option value="PM">PM</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Priority</label>
+        <select id="woPriority">
+          <option value="med">Medium</option>
+          <option value="high">High</option>
+          <option value="low">Low</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>PM Schedule (optional — seeds checklist)</label>
+      <select id="woPmSched"><option value="">None / Ad-hoc</option></select>
+    </div>
+    <div class="form-group">
+      <label>Assigned To</label>
+      <input id="woAssignTo" placeholder="Name…">
+    </div>
+    <div class="form-group">
+      <label>Description</label>
+      <textarea id="woDesc" rows="3" placeholder="Describe the work…"></textarea>
+    </div>
+    <div class="row" style="margin-top:16px;gap:8px">
+      <button class="btn" onclick="closeModal('createWOModal')">Cancel</button>
+      <button class="btn btn-primary ml-auto" onclick="submitCreateWO()">Create Work Order</button>
+    </div>
+  </div>
+</div>
+
+<!-- SUBMIT WO MODAL -->
+<div class="modal-bg" id="submitWOModal">
+  <div class="modal">
+    <h2>Submit Work Order</h2>
+    <div id="submitSpareList" style="margin-bottom:16px"></div>
+    <div class="form-group" id="incompleteReasonGroup" style="display:none">
+      <label class="err">Reason for closing with incomplete checklist *</label>
+      <textarea id="incompleteReason" rows="2" placeholder="Explain why items were not completed…"></textarea>
+    </div>
+    <div class="row" style="gap:8px">
+      <button class="btn" onclick="closeModal('submitWOModal')">Cancel</button>
+      <button class="btn btn-primary ml-auto" onclick="confirmSubmitWO()">Submit &amp; Close WO</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT ON-HAND MODAL -->
+<div class="modal-bg" id="onHandModal">
+  <div class="modal">
+    <h2>Adjust On-Hand Quantity</h2>
+    <div id="onHandSpareInfo" style="margin-bottom:14px;color:var(--sub);font-size:13px"></div>
+    <div class="form-group">
+      <label>New On-Hand Quantity</label>
+      <input type="number" id="onHandQty" min="0" step="0.01">
+    </div>
+    <div class="row" style="gap:8px;margin-top:16px">
+      <button class="btn" onclick="closeModal('onHandModal')">Cancel</button>
+      <button class="btn btn-primary ml-auto" onclick="saveOnHand()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+'use strict';
+
+// ── State ────────────────────────────────────────────────────────────────────
+let me = null;
+let allEquipment = [], allWorkOrders = [], allSpares = [];
+let currentEqId = null, currentWOId = null, currentSpareId = null;
+let submitWOData = null;
+let onHandSpareId = null;
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+function toast(msg, dur=2500) {
+  const el=$('toast'); el.textContent=msg; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),dur);
+}
+function fmtDate(s){ if(!s)return'—'; const d=new Date(s); return isNaN(d)?s:d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
+function fmtDt(s){ if(!s)return'—'; const d=new Date(s); return isNaN(d)?s:d.toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}); }
+function esc(s){ return s==null?'':String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+async function api(method, url, body){
+  const opts={method,headers:{'Content-Type':'application/json'}};
+  if(body!=null) opts.body=JSON.stringify(body);
+  const r=await fetch(url,opts);
+  if(r.status===401){ toast('Session expired — please log in again'); return null; }
+  return r.json();
+}
+
+function statusBadge(s){
+  const map={open:'badge-open',in_progress:'badge-inprog',complete:'badge-complete',closed:'badge-closed'};
+  const lbl={open:'Open',in_progress:'In Progress',complete:'Complete',closed:'Closed'};
+  return `<span class="badge ${map[s]||'badge-closed'}">${lbl[s]||s}</span>`;
+}
+function prioBadge(p){
+  const map={high:'badge-high',med:'badge-med',low:'badge-low'};
+  return `<span class="badge ${map[p]||'badge-med'}">${p}</span>`;
+}
+function typeBadge(t){
+  const map={PM:'badge-pm',repair:'badge-repair',breakdown:'badge-breakdown'};
+  return `<span class="badge ${map[t]||'badge-repair'}">${t}</span>`;
+}
+
+function closeDetail(which){
+  $(`${which}Overlay`).classList.remove('open');
+}
+function closeModal(id){ $(id).classList.remove('open'); }
+
+// ── Auth check ────────────────────────────────────────────────────────────────
+async function init(){
+  const r = await api('GET','/api/auth/me');
+  if(!r||r.error){ window.location='/'; return; }
+  me = r;
+  $('navUser').textContent = me.name + (me.role==='supervisor'?' ★':'');
+  if(me.role==='supervisor') $('adminTab').style.display='';
+  setupNav();
+  loadDashboard();
+  loadEquipment();
+  loadWorkOrders();
+  loadSpares();
+  if(me.role==='supervisor') loadSyncStatus();
+}
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+function setupNav(){
+  document.querySelectorAll('.nav-tab[data-tab]').forEach(t=>{
+    t.addEventListener('click',()=>{
+      document.querySelectorAll('.nav-tab').forEach(x=>x.classList.remove('active'));
+      document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+      $('tab-'+t.dataset.tab).classList.add('active');
+    });
+  });
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+async function loadDashboard(){
+  const [pmDue, spares, wos] = await Promise.all([
+    api('GET','/api/maintenance/pm-due'),
+    api('GET','/api/maintenance/spares?below_min=1'),
+    api('GET','/api/maintenance/work-orders?status=open'),
+  ]);
+
+  const overdue = (pmDue||[]).filter(s=>s.daysUntil!=null&&s.daysUntil<0);
+  const soon    = (pmDue||[]).filter(s=>s.daysUntil!=null&&s.daysUntil>=0);
+  $('dOverdue').textContent = overdue.length;
+  $('dDueSoon').textContent = soon.length;
+  $('dOpenWO').textContent  = (wos||[]).length;
+  $('dBelowMin').textContent= (spares||[]).length;
+
+  const pmBody = $('pmDueBody');
+  if(!(pmDue||[]).length){ pmBody.innerHTML='<tr><td colspan="6" style="color:var(--sub);text-align:center;padding:20px">No PMs due soon</td></tr>'; }
+  else pmBody.innerHTML = (pmDue||[]).map(s=>{
+    const eq = allEquipment.find(e=>e.iqms_id===s.pmeqmt_id);
+    const eqLabel = eq ? `${eq.eqno} — ${eq.descrip||''}` : s.pmeqmt_id||'—';
+    const dueTxt = s.daysUntil==null?'—'
+      :s.daysUntil<0?`<span class="err">${Math.abs(s.daysUntil)}d overdue</span>`
+      :`<span class="${s.daysUntil<=3?'err':s.daysUntil<=7?'warn':'ok'}">${s.daysUntil}d</span>`;
+    const meterTxt = s.meterPct!=null?`<span class="${s.meterDue?'err':s.meterPct>=90?'warn':'ok'}">${s.meterPct}%</span>`:'—';
+    return `<tr class="clickable" onclick="openCreateWO('${esc(s.pmeqmt_id)}','${esc(s.iqms_id)}')">
+      <td>${esc(eqLabel)}</td><td>${esc(s.descrip||s.taskno)}</td><td>${esc(s.uom)}</td>
+      <td>${dueTxt}</td><td>${meterTxt}</td>
+      <td><button class="btn btn-sm btn-primary" onclick="event.stopPropagation();openCreateWO('${esc(s.pmeqmt_id)}','${esc(s.iqms_id)}')">+ WO</button></td>
+    </tr>`;
+  }).join('');
+
+  const bmBody = $('belowMinBody');
+  if(!(spares||[]).length){ bmBody.innerHTML='<tr><td colspan="6" style="color:var(--sub);text-align:center;padding:20px">All spares stocked OK</td></tr>'; }
+  else bmBody.innerHTML = (spares||[]).map(s=>{
+    const cls = s.on_hand<=0?'stock-out':'stock-low';
+    const reorder = s.reorder_url?`<a href="${esc(s.reorder_url)}" target="_blank" class="btn btn-sm">Order</a>`:'';
+    return `<tr class="clickable" onclick="openSpareDetail(${s.id})">
+      <td><span class="spare-bin">${esc(s.bin)}</span></td>
+      <td>${esc(s.description)}</td>
+      <td class="${cls}">${s.on_hand}</td>
+      <td>${s.min_qty}</td>
+      <td>${esc(s.supplier_name||'—')}</td>
+      <td>${reorder}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Equipment ─────────────────────────────────────────────────────────────────
+async function loadEquipment(){
+  const data = await api('GET','/api/maintenance/equipment');
+  allEquipment = data||[];
+  $('eqCount').textContent = allEquipment.length + ' items';
+  renderEquipment();
+}
+
+function renderEquipment(){
+  const q=$('eqSearch').value.toLowerCase();
+  const crit=$('eqCritical').value;
+  const oos=$('eqOOS').value;
+  const rows = allEquipment.filter(e=>{
+    if(crit!==''&&String(e.critical)!==crit) return false;
+    if(oos!==''&&String(e.out_of_service)!==oos) return false;
+    if(q&&!`${e.eqno} ${e.descrip} ${e.class} ${e.location}`.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  const body=$('equipBody');
+  if(!rows.length){ body.innerHTML='<tr><td colspan="7" style="color:var(--sub);text-align:center;padding:20px">No equipment found</td></tr>'; return; }
+  body.innerHTML=rows.map(e=>`<tr class="clickable" onclick="openEqDetail('${esc(e.iqms_id)}')">
+    <td><strong>${esc(e.eqno)}</strong></td>
+    <td>${esc(e.descrip||'—')}</td>
+    <td><span class="tag">${esc(e.class||'—')}</span></td>
+    <td>${esc(e.loc_desc||e.location||'—')}</td>
+    <td>${e.critical?'<span class="badge badge-critical">Critical</span>':''}</td>
+    <td>${e.open_wo_count>0?`<span class="ok">${e.open_wo_count}</span>`:'0'}</td>
+    <td>${e.spare_count}</td>
+  </tr>`).join('');
+}
+
+async function openEqDetail(iqms_id){
+  currentEqId = iqms_id;
+  const data = await api('GET',`/api/maintenance/equipment/${encodeURIComponent(iqms_id)}`);
+  if(!data||data.error){ toast('Error loading equipment'); return; }
+  const e = data.equipment;
+  $('eqPanelTitle').textContent = `${e.eqno} — ${e.descrip||''}`;
+  $('eqOverlay').classList.add('open');
+
+  // Populate PM schedule select for Create WO
+  const pmSched = $('woPmSched');
+  pmSched.innerHTML='<option value="">None / Ad-hoc</option>';
+  (data.schedules||[]).forEach(s=>{
+    const o=document.createElement('option');
+    o.value=s.iqms_id; o.textContent=`${s.taskno} — ${s.descrip||''}`;
+    pmSched.appendChild(o);
+  });
+
+  let html = `<div class="detail-section">
+    <h3>Details</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;font-size:13px">
+      <div><span style="color:var(--sub)">Class: </span>${esc(e.class||'—')}</div>
+      <div><span style="color:var(--sub)">Model: </span>${esc(e.model||'—')}</div>
+      <div><span style="color:var(--sub)">Serial: </span>${esc(e.serialno||'—')}</div>
+      <div><span style="color:var(--sub)">Location: </span>${esc(e.loc_desc||e.location||'—')}</div>
+      <div><span style="color:var(--sub)">Plant: </span>${esc(e.eplant_name||'—')}</div>
+      <div><span style="color:var(--sub)">Installed: </span>${fmtDate(e.inst_date)}</div>
+      ${e.critical?'<div class="err">⚠ Critical Equipment</div>':''}
+      ${e.out_of_service?'<div class="err">Out of Service since '+fmtDate(e.service_date_out)+'</div>':''}
+    </div>
+  </div>`;
+
+  // Open WOs
+  html+=`<div class="detail-section"><h3>Open Work Orders</h3>`;
+  if(!(data.openWOs||[]).length) html+=`<p style="color:var(--sub);font-size:13px">No open work orders</p>`;
+  else html+=data.openWOs.map(w=>`<div class="spare-row clickable" onclick="openWODetail(${w.id})">
+    <div style="flex:1">
+      <div>${esc(w.wo_number)} ${typeBadge(w.wo_type)} ${statusBadge(w.status)}</div>
+      <div style="font-size:12px;color:var(--sub)">${esc(w.description||'—')} — ${fmtDate(w.created_at)}</div>
+    </div>
+    ${prioBadge(w.priority)}
+  </div>`).join('');
+  html+='</div>';
+
+  // PM Schedules
+  html+=`<div class="detail-section"><h3>PM Schedules</h3>`;
+  if(!(data.schedules||[]).length) html+=`<p style="color:var(--sub);font-size:13px">No PM schedules</p>`;
+  else html+=data.schedules.map(s=>`<div class="spare-row">
+    <div style="flex:1">
+      <div>${esc(s.taskno)} — ${esc(s.descrip||'')}</div>
+      <div style="font-size:12px;color:var(--sub)">Every ${s.perform_every} ${s.uom||''} | Last closed: ${fmtDate(s.last_closed_wo)}</div>
+    </div>
+    <button class="btn btn-sm btn-primary" onclick="openCreateWO('${esc(iqms_id)}','${esc(s.iqms_id)}')">+ WO</button>
+  </div>`).join('');
+  html+='</div>';
+
+  // Linked spares
+  html+=`<div class="detail-section">
+    <h3>Critical Spares <button class="btn btn-sm" style="float:right" onclick="openSpareAssign('${esc(iqms_id)}')">Manage</button></h3>`;
+  if(!(data.spares||[]).length) html+=`<p style="color:var(--sub);font-size:13px">No spares linked — click Manage to assign</p>`;
+  else html+=data.spares.map(s=>{
+    const cls=s.on_hand<=0?'stock-out':s.on_hand<s.min_qty?'stock-low':'stock-ok';
+    return `<div class="spare-row">
+      <span class="spare-bin">${esc(s.bin)}</span>
+      <div style="flex:1"><div>${esc(s.description)}</div><div style="font-size:12px;color:var(--sub)">${esc(s.part_no||'')}</div></div>
+      <span class="${cls}">${s.on_hand} / ${s.min_qty}</span>
+    </div>`;
+  }).join('');
+  html+='</div>';
+
+  $('eqPanelBody').innerHTML=html;
+}
+
+// ── Work Orders ───────────────────────────────────────────────────────────────
+async function loadWorkOrders(){
+  const data = await api('GET','/api/maintenance/work-orders');
+  allWorkOrders = data||[];
+  renderWorkOrders();
+}
+
+function renderWorkOrders(){
+  const q=$('woSearch').value.toLowerCase();
+  const st=$('woStatus').value;
+  const tp=$('woType').value;
+  const rows=allWorkOrders.filter(w=>{
+    if(st&&w.status!==st) return false;
+    if(tp&&w.woType!==tp) return false;
+    if(q&&!`${w.woNumber} ${w.eqno} ${w.equipDescrip} ${w.description}`.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  const body=$('woBody');
+  if(!rows.length){ body.innerHTML='<tr><td colspan="7" style="color:var(--sub);text-align:center;padding:20px">No work orders found</td></tr>'; return; }
+  body.innerHTML=rows.map(w=>`<tr class="clickable" onclick="openWODetail(${w.id})">
+    <td><strong>${esc(w.woNumber)}</strong></td>
+    <td>${esc(w.eqno||'—')}<br><span style="font-size:11px;color:var(--sub)">${esc(w.equipDescrip||'')}</span></td>
+    <td>${typeBadge(w.woType)}</td>
+    <td>${statusBadge(w.status)}</td>
+    <td>${prioBadge(w.priority)}</td>
+    <td>${esc(w.assignedTo||'—')}</td>
+    <td>${fmtDate(w.createdAt)}</td>
+  </tr>`).join('');
+}
+
+async function openWODetail(id){
+  currentWOId = id;
+  const data = await api('GET',`/api/maintenance/work-orders/${id}`);
+  if(!data||data.error){ toast('Error loading WO'); return; }
+  $('woPanelTitle').textContent = data.woNumber;
+  $('woOverlay').classList.add('open');
+  renderWOPanel(data);
+}
+
+function renderWOPanel(data){
+  const canEdit = !['complete','closed'].includes(data.status);
+  const actions = $('woPanelActions');
+  actions.innerHTML='';
+  if(canEdit){
+    if(data.status==='open'){
+      const b=document.createElement('button'); b.className='btn btn-sm btn-primary';
+      b.textContent='Start'; b.onclick=()=>patchWO(data.id,{status:'in_progress'});
+      actions.appendChild(b);
+    }
+    const sub=document.createElement('button'); sub.className='btn btn-sm btn-primary';
+    sub.textContent='Submit WO'; sub.onclick=()=>openSubmitWO(data);
+    actions.appendChild(sub);
+  }
+
+  const allDone = (data.checklist||[]).length===0 || (data.checklist||[]).every(i=>i.is_done||i.status==='na');
+
+  let html=`<div class="detail-section">
+    <h3>Work Order</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;font-size:13px">
+      <div><span style="color:var(--sub)">Equipment: </span>${esc(data.eqno||'—')}</div>
+      <div><span style="color:var(--sub)">Type: </span>${typeBadge(data.woType)}</div>
+      <div><span style="color:var(--sub)">Status: </span>${statusBadge(data.status)}</div>
+      <div><span style="color:var(--sub)">Priority: </span>${prioBadge(data.priority)}</div>
+      <div><span style="color:var(--sub)">Requested by: </span>${esc(data.requestedBy||'—')}</div>
+      <div><span style="color:var(--sub)">Assigned to: </span>${esc(data.assignedTo||'—')}</div>
+      <div><span style="color:var(--sub)">Created: </span>${fmtDt(data.createdAt)}</div>
+      ${data.completedAt?`<div><span style="color:var(--sub)">Completed: </span>${fmtDt(data.completedAt)}</div>`:''}
+    </div>
+    ${data.description?`<div style="margin-top:10px;font-size:13px;color:var(--sub)">${esc(data.description)}</div>`:''}
+    ${data.closeIncompleteReason?`<div style="margin-top:8px;font-size:12px;color:var(--yellow)">Closed incomplete: ${esc(data.closeIncompleteReason)}</div>`:''}
+  </div>`;
+
+  // Checklist
+  html+=`<div class="detail-section">
+    <h3>Checklist ${allDone?'<span class="ok">✓ All done</span>':''}</h3>`;
+  if(!(data.checklist||[]).length) html+='<p style="color:var(--sub);font-size:13px">No checklist items</p>';
+  else html+=data.checklist.map(item=>{
+    const doneClass=item.is_done?'done':item.status==='na'?'na':'';
+    const check=item.is_done?'✓':item.status==='na'?'N/A':'';
+    const editable=canEdit&&item.status!=='done';
+    return `<div class="chk-item">
+      ${item.critical?'<div class="chk-critical"></div>':''}
+      <div class="chk-box ${doneClass}" onclick="${canEdit?`signOff(${item.id},${item.is_done?0:1})`:''}">
+        ${check}
+      </div>
+      <div class="chk-text">
+        <div class="text" style="${item.is_done?'text-decoration:line-through;color:var(--sub)':''}">${esc(item.text)}</div>
+        <div class="meta">${item.is_done?`Signed off by ${esc(item.done_by||'?')} at ${fmtDt(item.done_at)}`
+          :item.critical?'<span class="err">⚠ Critical step</span>':''}</div>
+        ${item.note?`<div class="meta" style="color:var(--sub)">Note: ${esc(item.note)}</div>`:''}
+      </div>
+      ${canEdit?`<button class="btn btn-sm" style="flex-shrink:0" onclick="markNA(${item.id})">${item.status==='na'?'Undo N/A':'N/A'}</button>`:''}
+    </div>`;
+  }).join('');
+  html+='</div>';
+
+  // Spare usage
+  if((data.spareUsage||[]).length){
+    html+=`<div class="detail-section"><h3>Spares Used</h3>`;
+    html+=data.spareUsage.map(u=>`<div class="spare-row">
+      <span class="spare-bin">${esc(u.bin)}</span>
+      <div style="flex:1">${esc(u.description)}</div>
+      <span>×${u.qty_used}</span>
+      <span style="color:var(--sub);font-size:11px">${fmtDt(u.used_at)}</span>
+    </div>`).join('');
+    html+='</div>';
+  }
+
+  $('woPanelBody').innerHTML=html;
+}
+
+async function signOff(itemId, done){
+  await api('PATCH',`/api/maintenance/checklist/${itemId}`,{is_done:done?1:0});
+  const data = await api('GET',`/api/maintenance/work-orders/${currentWOId}`);
+  if(data) renderWOPanel(data);
+}
+
+async function markNA(itemId){
+  const item_data = await api('GET',`/api/maintenance/work-orders/${currentWOId}`);
+  if(!item_data) return;
+  const item = item_data.checklist.find(i=>i.id===itemId);
+  const newStatus = item&&item.status==='na'?'open':'na';
+  await api('PATCH',`/api/maintenance/checklist/${itemId}`,{status:newStatus,is_done:0});
+  const data = await api('GET',`/api/maintenance/work-orders/${currentWOId}`);
+  if(data) renderWOPanel(data);
+}
+
+async function patchWO(id, body){
+  await api('PATCH',`/api/maintenance/work-orders/${id}`,body);
+  const data = await api('GET',`/api/maintenance/work-orders/${id}`);
+  if(data) renderWOPanel(data);
+  loadWorkOrders();
+}
+
+function openSubmitWO(data){
+  submitWOData = data;
+  const unfinished = (data.checklist||[]).filter(i=>!i.is_done&&i.status!=='na');
+  const igroup = $('incompleteReasonGroup');
+  igroup.style.display = unfinished.length&&me.role==='supervisor'?'':'none';
+  if(unfinished.length&&me.role!=='supervisor'){
+    toast(`${unfinished.length} checklist item(s) not done. Must complete all items.`,3000); return;
+  }
+  $('incompleteReason').value='';
+
+  // Spare usage entry — show linked spares for this equipment
+  const spareList = $('submitSpareList');
+  spareList.innerHTML='<p style="color:var(--sub);font-size:13px;margin-bottom:8px">Record spares used (optional):</p>';
+
+  // Fetch linked spares
+  if(data.equipmentId){
+    api('GET',`/api/maintenance/equipment/${encodeURIComponent(data.equipmentId)}/spares`).then(spares=>{
+      if(!spares||!spares.length){ spareList.innerHTML='<p style="color:var(--sub);font-size:13px">No spares linked to this equipment</p>'; return; }
+      spareList.innerHTML='<p style="color:var(--sub);font-size:13px;margin-bottom:8px">Record spares used:</p>'+
+        spares.map(s=>`<div class="spare-row">
+          <span class="spare-bin">${esc(s.bin)}</span>
+          <div style="flex:1;font-size:13px">${esc(s.description)}<br>
+            <span style="color:var(--sub);font-size:11px">On hand: ${s.on_hand} | Min: ${s.min_qty}</span>
+          </div>
+          <input type="number" data-spare-id="${s.id}" class="spare-usage-qty"
+            placeholder="Qty used" min="0" step="1" style="width:90px">
+        </div>`).join('');
+    });
+  }
+
+  $('submitWOModal').classList.add('open');
+}
+
+async function confirmSubmitWO(){
+  if(!submitWOData) return;
+  const reason = $('incompleteReason').value.trim();
+  const unfinished = (submitWOData.checklist||[]).filter(i=>!i.is_done&&i.status!=='na');
+  if(unfinished.length&&me.role==='supervisor'&&!reason){
+    toast('Please provide a reason for closing with incomplete items'); return;
+  }
+
+  const spareUsage=[];
+  document.querySelectorAll('.spare-usage-qty').forEach(inp=>{
+    const qty=parseFloat(inp.value);
+    if(qty>0) spareUsage.push({spare_id:parseInt(inp.dataset.spareId),qty_used:qty});
+  });
+
+  const r = await api('POST',`/api/maintenance/work-orders/${submitWOData.id}/submit`,{
+    spare_usage: spareUsage,
+    close_incomplete_reason: reason||undefined
+  });
+  if(!r){ toast('Error submitting WO'); return; }
+  if(r.error){ toast(r.error,3500); return; }
+  closeModal('submitWOModal');
+  toast('Work order submitted');
+  loadWorkOrders();
+  const data = await api('GET',`/api/maintenance/work-orders/${submitWOData.id}`);
+  if(data) renderWOPanel(data);
+  loadDashboard();
+}
+
+// ── Create WO ─────────────────────────────────────────────────────────────────
+function openCreateWO(presetEqId, presetPmId){
+  // Populate equipment dropdown
+  const sel=$('woEqSelect');
+  sel.innerHTML='<option value="">Select equipment…</option>';
+  [...allEquipment].sort((a,b)=>(a.eqno||'').localeCompare(b.eqno||'')).forEach(e=>{
+    const o=document.createElement('option');
+    o.value=e.iqms_id; o.textContent=`${e.eqno} — ${e.descrip||''}`;
+    sel.appendChild(o);
+  });
+  if(presetEqId){ sel.value=presetEqId; loadPmSchedsForEq(presetEqId, presetPmId); }
+  sel.onchange=()=>loadPmSchedsForEq(sel.value,'');
+  $('woDesc').value=''; $('woAssignTo').value='';
+  $('createWOModal').classList.add('open');
+}
+
+async function loadPmSchedsForEq(eqId, presetPmId){
+  const pmSched=$('woPmSched');
+  pmSched.innerHTML='<option value="">Loading…</option>';
+  if(!eqId){ pmSched.innerHTML='<option value="">None / Ad-hoc</option>'; return; }
+  const data=await api('GET',`/api/maintenance/equipment/${encodeURIComponent(eqId)}`);
+  pmSched.innerHTML='<option value="">None / Ad-hoc</option>';
+  (data&&data.schedules||[]).forEach(s=>{
+    const o=document.createElement('option');
+    o.value=s.iqms_id; o.textContent=`${s.taskno} — ${s.descrip||''}`;
+    pmSched.appendChild(o);
+  });
+  if(presetPmId) pmSched.value=presetPmId;
+}
+
+async function submitCreateWO(){
+  const eqId=$('woEqSelect').value;
+  if(!eqId){ toast('Select an equipment'); return; }
+  const r=await api('POST','/api/maintenance/work-orders',{
+    equipment_id:eqId,
+    pm_schedule_id:$('woPmSched').value||null,
+    wo_type:$('woTypeNew').value,
+    priority:$('woPriority').value,
+    assigned_to:$('woAssignTo').value||null,
+    description:$('woDesc').value||null,
+    requested_by: me.name
+  });
+  if(!r||r.error){ toast(r?r.error:'Error creating WO'); return; }
+  closeModal('createWOModal');
+  toast(`Created ${r.wo_number}`);
+  loadWorkOrders();
+  loadDashboard();
+  openWODetail(r.id);
+}
+
+// ── Spares ────────────────────────────────────────────────────────────────────
+async function loadSpares(){
+  const data=await api('GET','/api/maintenance/spares');
+  allSpares=data||[];
+  $('spareCount').textContent=allSpares.length+' items';
+  renderSpares();
+}
+
+function renderSpares(){
+  const q=$('spareSearch').value.toLowerCase();
+  const cat=$('spareCat').value;
+  const stock=$('spareStock').value;
+  const rows=allSpares.filter(s=>{
+    if(cat&&s.category!==cat) return false;
+    if(stock==='low'&&s.on_hand>=s.min_qty) return false;
+    if(stock==='ok'&&s.on_hand<s.min_qty) return false;
+    if(q&&!`${s.bin} ${s.description} ${s.part_no} ${s.supplier_name}`.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  const body=$('spareBody');
+  if(!rows.length){ body.innerHTML='<tr><td colspan="7" style="color:var(--sub);text-align:center;padding:20px">No spares found</td></tr>'; return; }
+  body.innerHTML=rows.map(s=>{
+    const cls=s.on_hand<=0?'stock-out':s.on_hand<s.min_qty?'stock-low':'stock-ok';
+    return `<tr class="clickable" onclick="openSpareDetail(${s.id})">
+      <td><span class="spare-bin">${esc(s.bin)}</span></td>
+      <td>${esc(s.description||'—')}</td>
+      <td style="font-family:monospace;font-size:12px">${esc(s.part_no||'—')}</td>
+      <td class="${cls}">${s.on_hand}<button class="btn btn-sm" style="margin-left:8px" onclick="event.stopPropagation();openOnHand(${s.id})">Edit</button></td>
+      <td>${s.min_qty}</td>
+      <td>${esc(s.supplier_name||'—')}</td>
+      <td>${s.eq_count}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function openSpareDetail(id){
+  currentSpareId=id;
+  const data=await api('GET',`/api/maintenance/spares/${id}`);
+  if(!data||data.error){ toast('Error loading spare'); return; }
+  $('sparePanelTitle').textContent=`${data.bin} — ${data.description||''}`;
+  $('spareOverlay').classList.add('open');
+
+  const cls=data.on_hand<=0?'stock-out':data.on_hand<data.min_qty?'stock-low':'stock-ok';
+  let html=`<div class="detail-section">
+    <h3>Details</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;font-size:13px">
+      <div><span style="color:var(--sub)">Bin: </span>${esc(data.bin)}</div>
+      <div><span style="color:var(--sub)">Category: </span>${esc(data.category||'—')}</div>
+      <div><span style="color:var(--sub)">Part #: </span><span style="font-family:monospace">${esc(data.part_no||'—')}</span></div>
+      <div><span style="color:var(--sub)">UOM: </span>${esc(data.uom||'—')}</div>
+      <div><span style="color:var(--sub)">Supplier: </span>${esc(data.supplier_name||'—')}</div>
+      <div><span style="color:var(--sub)">Unit Cost: </span>${data.unit_cost!=null?'$'+data.unit_cost:'—'}</div>
+    </div>
+    <div style="margin-top:12px;display:flex;align-items:center;gap:12px">
+      <div class="${cls}" style="font-size:18px;font-weight:700">${data.on_hand}</div>
+      <div style="color:var(--sub);font-size:13px">on hand (min: ${data.min_qty})</div>
+      <button class="btn btn-sm" onclick="openOnHand(${data.id})">Adjust</button>
+      ${data.reorder_url?`<a href="${esc(data.reorder_url)}" target="_blank" class="btn btn-sm btn-primary">Reorder</a>`:''}
+    </div>
+    ${data.do_not_order?'<div class="err" style="margin-top:8px;font-size:12px">⚠ Do Not Order flag set</div>':''}
+  </div>`;
+
+  html+=`<div class="detail-section"><h3>Linked Equipment</h3>`;
+  if(!(data.equipment||[]).length) html+='<p style="color:var(--sub);font-size:13px">Not linked to any equipment</p>';
+  else html+=data.equipment.map(e=>`<div class="spare-row clickable" onclick="openEqDetail('${esc(e.iqms_id)}')">
+    <div style="flex:1"><div>${esc(e.eqno)} — ${esc(e.descrip||'')}</div>
+    <div style="font-size:12px;color:var(--sub)">Qty required: ${e.qty_required}</div></div>
+    ${e.critical?'<span class="badge badge-critical">Critical</span>':''}
+  </div>`).join('');
+  html+='</div>';
+
+  html+=`<div class="detail-section"><h3>Recent Usage</h3>`;
+  if(!(data.usage||[]).length) html+='<p style="color:var(--sub);font-size:13px">No usage recorded</p>';
+  else html+=data.usage.map(u=>`<div class="spare-row">
+    <div style="flex:1">${esc(u.wo_number)} — ×${u.qty_used}</div>
+    <span style="color:var(--sub);font-size:12px">${fmtDt(u.used_at)} by ${esc(u.used_by||'?')}</span>
+  </div>`).join('');
+  html+='</div>';
+
+  $('sparePanelBody').innerHTML=html;
+}
+
+function openOnHand(id){
+  onHandSpareId=id;
+  const spare=allSpares.find(s=>s.id===id)||{description:'',bin:''};
+  $('onHandSpareInfo').textContent=`${spare.bin} — ${spare.description}`;
+  $('onHandQty').value=spare.on_hand||0;
+  $('onHandModal').classList.add('open');
+}
+
+async function saveOnHand(){
+  const qty=parseFloat($('onHandQty').value);
+  if(isNaN(qty)||qty<0){ toast('Enter a valid quantity'); return; }
+  await api('PATCH',`/api/maintenance/spares/${onHandSpareId}`,{on_hand:qty});
+  closeModal('onHandModal');
+  toast('Quantity updated');
+  loadSpares();
+  loadDashboard();
+  if(currentSpareId===onHandSpareId) openSpareDetail(onHandSpareId);
+}
+
+// ── Spare assignment UI ───────────────────────────────────────────────────────
+async function openSpareAssign(eqId){
+  // Simple: open a window listing all spares with checkboxes, toggles their link
+  const [linked, allS] = await Promise.all([
+    api('GET',`/api/maintenance/equipment/${encodeURIComponent(eqId)}/spares`),
+    api('GET','/api/maintenance/spares')
+  ]);
+  const linkedIds = new Set((linked||[]).map(s=>s.id));
+  const panel = window.open('','_blank','width=600,height=700');
+  panel.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+    body{font-family:system-ui;background:#0f1117;color:#e2e8f0;padding:20px}
+    .item{display:flex;gap:10px;align-items:center;padding:8px;border-bottom:1px solid #2d3148;cursor:pointer}
+    .item:hover{background:#1a1d27}
+    input[type=checkbox]{width:18px;height:18px;cursor:pointer}
+    h2{margin-bottom:16px;font-size:15px}
+    input[type=text]{background:#22263a;border:1px solid #2d3148;border-radius:6px;color:#e2e8f0;padding:6px 10px;width:100%;margin-bottom:14px;font-size:14px}
+  </style></head><body>
+  <h2>Assign Spares to Equipment</h2>
+  <input type="text" placeholder="Search…" oninput="filter(this.value)">
+  <div id="list">${(allS||[]).map(s=>`<label class="item" data-txt="${(s.bin+' '+s.description+' '+s.part_no).toLowerCase()}">
+    <input type="checkbox" data-id="${s.id}" ${linkedIds.has(s.id)?'checked':''}>
+    <span style="font-family:monospace;font-size:12px;min-width:40px">${s.bin}</span>
+    <span style="flex:1">${s.description||''}</span>
+    <span style="font-size:11px;color:#8892a4">${s.on_hand} on hand</span>
+  </label>`).join('')}</div>
+  <br>
+  <button onclick="save()" style="background:#4f7cff;color:#fff;border:none;border-radius:8px;padding:10px 24px;font-size:14px;cursor:pointer">Save Links</button>
+  <script>
+    function filter(q){document.querySelectorAll('[data-txt]').forEach(el=>el.style.display=el.dataset.txt.includes(q.toLowerCase())?'':'none')}
+    async function save(){
+      const links=[...document.querySelectorAll('input[type=checkbox]:checked')].map(cb=>({spare_id:parseInt(cb.dataset.id),qty_required:1}));
+      await fetch('/api/maintenance/equipment/${encodeURIComponent(eqId)}/spares',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(links)});
+      alert('Saved '+links.length+' spare links');
+      window.close();
+    }
+  <\/script></body></html>`);
+}
+
+// ── Admin / Sync ──────────────────────────────────────────────────────────────
+async function loadSyncStatus(){
+  const r=await api('GET','/api/maintenance/sync/status');
+  if(!r){ $('syncStatus').textContent='Could not load sync status'; return; }
+  $('syncStatus').innerHTML=`
+    <table style="font-size:12px;border-collapse:collapse">
+      <tr><th style="text-align:left;padding:4px 12px 4px 0;color:#8892a4">Table</th><th style="color:#8892a4;padding-right:12px">Rows</th><th style="color:#8892a4">Last Synced</th></tr>
+      <tr><td style="padding:4px 12px 4px 0">Equipment</td><td>${r.equipment.n}</td><td>${r.equipment.at||'Never'}</td></tr>
+      <tr><td style="padding:4px 12px 4px 0">PM Schedules</td><td>${r.pm_schedules.n}</td><td>${r.pm_schedules.at||'Never'}</td></tr>
+      <tr><td style="padding:4px 12px 4px 0">PM Templates</td><td>${r.pm_templates.n}</td><td>${r.pm_templates.at||'Never'}</td></tr>
+      <tr><td style="padding:4px 12px 4px 0">WO History</td><td>${r.wo_history.n}</td><td>${r.wo_history.at||'Never'}</td></tr>
+    </table>`;
+}
+
+async function runSync(targets){
+  $('syncResult').textContent='Syncing…';
+  const r=await api('POST','/api/maintenance/sync',{targets});
+  if(!r||r.error){ $('syncResult').textContent='Error: '+(r?r.error:'Network error'); return; }
+  $('syncResult').textContent='Synced at '+new Date(r.at).toLocaleString()+' — '+JSON.stringify(r.synced);
+  loadSyncStatus(); loadEquipment(); loadWorkOrders(); loadDashboard();
+  toast('Sync complete');
+}
+
+async function importCSP(){
+  const file=$('cspFile').files[0];
+  if(!file){ toast('Select a file first'); return; }
+  $('importResult').textContent='Uploading…';
+  const fd=new FormData(); fd.append('file',file);
+  const r=await fetch('/api/maintenance/import-csp',{method:'POST',body:fd});
+  const j=await r.json();
+  if(j.error){ $('importResult').textContent='Error: '+j.error; return; }
+  $('importResult').textContent=`Imported ${j.spares} spares, ${j.suppliers} suppliers.`;
+  toast('Import complete'); loadSpares();
+}
+
+init();
+</script>
+</body>
+</html>
