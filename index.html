@@ -1146,9 +1146,13 @@ function saveSettings(){
   toast('Settings saved');
 }
 
-function openChangePIN(){
+async function openChangePIN(){
   $('pmCurrent').value=''; $('pmNew').value=''; $('nuName').value=''; $('nuPin').value='';
   $('pinModalErr').textContent='';
+  try{
+    const serverUsers = await apiCall('GET','/api/auth/users');
+    if(serverUsers&&serverUsers.length) lsSet('hl_users',JSON.stringify(serverUsers.map(u=>({...u,pinHash:u.pin_hash}))));
+  }catch(e){}
   renderUserList();
   $('pinModal').classList.add('open');
 }
