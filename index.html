@@ -1731,7 +1731,7 @@ function shareTicket(sec,id){
   const e=state[sec].entries.find(x=>x.id===id);
   if(!e||!e.ticketNum){ toast('No ticket number on this entry','#cc4444'); return; }
   const base=window.location.origin;
-  const url=base+'/t1.html?ticket='+e.ticketNum;
+  const url=base+'/t/?ticket='+e.ticketNum;
   if(navigator.clipboard&&navigator.clipboard.writeText){
     navigator.clipboard.writeText(url).then(()=>toast('Ticket link copied')).catch(()=>prompt('Copy this link:',url));
   } else { prompt('Copy this link:',url); }
@@ -1910,7 +1910,7 @@ function buildReceiptHTML(entry, sec){
   const date = new Date(entry.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
   const time = new Date(entry.date).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});
   const base = window.location.origin;
-  const ticketUrl = entry.ticketNum ? base+'/t1.html?ticket='+entry.ticketNum : null;
+  const ticketUrl = entry.ticketNum ? base+'/t/?ticket='+entry.ticketNum : null;
   const tkt = entry.ticketNum || '--';
   const qrId = 'receipt-qr-'+Date.now();
 
@@ -1953,7 +1953,7 @@ function buildReceiptHTML(entry, sec){
     <div class="receipt-row"><span class="receipt-row-label">Date</span><span class="receipt-row-val">${date}</span></div>
     <div class="receipt-row"><span class="receipt-row-label">Time</span><span class="receipt-row-val">${time}</span></div>
     <hr class="receipt-divider">
-    ${ticketUrl ? `<div class="receipt-qr" id="${qrId}"></div><div class="receipt-footer">Scan to check ticket status<br><strong>${window.location.host}/t1.html</strong></div>` : `<div class="receipt-footer">${window.location.host}/t1.html</div>`}`;
+    ${ticketUrl ? `<div class="receipt-qr" id="${qrId}"></div><div class="receipt-footer">Scan to check ticket status<br><strong>${window.location.host}/t/</strong></div>` : `<div class="receipt-footer">${window.location.host}/t/</div>`}`;
 
   return { html, qrId, ticketUrl };
 }
