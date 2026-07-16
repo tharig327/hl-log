@@ -35,6 +35,7 @@ async function importGist() {
   console.log('Fetching Gist...');
   const gist = await gistGet(gistId, token);
   const files = gist.files || {};
+  console.log('Files found in Gist:', Object.keys(files).join(', ') || '(none)');
 
   function parseFile(name) {
     const f = files[name];
@@ -47,6 +48,20 @@ async function importGist() {
     const stmt = db.prepare(`INSERT OR IGNORE INTO users (name,pin_hash,role,active) VALUES (?,?,?,1)`);
     users.forEach(u => stmt.run(u.name||u.n, u.pin_hash||u.pinHash||u.p, u.role||'tech'));
     console.log(`Imported ${users.length} users`);
+  }
+
+  // Users from hl_applicator_meta.json
+  if (!users) {
+    const meta = parseFile('hl_applicator_meta.json');
+    if (meta && Array.isArray(meta.users)) {
+      const stmt = db.prepare(`INSERT OR IGNORE INTO users (name,pin_hash,role,active) VALUES (?,?,?,1)`);
+      meta.users.forEach(u => stmt.run(u.name||u.n, u.pinHash||u.pin_hash||u.p, u.role||'supervisor'));
+      console.log(`Imported ${meta.users.length} users from hl_applicator_meta.json`);
+    } else if (meta && meta.pinHash) {
+      db.prepare(`INSERT OR IGNORE INTO users (name,pin_hash,role,active) VALUES (?,?,?,1)`)
+        .run(meta.name||'Tyler', meta.pinHash, 'supervisor');
+      console.log('Imported 1 user from hl_applicator_meta.json pinHash');
+    }
   }
 
   const contacts = parseFile('contacts.json');
@@ -97,32 +112,18 @@ async function importGist() {
     console.log(`Imported ${setup.length} setup entries`);
   }
 
-  // Try to read queue from gist
-  const gistData = parseFile('hl_applicator_data.json');
-  const appQueue = parseFile('hl_queue_applicator.json') || (gistData&&gistData.queueOrder) || [];
+  // Queue order — hl_queue_order.json holds all three, individual files as fallback
+  const queueOrder = parseFile('hl_queue_order.json');
   ['applicator','machine','setup'].forEach(sec => {
-    const q = sec==='applicator' ? appQueue :
-              sec==='machine'    ? (parseFile('hl_queue_machine.json')||[]) :
-                                   (parseFile('hl_queue_setup.json')||[]);
+    let q = null;
+    if (queueOrder && Array.isArray(queueOrder[sec])) q = queueOrder[sec];
+    else if (sec==='machine') q = parseFile('hl_queue_machine.json');
+    else if (sec==='setup')   q = parseFile('hl_queue_setup.json');
     if (Array.isArray(q) && q.length) {
       db.prepare('UPDATE queue_order SET order_json=? WHERE section=?').run(JSON.stringify(q), sec);
+      console.log(`Queue ${sec}: ${q.length} items`);
     }
   });
-  console.log('Queue order imported');
-
-  // Import users from meta file if no users.json
-  if (!users) {
-    const meta = parseFile('hl_meta.json');
-    if (meta && meta.users) {
-      const stmt = db.prepare(`INSERT OR IGNORE INTO users (name,pin_hash,role,active) VALUES (?,?,?,1)`);
-      meta.users.forEach(u => stmt.run(u.name, u.pinHash||u.pin_hash, u.role||'tech'));
-      console.log(`Imported ${meta.users.length} users from meta`);
-    } else if (meta && meta.pinHash) {
-      db.prepare(`INSERT OR IGNORE INTO users (name,pin_hash,role,active) VALUES (?,?,?,1)`)
-        .run('Tyler', meta.pinHash, 'supervisor');
-      console.log('Imported 1 user from legacy pinHash');
-    }
-  }
 
   console.log('Migration complete.');
 }
