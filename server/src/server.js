@@ -23,6 +23,11 @@ function touch() {
   db.prepare("UPDATE meta SET value = CURRENT_TIMESTAMP WHERE key = 'updated_at'").run();
 }
 
+function txn(fn) {
+  db.exec('BEGIN');
+  try { fn(); db.exec('COMMIT'); } catch(e) { db.exec('ROLLBACK'); throw e; }
+}
+
 function requireAuth(req, res, next) {
   if (req.session && req.session.userId) return next();
   res.status(401).json({ error: 'Not authenticated' });
@@ -161,14 +166,14 @@ app.put('/api/entries/:section', requireAuth, (req, res) => {
   const table = SECTION_TABLE[section];
   const stmt = db.prepare(UPSERT_SQL[section]);
   const ids = entries.map(e => e.id).filter(Boolean);
-  db.transaction(() => {
+  txn(() => {
     if (ids.length > 0) {
       db.prepare(`DELETE FROM ${table} WHERE id NOT IN (${ids.map(()=>'?').join(',')})`).run(...ids);
     } else {
       db.prepare(`DELETE FROM ${table}`).run();
     }
     entries.forEach(e => upsertRow(section, stmt, e));
-  })();
+  });
   touch();
   res.json({ ok: true });
 });
@@ -199,11 +204,11 @@ app.put('/api/contacts', requireAuth, (req, res) => {
   const stmt = db.prepare(`INSERT INTO contacts (id,name,email,active) VALUES (?,?,?,?)
     ON CONFLICT(id) DO UPDATE SET name=excluded.name,email=excluded.email,active=excluded.active`);
   const ids = rows.map(c=>c.id).filter(Boolean);
-  db.transaction(() => {
+  txn(() => {
     if (ids.length) db.prepare(`DELETE FROM contacts WHERE id NOT IN (${ids.map(()=>'?').join(',')})`).run(...ids);
     else db.prepare('DELETE FROM contacts').run();
     rows.forEach(c => stmt.run(c.id,c.name,c.email||null,c.active==null?1:c.active));
-  })();
+  });
   touch();
   res.json({ ok: true });
 });
@@ -214,11 +219,11 @@ app.put('/api/customers', requireAuth, (req, res) => {
   const stmt = db.prepare(`INSERT INTO customers (id,name,active) VALUES (?,?,?)
     ON CONFLICT(id) DO UPDATE SET name=excluded.name,active=excluded.active`);
   const ids = rows.map(c=>c.id).filter(Boolean);
-  db.transaction(() => {
+  txn(() => {
     if (ids.length) db.prepare(`DELETE FROM customers WHERE id NOT IN (${ids.map(()=>'?').join(',')})`).run(...ids);
     else db.prepare('DELETE FROM customers').run();
     rows.forEach(c => stmt.run(c.id,c.name,c.active==null?1:c.active));
-  })();
+  });
   touch();
   res.json({ ok: true });
 });
