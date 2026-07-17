@@ -20,7 +20,8 @@ app.use(session({
   cookie: { httpOnly: true, sameSite: 'lax', maxAge: 8 * 60 * 60 * 1000 }
 }));
 
-app.use(express.static(path.join(__dirname, '../../')));
+const STATIC_ROOT = process.env.STATIC_ROOT || path.join(__dirname, '../..');
+app.use('/updates', express.static(path.join(STATIC_ROOT, 'updates')));
 
 
 function touch() {
