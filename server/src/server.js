@@ -22,7 +22,7 @@ app.use(session({
 
 const STATIC_ROOT = process.env.STATIC_ROOT || path.join(__dirname, '../..');
 app.use('/updates', express.static(path.join(STATIC_ROOT, 'updates')));
-
+app.use(express.static(STATIC_ROOT));
 
 function touch() {
   db.prepare("UPDATE meta SET value = CURRENT_TIMESTAMP WHERE key = 'updated_at'").run();

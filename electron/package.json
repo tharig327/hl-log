@@ -9,7 +9,7 @@
     "build:dir": "electron-builder --win --x64 --dir"
   },
   "dependencies": {
-    "electron-updater": "^6.3.9"
+    "electron-updater": "^6.8.9"
   },
   "devDependencies": {
     "electron": "^36.0.0",
@@ -32,14 +32,24 @@
       {
         "from": "../server",
         "to": "server",
-        "filter": ["**/*", "!db/**", "!node_modules/.cache/**"]
+        "filter": [
+          "**/*",
+          "!db/**",
+          "!node_modules/.cache/**"
+        ]
       },
       {
         "from": "../",
         "to": "app",
         "filter": [
-          "index.html", "maintenance.html", "manifest.json",
-          "sw.js", "icon-*.png", "Splash.png", "qr.html", "sql.html",
+          "index.html",
+          "maintenance.html",
+          "manifest.json",
+          "sw.js",
+          "icon-*.png",
+          "Splash.png",
+          "qr.html",
+          "sql.html",
           "t/**/*"
         ]
       }
@@ -50,7 +60,12 @@
     },
     "win": {
       "target": [
-        { "target": "nsis", "arch": ["x64"] }
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
       ],
       "icon": "../icon-512.png"
     },
