@@ -1,6 +1,6 @@
 {
   "name": "hl-floorsync",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "H&L FloorSync — Floor Issue Log & Maintenance",
   "main": "main.js",
   "scripts": {
