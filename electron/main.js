@@ -186,7 +186,7 @@ app.whenReady().then(() => {
     show: false,
   });
 
-  mainWindow.loadURL('data:text/html,<style>body{background:%23111;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:system-ui;color:%23aaa;font-size:14px}</style><body>Starting FloorSync…</body>');
+  mainWindow.loadURL('data:text/html,<style>body{background:%23111;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:system-ui;color:%23aaa;font-size:14px}</style><body>Starting FloorSync...</body>');
   mainWindow.once('ready-to-show', () => mainWindow.show());
   mainWindow.on('close', e => { if(!app.isQuitting){ e.preventDefault(); mainWindow.hide(); } });
   mainWindow.on('closed', () => { mainWindow = null; });
