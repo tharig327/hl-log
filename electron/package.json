@@ -20,41 +20,17 @@
     "icon": "../icon-512.png",
     "asar": true,
     "asarUnpack": [
-      "node_modules/**/*.node",
-      "../server/**/*",
-      "../icon-192.png",
-      "../icon-512.png",
-      "../index.html",
-      "../maintenance.html",
-      "../manifest.json",
-      "../sw.js",
-      "../t/**/*",
-      "../qr.html",
-      "../sql.html",
-      "../icon-*.png",
-      "../Splash.png"
+      "node_modules/**/*.node"
     ],
     "files": [
       "main.js",
-      "node_modules/**/*",
-      "../server/**/*",
-      "../index.html",
-      "../maintenance.html",
-      "../manifest.json",
-      "../sw.js",
-      "../t/**/*",
-      "../qr.html",
-      "../sql.html",
-      "../icon-*.png",
-      "../Splash.png",
-      "!../server/db/**",
-      "!../server/node_modules/.cache/**"
+      "node_modules/**/*"
     ],
     "extraResources": [
       {
         "from": "../server",
         "to": "server",
-        "filter": ["**/*", "!db/*.db-shm", "!db/*.db-wal"]
+        "filter": ["**/*", "!db/**", "!node_modules/.cache/**"]
       },
       {
         "from": "../",

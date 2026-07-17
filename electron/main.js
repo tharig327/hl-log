@@ -1,7 +1,6 @@
 'use strict';
 
 const { app, BrowserWindow, Tray, Menu, shell, dialog } = require('electron');
-const { spawn } = require('child_process');
 const path = require('path');
 const http = require('http');
 
@@ -20,52 +19,32 @@ const ICON_PATH = IS_PACKAGED
 
 let mainWindow = null;
 let tray = null;
-let serverProcess = null;
-let serverReady = false;
 
-// ── Start Express server ──────────────────────────────────────────────────────
+// ── Start Express server in-process (no external Node.js needed) ──────────────
 function startServer() {
-  // In packaged mode, DB lives in userData so it persists across updates
   const dbDir = IS_PACKAGED
     ? path.join(app.getPath('userData'), 'db')
     : path.join(__dirname, '../server/db');
-  // Static files root
   const staticRoot = IS_PACKAGED
     ? path.join(RESOURCES, 'app')
     : path.join(__dirname, '..');
 
-  serverProcess = spawn(process.execPath, [SERVER_JS], {
-    env: {
-      ...process.env,
-      PORT: String(PORT),
-      DB_DIR: dbDir,
-      STATIC_ROOT: staticRoot,
-    },
-    stdio: ['ignore', 'pipe', 'pipe']
-  });
+  process.env.PORT = String(PORT);
+  process.env.DB_DIR = dbDir;
+  process.env.STATIC_ROOT = staticRoot;
 
-  serverProcess.stdout.on('data', d => {
-    const msg = d.toString().trim();
-    console.log('[server]', msg);
-    if (msg.includes('listening')) serverReady = true;
-  });
-
-  serverProcess.stderr.on('data', d => console.error('[server err]', d.toString().trim()));
-
-  serverProcess.on('exit', (code) => {
-    console.log('[server] exited with code', code);
-    serverReady = false;
-    // Relaunch if it crashes (not on intentional quit)
-    if (!app.isQuitting) {
-      console.log('[server] restarting…');
-      setTimeout(startServer, 2000);
-    }
-  });
+  try {
+    require(SERVER_JS);
+  } catch (e) {
+    console.error('[server] failed to load:', e.message);
+    dialog.showErrorBox('FloorSync', 'Server failed to start:\n' + e.message);
+    app.quit();
+  }
 }
 
 // ── Wait for server to accept connections ─────────────────────────────────────
 function waitForServer(cb, attempts = 0) {
-  if (attempts > 30) { cb(new Error('Server did not start in time')); return; }
+  if (attempts > 60) { cb(new Error('Server did not start in time')); return; }
   http.get(APP_URL, () => cb(null)).on('error', () => {
     setTimeout(() => waitForServer(cb, attempts + 1), 500);
   });
@@ -101,7 +80,6 @@ function createWindow() {
   });
 
   mainWindow.on('close', (e) => {
-    // Hide to tray instead of quitting
     if (!app.isQuitting) {
       e.preventDefault();
       mainWindow.hide();
@@ -138,18 +116,9 @@ function createTray() {
     },
     { type: 'separator' },
     {
-      label: 'Restart Server',
-      click: () => {
-        if (serverProcess) serverProcess.kill();
-        // startServer() is called automatically on exit
-      }
-    },
-    { type: 'separator' },
-    {
       label: 'Quit FloorSync',
       click: () => {
         app.isQuitting = true;
-        if (serverProcess) serverProcess.kill();
         app.quit();
       }
     }
@@ -164,7 +133,6 @@ function createTray() {
 
 // ── App lifecycle ─────────────────────────────────────────────────────────────
 app.whenReady().then(() => {
-  // Single instance lock
   if (!app.requestSingleInstanceLock()) {
     app.quit();
     return;
@@ -175,12 +143,11 @@ app.whenReady().then(() => {
   });
 
   createTray();
-  startServer();
 
-  // Show splash/loading state while server starts
+  // Show splash while server loads
   mainWindow = new BrowserWindow({
     width: 1280, height: 820, minWidth: 800, minHeight: 600,
-    title: 'H&L FloorSync — Starting…',
+    title: 'H&L FloorSync',
     icon: ICON_PATH,
     backgroundColor: '#111111',
     show: false,
@@ -188,8 +155,10 @@ app.whenReady().then(() => {
 
   mainWindow.loadURL('data:text/html,<style>body{background:%23111;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:system-ui;color:%23aaa;font-size:14px}</style><body>Starting FloorSync...</body>');
   mainWindow.once('ready-to-show', () => mainWindow.show());
-  mainWindow.on('close', e => { if(!app.isQuitting){ e.preventDefault(); mainWindow.hide(); } });
+  mainWindow.on('close', e => { if (!app.isQuitting) { e.preventDefault(); mainWindow.hide(); } });
   mainWindow.on('closed', () => { mainWindow = null; });
+
+  startServer();
 
   waitForServer((err) => {
     if (err) {
@@ -198,14 +167,13 @@ app.whenReady().then(() => {
       return;
     }
     if (mainWindow) {
-      mainWindow.setTitle('H&L FloorSync');
       mainWindow.loadURL(APP_URL);
     }
   });
 });
 
 app.on('window-all-closed', () => {
-  // Don't quit when all windows closed — stay in tray
+  // Stay in tray
 });
 
 app.on('activate', () => {
@@ -214,5 +182,4 @@ app.on('activate', () => {
 
 app.on('before-quit', () => {
   app.isQuitting = true;
-  if (serverProcess) serverProcess.kill();
 });
