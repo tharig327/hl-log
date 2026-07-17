@@ -1,6 +1,7 @@
 'use strict';
 
 const { app, BrowserWindow, Tray, Menu, shell, dialog } = require('electron');
+const { autoUpdater } = require('electron-updater');
 const path = require('path');
 const http = require('http');
 
@@ -116,6 +117,13 @@ function createTray() {
     },
     { type: 'separator' },
     {
+      label: 'Check for Updates',
+      click: () => {
+        if (IS_PACKAGED) autoUpdater.checkForUpdates().catch(() => {});
+      }
+    },
+    { type: 'separator' },
+    {
       label: 'Quit FloorSync',
       click: () => {
         app.isQuitting = true;
@@ -168,6 +176,24 @@ app.whenReady().then(() => {
     }
     if (mainWindow) {
       mainWindow.loadURL(APP_URL);
+    }
+    // Check for updates silently after app loads (only when packaged)
+    if (IS_PACKAGED) {
+      autoUpdater.autoDownload = true;
+      autoUpdater.autoInstallOnAppQuit = true;
+      autoUpdater.checkForUpdates().catch(() => {});
+      autoUpdater.on('update-downloaded', () => {
+        dialog.showMessageBox({
+          type: 'info',
+          title: 'Update Ready',
+          message: 'A new version of H&L FloorSync has been downloaded. It will install when you quit the app.',
+          buttons: ['Install Now', 'Later']
+        }).then(({ response }) => {
+          if (response === 0) {
+            autoUpdater.quitAndInstall();
+          }
+        });
+      });
     }
   });
 });
