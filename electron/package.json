@@ -1,0 +1,87 @@
+{
+  "name": "hl-floorsync",
+  "version": "1.0.0",
+  "description": "H&L FloorSync — Floor Issue Log & Maintenance",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win --x64",
+    "build:dir": "electron-builder --win --x64 --dir"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.hlmanufacturing.floorsync",
+    "productName": "H&L FloorSync",
+    "copyright": "Copyright © 2025 H&L Manufacturing",
+    "icon": "../icon-512.png",
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/**/*.node",
+      "../server/**/*",
+      "../icon-192.png",
+      "../icon-512.png",
+      "../index.html",
+      "../maintenance.html",
+      "../manifest.json",
+      "../sw.js",
+      "../t/**/*",
+      "../qr.html",
+      "../sql.html",
+      "../icon-*.png",
+      "../Splash.png"
+    ],
+    "files": [
+      "main.js",
+      "node_modules/**/*",
+      "../server/**/*",
+      "../index.html",
+      "../maintenance.html",
+      "../manifest.json",
+      "../sw.js",
+      "../t/**/*",
+      "../qr.html",
+      "../sql.html",
+      "../icon-*.png",
+      "../Splash.png",
+      "!../server/db/**",
+      "!../server/node_modules/.cache/**"
+    ],
+    "extraResources": [
+      {
+        "from": "../server",
+        "to": "server",
+        "filter": ["**/*", "!db/*.db-shm", "!db/*.db-wal"]
+      },
+      {
+        "from": "../",
+        "to": "app",
+        "filter": [
+          "index.html", "maintenance.html", "manifest.json",
+          "sw.js", "icon-*.png", "Splash.png", "qr.html", "sql.html",
+          "t/**/*"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] }
+      ],
+      "icon": "../icon-512.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "H&L FloorSync",
+      "installerHeaderIcon": "../icon-192.png"
+    },
+    "extraMetadata": {
+      "main": "main.js"
+    }
+  }
+}
