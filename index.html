@@ -362,6 +362,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <i class="ti ti-building"></i>
         <span class="tab-text">Customers</span>
       </div>
+    <div class="section-tab" onclick="switchSection('eng')" id="stab-eng">
+      <i class="ti ti-clipboard-list"></i><span class="tab-text">ENG Requests</span>
+    </div>
     <a href="/maintenance.html" class="section-tab" style="text-decoration:none">
       <i class="ti ti-tool"></i><span class="tab-text">Maintenance</span>
     </a>
@@ -543,6 +546,33 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div id="emptyCustomers" class="empty" style="display:none">
       <i class="ti ti-building" style="font-size:26px;display:block;margin-bottom:6px"></i>
       No customers yet
+    </div>
+  </div>
+</div>
+
+<!-- ENG REQUESTS SECTION (read-only view of Justin's OneDrive ENG request list) -->
+<div id="section-eng" style="display:none">
+  <div class="tab-bar">
+    <div class="tab active" id="engtab-tech" onclick="switchEngSheet('tech')">Tech</div>
+    <div class="tab" id="engtab-fab" onclick="switchEngSheet('fab')">Fab</div>
+    <div class="tab" id="engtab-proto" onclick="switchEngSheet('proto')">Proto</div>
+  </div>
+  <div style="padding:.75rem 1rem 1.5rem">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:.75rem">
+      <div style="display:flex;gap:4px">
+        <button class="btn" id="engf-open" onclick="setEngFilter('open')" style="font-size:11px;padding:5px 10px">Open</button>
+        <button class="btn" id="engf-all" onclick="setEngFilter('all')" style="font-size:11px;padding:5px 10px">All</button>
+        <button class="btn" id="engf-overdue" onclick="setEngFilter('overdue')" style="font-size:11px;padding:5px 10px">Overdue</button>
+      </div>
+      <input type="search" id="engSearch" placeholder="Search requests…" style="flex:1;min-width:140px" oninput="renderEng()">
+      <span id="engSyncLabel" style="font-size:11px;color:var(--hl-text3)"></span>
+      <button class="btn" onclick="engSyncNow()" title="Pull latest from OneDrive"><i class="ti ti-refresh"></i> Sync</button>
+    </div>
+    <div id="engNotice" style="display:none;font-size:12px;color:var(--hl-text2);background:var(--hl-surface2);border:1px solid var(--hl-border);border-radius:4px;padding:8px 10px;margin-bottom:.75rem"></div>
+    <div id="engList" style="overflow-x:auto"></div>
+    <div id="emptyEng" class="empty" style="display:none">
+      <i class="ti ti-clipboard-list" style="font-size:26px;display:block;margin-bottom:6px"></i>
+      No requests
     </div>
   </div>
 </div>
@@ -1211,7 +1241,7 @@ async function savePIN(){
 // ── NAVIGATION ──
 function switchSection(sec){
   activeSection=sec;
-  ['applicator','machine','setup','contacts','customers'].forEach(s=>{
+  ['applicator','machine','setup','contacts','customers','eng'].forEach(s=>{
     $('stab-'+s).classList.toggle('active',s===sec);
     const el=$('section-'+s); if(el) el.style.display=s===sec?'block':'none';
   });
@@ -1219,8 +1249,116 @@ function switchSection(sec){
   else if(sec==='machine') renderSection('machine');
   else if(sec==='setup') renderSection('setup');
   else if(sec==='customers') renderCustomers();
+  else if(sec==='eng') loadEng();
   else renderContacts();
 }
+// ── ENG REQUESTS ──
+let engSheet='tech', engFilter='open', engData=[], engMeta={};
+function switchEngSheet(s){
+  engSheet=s;
+  ['tech','fab','proto'].forEach(t=>$('engtab-'+t).classList.toggle('active',t===s));
+  loadEng();
+}
+function setEngFilter(f){ engFilter=f; renderEng(); }
+async function loadEng(){
+  try{
+    const j = await apiCall('GET', '/api/eng-requests?sheet='+engSheet);
+    engData = j.rows||[]; engMeta = j;
+    renderEng();
+  }catch(e){ toast('ENG load failed: '+e.message,'#cc4444'); }
+}
+async function engSyncNow(){
+  const lbl=$('engSyncLabel'); lbl.textContent='Syncing…';
+  try{
+    await apiCall('POST','/api/eng-requests/sync');
+    toast('ENG requests synced');
+    loadEng();
+  }catch(e){ toast('Sync failed: '+e.message,'#cc4444'); renderEng(); }
+}
+function engParseDate(s){
+  if(!s) return null;
+  let m=/^(\d{4})-(\d{2})-(\d{2})/.exec(s);
+  if(m) return new Date(+m[1],+m[2]-1,+m[3]);
+  m=/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/.exec(s);
+  if(m){ let y=+m[3]; if(y<100) y+=2000; return new Date(y,+m[1]-1,+m[2]); }
+  return null;
+}
+function engFmtDate(s){
+  const d=engParseDate(s);
+  if(!d) return s||'—';
+  return (d.getMonth()+1)+'/'+d.getDate()+'/'+String(d.getFullYear()).slice(2);
+}
+function engIsOverdue(r){
+  if(r.date_closed) return false;
+  const t=engParseDate(r.target_date);
+  return !!t && t < new Date(new Date().toDateString());
+}
+const ENG_STATUS_COLORS={g:'#50a870',y:'#d0a933',r:'#cc4444',p:'#888'};
+function engStatusPill(r){
+  if(engSheet==='proto'){
+    const pct=r.pct_complete==null?null:Math.round(r.pct_complete);
+    if(pct==null) return '—';
+    const col=pct>=100?'#50a870':(engIsOverdue(r)?'#cc4444':'#d0a933');
+    return `<div style="display:flex;align-items:center;gap:6px;min-width:90px"><div style="flex:1;height:6px;background:var(--hl-surface2);border-radius:3px;overflow:hidden"><div style="width:${Math.min(pct,100)}%;height:100%;background:${col}"></div></div><span style="font-size:10px;color:var(--hl-text2)">${pct}%</span></div>`;
+  }
+  const s=(r.status||'').toLowerCase();
+  const col=ENG_STATUS_COLORS[s];
+  if(!col) return '—';
+  const label={g:'ON TRACK',y:'DUE SOON',r:'BEHIND',p:'ON HOLD'}[s];
+  return `<span style="display:inline-block;padding:2px 7px;border-radius:3px;font-size:10px;font-weight:600;letter-spacing:.4px;color:#fff;background:${col}">${label}</span>`;
+}
+function engEsc(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function renderEng(){
+  const lbl=$('engSyncLabel');
+  if(engMeta.synced_at){
+    const mins=Math.round((Date.now()-new Date(engMeta.synced_at).getTime())/60000);
+    lbl.textContent='Synced '+(mins<1?'just now':mins<60?mins+'m ago':Math.round(mins/60)+'h ago');
+  } else lbl.textContent='Never synced';
+  const notice=$('engNotice');
+  if(engMeta.configured===false){
+    notice.style.display='block';
+    notice.textContent='OneDrive sync is not configured on this server — see docs/eng-requests-setup.md. Showing last-known data.';
+  } else if(engMeta.error){
+    notice.style.display='block';
+    notice.textContent='Last sync error: '+engMeta.error;
+  } else notice.style.display='none';
+
+  ['open','all','overdue'].forEach(f=>{
+    const b=$('engf-'+f);
+    b.style.background=f===engFilter?'var(--hl-red)':'';
+    b.style.color=f===engFilter?'#fff':'';
+  });
+
+  const q=($('engSearch').value||'').toLowerCase();
+  let rows=engData.filter(r=>{
+    if(engFilter==='open' && r.date_closed) return false;
+    if(engFilter==='overdue' && !engIsOverdue(r)) return false;
+    if(q && !JSON.stringify(r).toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  const list=$('engList'), empty=$('emptyEng');
+  if(!rows.length){ list.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+
+  const isProto=engSheet==='proto';
+  const head=isProto
+    ? '<tr><th>Description</th><th>Progress</th><th>Target</th><th>Completed</th><th>Comments</th></tr>'
+    : '<tr><th>Request</th><th>Customer / Part</th><th>Notes</th><th>Assigned</th><th>PM</th><th>Open</th><th>Target</th><th>Closed</th><th>Status</th><th>Comments</th></tr>';
+  const body=rows.map(r=>{
+    const od=engIsOverdue(r);
+    const tgt=`<span style="${od?'color:#cc4444;font-weight:600':''}">${engFmtDate(r.target_date)}</span>`;
+    if(isProto){
+      return `<tr><td style="max-width:260px">${engEsc(r.request)}</td><td>${engStatusPill(r)}</td><td>${tgt}</td><td>${engFmtDate(r.date_closed)}</td><td style="max-width:280px;font-size:11px;color:var(--hl-text2)">${engEsc(r.comments)}</td></tr>`;
+    }
+    const comments=[r.comments,r.addl_comments].filter(Boolean).join(' · ');
+    return `<tr><td style="max-width:180px">${engEsc(r.request)}</td><td style="max-width:160px">${engEsc(r.customer_part)}</td><td style="max-width:200px;font-size:11px">${engEsc(r.notes)}</td><td>${engEsc(r.assigned_to)}</td><td>${engEsc(r.program_manager)}</td><td>${engFmtDate(r.date_open)}</td><td>${tgt}</td><td>${engFmtDate(r.date_closed)}</td><td>${engStatusPill(r)}</td><td style="max-width:260px;font-size:11px;color:var(--hl-text2)">${engEsc(comments)}</td></tr>`;
+  }).join('');
+  list.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px" class="eng-table"><thead>${head}</thead><tbody>${body}</tbody></table>
+    <style>.eng-table th{text-align:left;padding:6px 8px;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--hl-text3);border-bottom:1px solid var(--hl-border)}
+    .eng-table td{padding:7px 8px;border-bottom:1px solid var(--hl-border);vertical-align:top;word-break:break-word}</style>`;
+}
+
 function switchSubTab(sec,tab){
   const tabs=['log','queue','history'];
   const bar=$('section-'+sec).querySelector('.tab-bar');

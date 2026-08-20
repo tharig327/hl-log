@@ -963,4 +963,209 @@ app.post('/api/maintenance/import-csp', requireAuth, upload.single('file'), asyn
   });
 });
 
+// ═══════════════════════════════════════════════════════════════════════════
+// ENG REQUESTS — live read-only sync from Justin's OneDrive xlsx via MS Graph
+// ═══════════════════════════════════════════════════════════════════════════
+
+const fs = require('fs');
+
+const ENG_DRIVE_ID = process.env.ENG_DRIVE_ID || 'b!2NMJboov0kWeEJA81bibUZouNcWT6-JGg51u43y1cjRQpuuagL1QRpiCe7hpRy2o';
+const ENG_ITEM_ID  = process.env.ENG_ITEM_ID  || '014UQDRKZNPYM74573GBA3VQBWBSGELPAI';
+
+// Credentials: env vars first, then graph-config.json next to the db folder
+function graphConfig() {
+  let { MS_TENANT_ID: tenant, MS_CLIENT_ID: client, MS_CLIENT_SECRET: secret } = process.env;
+  if (!tenant || !client || !secret) {
+    try {
+      const cfgPath = path.join(process.env.DB_DIR || path.join(__dirname, '../db'), '..', 'graph-config.json');
+      const cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
+      tenant = tenant || cfg.tenantId; client = client || cfg.clientId; secret = secret || cfg.clientSecret;
+    } catch { /* no config file */ }
+  }
+  return (tenant && client && secret) ? { tenant, client, secret } : null;
+}
+
+let graphToken = null, graphTokenExp = 0;
+async function getGraphToken() {
+  if (graphToken && Date.now() < graphTokenExp - 5 * 60 * 1000) return graphToken;
+  const cfg = graphConfig();
+  if (!cfg) throw new Error('Graph credentials not configured');
+  const resp = await fetch(`https://login.microsoftonline.com/${cfg.tenant}/oauth2/v2.0/token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'client_credentials',
+      client_id: cfg.client,
+      client_secret: cfg.secret,
+      scope: 'https://graph.microsoft.com/.default'
+    })
+  });
+  if (!resp.ok) throw new Error(`Graph token error ${resp.status}: ${(await resp.text()).slice(0, 300)}`);
+  const j = await resp.json();
+  graphToken = j.access_token;
+  graphTokenExp = Date.now() + (j.expires_in || 3600) * 1000;
+  return graphToken;
+}
+
+function setMeta(key, value) {
+  db.prepare('INSERT INTO meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').run(key, value);
+}
+function getMeta(key) {
+  const r = db.prepare('SELECT value FROM meta WHERE key=?').get(key);
+  return r ? r.value : null;
+}
+
+// Unwrap ExcelJS cell values (richText, hyperlinks, formula results, Dates)
+function cellText(v) {
+  if (v === null || v === undefined) return null;
+  if (v instanceof Date) {
+    // Excel serial dates come through as UTC Dates
+    const y = v.getUTCFullYear(), m = String(v.getUTCMonth() + 1).padStart(2, '0'), d = String(v.getUTCDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+  if (typeof v === 'object') {
+    if (v.richText) return v.richText.map(r => r.text).join('');
+    if (v.result !== undefined) return cellText(v.result);
+    if (v.text !== undefined) return cellText(v.text);
+    return String(v);
+  }
+  const s = String(v).trim();
+  return s === '' ? null : s;
+}
+
+function normStatus(v) {
+  const s = (cellText(v) || '').trim().toLowerCase();
+  return ['g', 'y', 'r', 'p'].includes(s) ? s : (s || null);
+}
+
+// Parse tech/fab-style sheet: find the header row starting with "Request"
+function parseRequestSheet(ws, sheetKey) {
+  const out = [];
+  let headerRow = 0;
+  ws.eachRow((row, n) => {
+    if (!headerRow && String(cellText(row.getCell(1).value) || '').toLowerCase() === 'request') headerRow = n;
+  });
+  if (!headerRow) return out;
+  ws.eachRow((row, n) => {
+    if (n <= headerRow) return;
+    const c = i => cellText(row.getCell(i).value);
+    const request = c(1);
+    if (!request || /add lines above/i.test(request)) return;
+    out.push({
+      sheet: sheetKey, row_num: n,
+      request, customer_part: c(2), notes: c(3),
+      assigned_to: c(4), program_manager: c(5),
+      date_open: c(6), target_date: c(7), date_closed: c(8),
+      status: normStatus(row.getCell(9).value),
+      pct_complete: null,
+      comments: c(10), addl_comments: c(11)
+    });
+  });
+  return out;
+}
+
+// Parse proto sheet: Description | % Complete | Comments | Target Date | Completed (cols A-E)
+function parseProtoSheet(ws) {
+  const out = [];
+  let headerRow = 0;
+  ws.eachRow((row, n) => {
+    if (!headerRow && String(cellText(row.getCell(1).value) || '').toLowerCase() === 'description') headerRow = n;
+  });
+  if (!headerRow) return out;
+  ws.eachRow((row, n) => {
+    if (n <= headerRow) return;
+    const c = i => cellText(row.getCell(i).value);
+    const request = c(1);
+    if (!request) return;
+    let pct = row.getCell(2).value;
+    if (pct && typeof pct === 'object' && pct.result !== undefined) pct = pct.result;
+    pct = typeof pct === 'number' ? (pct <= 1 ? pct * 100 : pct) : (parseFloat(String(pct || '').replace('%', '')) || null);
+    out.push({
+      sheet: 'proto', row_num: n,
+      request, customer_part: null, notes: null,
+      assigned_to: null, program_manager: null,
+      date_open: null, target_date: c(4), date_closed: c(5),
+      status: null, pct_complete: pct,
+      comments: c(3), addl_comments: null
+    });
+  });
+  return out;
+}
+
+async function syncEngRequests() {
+  const token = await getGraphToken();
+  const resp = await fetch(`https://graph.microsoft.com/v1.0/drives/${ENG_DRIVE_ID}/items/${ENG_ITEM_ID}/content`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!resp.ok) throw new Error(`Graph download error ${resp.status}: ${(await resp.text()).slice(0, 300)}`);
+  const buf = Buffer.from(await resp.arrayBuffer());
+
+  const wb = new ExcelJS.Workbook();
+  await wb.xlsx.load(buf);
+
+  const findSheet = kw => wb.worksheets.find(s => s.name.toLowerCase().includes(kw));
+  const rows = [];
+  const counts = { tech: 0, fab: 0, proto: 0 };
+
+  const techWs = findSheet('tech');
+  if (techWs) { const r = parseRequestSheet(techWs, 'tech'); counts.tech = r.length; rows.push(...r); }
+  const fabWs = findSheet('fab');
+  if (fabWs) { const r = parseRequestSheet(fabWs, 'fab'); counts.fab = r.length; rows.push(...r); }
+  const protoWs = findSheet('proto');
+  if (protoWs) { const r = parseProtoSheet(protoWs); counts.proto = r.length; rows.push(...r); }
+
+  const now = new Date().toISOString();
+  txn(() => {
+    db.prepare('DELETE FROM eng_request').run();
+    const ins = db.prepare(`INSERT INTO eng_request
+      (sheet, row_num, request, customer_part, notes, assigned_to, program_manager,
+       date_open, target_date, date_closed, status, pct_complete, comments, addl_comments, synced_at)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
+    rows.forEach(r => ins.run(
+      r.sheet, r.row_num, r.request, r.customer_part, r.notes, r.assigned_to, r.program_manager,
+      r.date_open, r.target_date, r.date_closed, r.status, r.pct_complete, r.comments, r.addl_comments, now
+    ));
+    setMeta('eng_sync_at', now);
+    setMeta('eng_sync_error', '');
+  });
+  return counts;
+}
+
+app.post('/api/eng-requests/sync', requireAuth, async (req, res) => {
+  try {
+    const counts = await syncEngRequests();
+    res.json({ ok: true, counts, synced_at: getMeta('eng_sync_at') });
+  } catch (e) {
+    setMeta('eng_sync_error', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/eng-requests', requireAuth, (req, res) => {
+  const { sheet, open } = req.query;
+  let sql = 'SELECT * FROM eng_request WHERE 1=1';
+  const params = [];
+  if (sheet) { sql += ' AND sheet=?'; params.push(sheet); }
+  if (open === '1') sql += " AND (date_closed IS NULL OR date_closed='')";
+  sql += ' ORDER BY row_num';
+  res.json({
+    rows: db.prepare(sql).all(...params),
+    synced_at: getMeta('eng_sync_at'),
+    error: getMeta('eng_sync_error') || null,
+    configured: !!graphConfig()
+  });
+});
+
+// Auto-sync every 15 minutes (plus once shortly after startup) when configured
+if (graphConfig()) {
+  const safeSync = () => syncEngRequests().catch(e => {
+    setMeta('eng_sync_error', e.message);
+    console.error('[eng-sync]', e.message);
+  });
+  setTimeout(safeSync, 30 * 1000);
+  setInterval(safeSync, 15 * 60 * 1000);
+} else {
+  console.log('[eng-sync] Graph credentials not configured — ENG Requests sync disabled');
+}
+
 app.listen(PORT, () => console.log(`FloorSync listening on port ${PORT}`));

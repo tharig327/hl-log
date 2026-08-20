@@ -263,6 +263,24 @@ function createDb() {
       used_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
       used_by      TEXT
     );
+    CREATE TABLE IF NOT EXISTS eng_request (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      sheet         TEXT NOT NULL,          -- 'tech' | 'fab' | 'proto'
+      row_num       INTEGER,
+      request       TEXT,
+      customer_part TEXT,
+      notes         TEXT,
+      assigned_to   TEXT,
+      program_manager TEXT,
+      date_open     TEXT,
+      target_date   TEXT,
+      date_closed   TEXT,
+      status        TEXT,                   -- g / y / r / p
+      pct_complete  REAL,
+      comments      TEXT,
+      addl_comments TEXT,
+      synced_at     TEXT
+    );
   `);
 
   return db;
