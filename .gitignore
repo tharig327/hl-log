@@ -3,3 +3,6 @@ server/db/*.db-shm
 server/db/*.db-wal
 *.env
 .DS_Store
+updates/*.exe
+updates/*.blockmap
+server/graph-config.json

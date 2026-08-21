@@ -1,11 +1,11 @@
 {
   "name": "hl-floorsync",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "H&L FloorSync — Floor Issue Log & Maintenance",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder --win --x64",
+    "build": "electron-builder --win --x64 && node copy-to-updates.js",
     "build:dir": "electron-builder --win --x64 --dir"
   },
   "dependencies": {

@@ -33,6 +33,7 @@ function startServer() {
   process.env.PORT = String(PORT);
   process.env.DB_DIR = dbDir;
   process.env.STATIC_ROOT = staticRoot;
+  process.env.APP_VERSION = app.getVersion();
 
   try {
     require(SERVER_JS);
@@ -91,9 +92,34 @@ function createWindow() {
 }
 
 // ── Tray ──────────────────────────────────────────────────────────────────────
+function setAppMenu() {
+  Menu.setApplicationMenu(Menu.buildFromTemplate([
+    { role: 'fileMenu' },
+    { role: 'editMenu' },
+    { role: 'viewMenu' },
+    { role: 'windowMenu' },
+    {
+      role: 'help',
+      submenu: [
+        {
+          label: 'About H&L FloorSync',
+          click: () => {
+            dialog.showMessageBox({
+              type: 'info',
+              title: 'About H&L FloorSync',
+              message: `H&L FloorSync v${app.getVersion()}`,
+              detail: 'H&L Manufacturing · CMMS'
+            });
+          }
+        }
+      ]
+    }
+  ]));
+}
+
 function createTray() {
   tray = new Tray(ICON_PATH);
-  tray.setToolTip('H&L FloorSync');
+  tray.setToolTip(`H&L FloorSync v${app.getVersion()}`);
 
   const menu = Menu.buildFromTemplate([
     {
@@ -150,6 +176,7 @@ app.whenReady().then(() => {
     if (mainWindow) { mainWindow.show(); mainWindow.focus(); }
   });
 
+  setAppMenu();
   createTray();
 
   // Show splash while server loads

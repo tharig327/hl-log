@@ -329,7 +329,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="header">
     <div class="header-left">
       <div class="hl-logo">H&L</div>
-      <div><h1>H&L FloorSync</h1><p>H&amp;L Manufacturing · CMMS</p></div>
+      <div><h1>H&L FloorSync</h1><p>H&amp;L Manufacturing · CMMS <span id="appVersion" style="opacity:.6"></span></p></div>
     </div>
     <div class="header-actions">
       <span class="logged-in-badge" id="loggedInBadge" style="display:none"><i class="ti ti-user-circle"></i><span id="loggedInName"></span></span>
@@ -1261,6 +1261,10 @@ function switchEngSheet(s){
 }
 function setEngFilter(f){ engFilter=f; renderEng(); }
 
+fetch('/api/version').then(r=>r.json()).then(j=>{
+  if(j.version) $('appVersion').textContent='· v'+j.version.replace(/^v/,'');
+}).catch(()=>{});
+
 async function editEngComment(id){
   const r=engData.find(x=>x.id===id);
   if(!r) return;
@@ -2039,12 +2043,23 @@ function fixTicketNums(){
 (function(){
   const splash = document.getElementById('splashScreen');
   if(!splash) return;
+  // Only show the full splash on the first load of this session —
+  // returning to the page (e.g. from Maintenance) skips it
+  let seen=false;
+  try{ seen=sessionStorage.getItem('splashSeen')==='1'; }catch(e){}
+  if(seen){
+    splash._dismissed = true;
+    splash.style.display='none';
+    window._splashReady = function(){};
+    return;
+  }
   // Minimum display time: 2 seconds, then fade when app is ready
   const minTime = 2000;
   const start = Date.now();
   window._splashReady = function(){
     if(splash._dismissed) return;
     splash._dismissed = true;
+    try{ sessionStorage.setItem('splashSeen','1'); }catch(e){}
     const elapsed = Date.now() - start;
     const delay = Math.max(0, minTime - elapsed);
     setTimeout(()=>{

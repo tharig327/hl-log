@@ -1165,6 +1165,10 @@ async function graphExcel(method, urlPath, body) {
   return resp.json();
 }
 
+app.get('/api/version', (req, res) => {
+  res.json({ version: process.env.APP_VERSION || 'dev (node server.js)' });
+});
+
 // Write a team comment back into the spreadsheet cell, then update local cache
 app.post('/api/eng-requests/:id/comment', requireAuth, async (req, res) => {
   try {
