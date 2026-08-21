@@ -1,8 +1,8 @@
-version: 1.1.0
+version: 1.1.1
 files:
-  - url: H&L FloorSync Setup 1.1.0.exe
-    sha512: vjt9VodTajoN2+mRyNVK23yFIJYHXxm4WjlmagUFkhwYzsJWu+1vgBT2/1Y/R6K40BpRGQ9mL0qiV7hhR0AQEA==
-    size: 98865316
-path: H&L FloorSync Setup 1.1.0.exe
-sha512: vjt9VodTajoN2+mRyNVK23yFIJYHXxm4WjlmagUFkhwYzsJWu+1vgBT2/1Y/R6K40BpRGQ9mL0qiV7hhR0AQEA==
-releaseDate: '2026-08-21T11:08:30.080Z'
+  - url: H&L FloorSync Setup 1.1.1.exe
+    sha512: 5iYCPvO6+JIBcRV60cKuoc9/pP7EtfutTVOWN48LWL8qpR73HO2S0F4k39oMApjFg9mMH1ECHATiS20OaagtOA==
+    size: 98866619
+path: H&L FloorSync Setup 1.1.1.exe
+sha512: 5iYCPvO6+JIBcRV60cKuoc9/pP7EtfutTVOWN48LWL8qpR73HO2S0F4k39oMApjFg9mMH1ECHATiS20OaagtOA==
+releaseDate: '2026-08-21T13:20:12.138Z'
