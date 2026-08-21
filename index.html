@@ -1349,14 +1349,14 @@ function renderEng(){
     const od=engIsOverdue(r);
     const tgt=`<span style="${od?'color:#cc4444;font-weight:600':''}">${engFmtDate(r.target_date)}</span>`;
     if(isProto){
-      return `<tr><td style="max-width:260px">${engEsc(r.request)}</td><td>${engStatusPill(r)}</td><td>${tgt}</td><td>${engFmtDate(r.date_closed)}</td><td style="max-width:280px;font-size:11px;color:var(--hl-text2)">${engEsc(r.comments)}</td></tr>`;
+      return `<tr><td style="max-width:260px">${engEsc(r.request)}</td><td>${engStatusPill(r)}</td><td>${tgt}</td><td>${engFmtDate(r.date_closed)}</td><td style="max-width:280px;font-size:13px;color:var(--hl-text2)">${engEsc(r.comments)}</td></tr>`;
     }
     const comments=[r.comments,r.addl_comments].filter(Boolean).join(' · ');
-    return `<tr><td style="max-width:180px">${engEsc(r.request)}</td><td style="max-width:160px">${engEsc(r.customer_part)}</td><td style="max-width:200px;font-size:11px">${engEsc(r.notes)}</td><td>${engEsc(r.assigned_to)}</td><td>${engEsc(r.program_manager)}</td><td>${engFmtDate(r.date_open)}</td><td>${tgt}</td><td>${engFmtDate(r.date_closed)}</td><td>${engStatusPill(r)}</td><td style="max-width:260px;font-size:11px;color:var(--hl-text2)">${engEsc(comments)}</td></tr>`;
+    return `<tr><td style="max-width:180px">${engEsc(r.request)}</td><td style="max-width:160px">${engEsc(r.customer_part)}</td><td style="max-width:200px;font-size:13px">${engEsc(r.notes)}</td><td>${engEsc(r.assigned_to)}</td><td>${engEsc(r.program_manager)}</td><td>${engFmtDate(r.date_open)}</td><td>${tgt}</td><td>${engFmtDate(r.date_closed)}</td><td>${engStatusPill(r)}</td><td style="max-width:260px;font-size:13px;color:var(--hl-text2)">${engEsc(comments)}</td></tr>`;
   }).join('');
-  list.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px" class="eng-table"><thead>${head}</thead><tbody>${body}</tbody></table>
-    <style>.eng-table th{text-align:left;padding:6px 8px;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--hl-text3);border-bottom:1px solid var(--hl-border)}
-    .eng-table td{padding:7px 8px;border-bottom:1px solid var(--hl-border);vertical-align:top;word-break:break-word}</style>`;
+  list.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:14px" class="eng-table"><thead>${head}</thead><tbody>${body}</tbody></table>
+    <style>.eng-table th{text-align:left;padding:7px 8px;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--hl-text3);border-bottom:1px solid var(--hl-border)}
+    .eng-table td{padding:8px 8px;border-bottom:1px solid var(--hl-border);vertical-align:top;word-break:break-word}</style>`;
 }
 
 function switchSubTab(sec,tab){
