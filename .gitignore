@@ -6,3 +6,5 @@ server/db/*.db-wal
 updates/*.exe
 updates/*.blockmap
 server/graph-config.json
+updates/latest.yml
+updates/latest.yml
