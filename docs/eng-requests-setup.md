@@ -43,7 +43,6 @@ for the installed desktop app: `%APPDATA%\hl-floorsync\graph-config.json`):
   "clientSecret": "<secret value>"
 }
 ```
-
 > The file is gitignored — never commit the secret.
 
 ## Optional overrides
