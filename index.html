@@ -1260,6 +1260,22 @@ function switchEngSheet(s){
   loadEng();
 }
 function setEngFilter(f){ engFilter=f; renderEng(); }
+
+async function editEngComment(id){
+  const r=engData.find(x=>x.id===id);
+  if(!r) return;
+  const label=engSheet==='tech'?'Tech Comments':'Fab Comments';
+  const text=prompt(label+' — this writes back to the ENG spreadsheet:', r.team_comments||'');
+  if(text===null) return; // cancelled
+  try{
+    const resp=await fetch('/api/eng-requests/'+id+'/comment',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});
+    const j=await resp.json();
+    if(!resp.ok) throw new Error(j.error||'Save failed');
+    r.team_comments=j.team_comments;
+    renderEng();
+    toast('Comment saved to spreadsheet');
+  }catch(e){ toast('Save failed: '+e.message,'#cc4444'); }
+}
 async function loadEng(){
   try{
     const j = await apiCall('GET', '/api/eng-requests?sheet='+engSheet);
@@ -1353,7 +1369,7 @@ function renderEng(){
       return `<tr><td style="max-width:260px">${engEsc(r.request)}</td><td>${engStatusPill(r)}</td><td>${tgt}</td><td>${engFmtDate(r.date_closed)}</td><td style="max-width:280px;font-size:13px;color:var(--hl-text2)">${engEsc(r.comments)}</td></tr>`;
     }
     const comments=[r.comments,r.addl_comments].filter(Boolean).join(' · ');
-    return `<tr><td style="max-width:180px">${engEsc(r.request)}</td><td style="max-width:160px">${engEsc(r.customer_part)}</td><td style="max-width:200px;font-size:13px">${engEsc(r.notes)}</td><td>${engEsc(r.assigned_to)}</td><td>${engEsc(r.program_manager)}</td><td>${engFmtDate(r.date_open)}</td><td>${tgt}</td><td>${engFmtDate(r.date_closed)}</td><td>${engStatusPill(r)}</td><td style="max-width:260px;font-size:13px;color:var(--hl-text2)">${engEsc(comments)}</td><td style="max-width:220px;font-size:13px;color:var(--hl-text2)">${engEsc(r.team_comments)}</td></tr>`;
+    return `<tr><td style="max-width:180px">${engEsc(r.request)}</td><td style="max-width:160px">${engEsc(r.customer_part)}</td><td style="max-width:200px;font-size:13px">${engEsc(r.notes)}</td><td>${engEsc(r.assigned_to)}</td><td>${engEsc(r.program_manager)}</td><td>${engFmtDate(r.date_open)}</td><td>${tgt}</td><td>${engFmtDate(r.date_closed)}</td><td>${engStatusPill(r)}</td><td style="max-width:260px;font-size:13px;color:var(--hl-text2)">${engEsc(comments)}</td><td style="max-width:220px;font-size:13px;color:var(--hl-text2);cursor:pointer" title="Click to edit" onclick="editEngComment(${r.id})">${r.team_comments?engEsc(r.team_comments):'<i class="ti ti-pencil" style="opacity:.4"></i>'}</td></tr>`;
   }).join('');
   list.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:14px" class="eng-table"><thead>${head}</thead><tbody>${body}</tbody></table>
     <style>.eng-table th{text-align:left;padding:7px 8px;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--hl-text3);border-bottom:1px solid var(--hl-border)}

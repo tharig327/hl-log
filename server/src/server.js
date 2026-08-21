@@ -1052,6 +1052,8 @@ function parseRequestSheet(ws, sheetKey) {
   ws.getRow(headerRow).eachCell({ includeEmpty: false }, (cell, col) => {
     if (!teamCol && /^(tech|fab)\s*comments$/i.test(String(cellText(cell.value) || '').trim())) teamCol = col;
   });
+  // Remember where to write comments back (worksheet name + column)
+  out.writeInfo = { wsName: ws.name, teamCol };
   ws.eachRow((row, n) => {
     if (n <= headerRow) return;
     const c = i => cellText(row.getCell(i).value);
@@ -1114,10 +1116,11 @@ async function syncEngRequests() {
   const rows = [];
   const counts = { tech: 0, fab: 0, proto: 0 };
 
+  const writeInfo = {};
   const techWs = findSheet('tech');
-  if (techWs) { const r = parseRequestSheet(techWs, 'tech'); counts.tech = r.length; rows.push(...r); }
+  if (techWs) { const r = parseRequestSheet(techWs, 'tech'); counts.tech = r.length; writeInfo.tech = r.writeInfo; rows.push(...r); }
   const fabWs = findSheet('fab');
-  if (fabWs) { const r = parseRequestSheet(fabWs, 'fab'); counts.fab = r.length; rows.push(...r); }
+  if (fabWs) { const r = parseRequestSheet(fabWs, 'fab'); counts.fab = r.length; writeInfo.fab = r.writeInfo; rows.push(...r); }
   const protoWs = findSheet('proto');
   if (protoWs) { const r = parseProtoSheet(protoWs); counts.proto = r.length; rows.push(...r); }
 
@@ -1134,9 +1137,64 @@ async function syncEngRequests() {
     ));
     setMeta('eng_sync_at', now);
     setMeta('eng_sync_error', '');
+    for (const k of ['tech', 'fab']) {
+      if (writeInfo[k]) {
+        setMeta(`eng_ws_${k}`, writeInfo[k].wsName);
+        setMeta(`eng_teamcol_${k}`, String(writeInfo[k].teamCol || 0));
+      }
+    }
   });
   return counts;
 }
+
+// Column number → Excel letter (1→A, 27→AA)
+function colLetter(n) {
+  let s = '';
+  while (n > 0) { const r = (n - 1) % 26; s = String.fromCharCode(65 + r) + s; n = Math.floor((n - 1) / 26); }
+  return s;
+}
+
+async function graphExcel(method, urlPath, body) {
+  const token = await getGraphToken();
+  const resp = await fetch(`https://graph.microsoft.com/v1.0/drives/${ENG_DRIVE_ID}/items/${ENG_ITEM_ID}/workbook/${urlPath}`, {
+    method,
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  if (!resp.ok) throw new Error(`Graph workbook error ${resp.status}: ${(await resp.text()).slice(0, 300)}`);
+  return resp.json();
+}
+
+// Write a team comment back into the spreadsheet cell, then update local cache
+app.post('/api/eng-requests/:id/comment', requireAuth, async (req, res) => {
+  try {
+    const text = String(req.body.text ?? '').slice(0, 2000);
+    const row = db.prepare('SELECT * FROM eng_request WHERE id=?').get(req.params.id);
+    if (!row) return res.status(404).json({ error: 'Request not found' });
+    if (row.sheet !== 'tech' && row.sheet !== 'fab') return res.status(400).json({ error: 'Comments only supported on Tech and Fab sheets' });
+
+    const wsName = getMeta(`eng_ws_${row.sheet}`);
+    const teamCol = parseInt(getMeta(`eng_teamcol_${row.sheet}`) || '0', 10);
+    if (!wsName || !teamCol) return res.status(400).json({ error: `No "${row.sheet === 'tech' ? 'Tech' : 'Fab'} Comments" column found in the spreadsheet — run a sync first` });
+
+    const wsPath = `worksheets('${encodeURIComponent(wsName.replace(/'/g, "''"))}')`;
+
+    // Safety check: confirm the row hasn't shifted since last sync
+    const check = await graphExcel('GET', `${wsPath}/range(address='A${row.row_num}')`);
+    const liveReq = String((check.values && check.values[0] && check.values[0][0]) ?? '').trim();
+    if (liveReq !== String(row.request || '').trim()) {
+      return res.status(409).json({ error: 'The spreadsheet has changed since the last sync — press Sync and try again' });
+    }
+
+    const addr = `${colLetter(teamCol)}${row.row_num}`;
+    await graphExcel('PATCH', `${wsPath}/range(address='${addr}')`, { values: [[text]] });
+
+    db.prepare('UPDATE eng_request SET team_comments=? WHERE id=?').run(text || null, row.id);
+    res.json({ ok: true, team_comments: text || null });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
 app.post('/api/eng-requests/sync', requireAuth, async (req, res) => {
   try {
