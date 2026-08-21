@@ -1046,6 +1046,12 @@ function parseRequestSheet(ws, sheetKey) {
     if (!headerRow && String(cellText(row.getCell(1).value) || '').toLowerCase() === 'request') headerRow = n;
   });
   if (!headerRow) return out;
+  // Locate the "Tech Comments" / "Fab Comments" column by header text so it
+  // keeps working even if the column moves
+  let teamCol = 0;
+  ws.getRow(headerRow).eachCell({ includeEmpty: false }, (cell, col) => {
+    if (!teamCol && /^(tech|fab)\s*comments$/i.test(String(cellText(cell.value) || '').trim())) teamCol = col;
+  });
   ws.eachRow((row, n) => {
     if (n <= headerRow) return;
     const c = i => cellText(row.getCell(i).value);
@@ -1058,7 +1064,8 @@ function parseRequestSheet(ws, sheetKey) {
       date_open: c(6), target_date: c(7), date_closed: c(8),
       status: normStatus(row.getCell(9).value),
       pct_complete: null,
-      comments: c(10), addl_comments: c(11)
+      comments: c(10), addl_comments: c(11),
+      team_comments: teamCol ? c(teamCol) : null
     });
   });
   return out;
@@ -1119,11 +1126,11 @@ async function syncEngRequests() {
     db.prepare('DELETE FROM eng_request').run();
     const ins = db.prepare(`INSERT INTO eng_request
       (sheet, row_num, request, customer_part, notes, assigned_to, program_manager,
-       date_open, target_date, date_closed, status, pct_complete, comments, addl_comments, synced_at)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
+       date_open, target_date, date_closed, status, pct_complete, comments, addl_comments, team_comments, synced_at)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
     rows.forEach(r => ins.run(
       r.sheet, r.row_num, r.request, r.customer_part, r.notes, r.assigned_to, r.program_manager,
-      r.date_open, r.target_date, r.date_closed, r.status, r.pct_complete, r.comments, r.addl_comments, now
+      r.date_open, r.target_date, r.date_closed, r.status, r.pct_complete, r.comments, r.addl_comments, r.team_comments ?? null, now
     ));
     setMeta('eng_sync_at', now);
     setMeta('eng_sync_error', '');

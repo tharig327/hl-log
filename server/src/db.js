@@ -279,9 +279,13 @@ function createDb() {
       pct_complete  REAL,
       comments      TEXT,
       addl_comments TEXT,
+      team_comments TEXT,                   -- "Tech Comments" / "Fab Comments" column
       synced_at     TEXT
     );
   `);
+
+  // Migration for DBs created before team_comments existed
+  try { db.exec('ALTER TABLE eng_request ADD COLUMN team_comments TEXT'); } catch (e) {}
 
   return db;
 }
