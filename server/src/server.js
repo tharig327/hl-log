@@ -1148,6 +1148,36 @@ async function syncEngRequests() {
       }
     }
   });
+
+  // Notify about rows added directly in the spreadsheet
+  try {
+    const trackable = rows.filter(r => r.sheet === 'tech' || r.sheet === 'fab');
+    const seenIns = db.prepare("INSERT OR IGNORE INTO eng_seen (key, first_seen) VALUES (?, datetime('now'))");
+    if (getMeta('eng_seen_init') !== '1') {
+      // Baseline: mark everything current as seen, send nothing
+      txn(() => { trackable.forEach(r => seenIns.run(engSeenKey(r.sheet, r))); });
+      setMeta('eng_seen_init', '1');
+      console.log(`[eng-sync] baseline: marked ${trackable.length} existing rows as seen`);
+    } else {
+      const seenHas = db.prepare('SELECT 1 FROM eng_seen WHERE key=?');
+      const unseen = trackable.filter(r => !seenHas.get(engSeenKey(r.sheet, r)));
+      if (unseen.length) {
+        // Flood guard: a big batch is likely a bulk edit, not new requests
+        const notifyThem = unseen.length <= 10;
+        let queued = 0;
+        txn(() => {
+          unseen.forEach(r => {
+            if (notifyThem) queued += queueEngNotification(null, r.sheet, r) ? 1 : 0;
+            seenIns.run(engSeenKey(r.sheet, r));
+          });
+        });
+        console.log(`[eng-sync] ${unseen.length} new spreadsheet row(s); ${notifyThem ? queued + ' notification(s) queued' : 'notifications skipped (bulk change)'}`);
+      }
+    }
+  } catch (e) {
+    console.error('[eng-sync] new-row detection failed:', e.message);
+  }
+
   return counts;
 }
 
@@ -1238,7 +1268,14 @@ function engNotifyRecipients(sheet) {
   return [];
 }
 
-// Queue an email through the same notify pipeline the applicator Notify uses
+// Stable identity for a spreadsheet row across syncs (row numbers shift)
+function engSeenKey(sheet, r) {
+  const norm = v => String(v || '').trim().toLowerCase();
+  return `${sheet}|${norm(r.request)}|${String(r.date_open || '').trim()}|${norm(r.customer_part)}`;
+}
+
+// Queue an email through the same notify pipeline the applicator Notify uses.
+// req may be null for rows detected in the spreadsheet by the auto-sync.
 function queueEngNotification(req, sheet, body) {
   try {
     const recipients = engNotifyRecipients(sheet);
@@ -1254,7 +1291,7 @@ function queueEngNotification(req, sheet, body) {
       ticketNum: null,
       ticketUrl: null,
       priority: body.priority || 'normal',
-      by: (req.session && req.session.userName) || null,
+      by: (req && req.session && req.session.userName) || body.program_manager || null,
       daysOpen: 0,
       terminal: null, wire: null, awg: null, doc: null,
       notes: [body.assigned_to && ('Assigned to: ' + body.assigned_to),
@@ -1263,7 +1300,7 @@ function queueEngNotification(req, sheet, body) {
       result: null,
       recipients,
       queuedAt: Date.now(),
-      queuedBy: (req.session && req.session.userName) || 'FloorSync'
+      queuedBy: (req && req.session && req.session.userName) || 'ENG Spreadsheet'
     };
     db.prepare('INSERT INTO notify_queue (payload) VALUES (?)').run(JSON.stringify(payload));
     return recipients.length;
@@ -1313,6 +1350,13 @@ app.post('/api/eng-requests/new', requireAuth, async (req, res) => {
       const col = parseInt(getMeta(spec.metaKey + sheet) || '0', 10);
       if (v && col) await graphExcel('PATCH', `${wsPath}/range(address='${colLetter(col)}${insertAt}')`, { values: [[v]] });
     }
+
+    // Mark this row as seen BEFORE the sync so the spreadsheet-row detector
+    // doesn't also email about it (this endpoint sends its own notification)
+    try {
+      db.prepare("INSERT OR IGNORE INTO eng_seen (key, first_seen) VALUES (?, datetime('now'))")
+        .run(engSeenKey(sheet, { request, date_open: today, customer_part: f('customer_part') }));
+    } catch (e) { /* non-fatal */ }
 
     // Refresh the local cache so row numbers line up
     const counts = await syncEngRequests();
