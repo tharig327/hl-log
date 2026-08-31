@@ -1287,9 +1287,12 @@ async function editEngField(id,field){
   const text=prompt(label+' — this writes back to the ENG spreadsheet:', r[field]||'');
   if(text===null) return; // cancelled
   try{
-    const resp=await fetch('/api/eng-requests/'+id+'/comment',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({field,text})});
+    const resp=await fetch('/api/eng-requests/'+id+'/comment',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({field,text,sheet:r.sheet,row_num:r.row_num,request:r.request})});
     const j=await resp.json();
-    if(!resp.ok) throw new Error(j.error||'Save failed');
+    if(!resp.ok){
+      if(resp.status===404||resp.status===409) loadEng(); // refresh stale list
+      throw new Error(j.error||'Save failed');
+    }
     r[field]=j.value;
     renderEng();
     toast(label+' saved to spreadsheet');

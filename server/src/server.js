@@ -1190,8 +1190,13 @@ app.post('/api/eng-requests/:id/comment', requireAuth, async (req, res) => {
     const spec = ENG_WRITE_FIELDS[field];
     if (!spec) return res.status(400).json({ error: 'Field not editable' });
     const text = String(req.body.text ?? '').slice(0, 2000);
-    const row = db.prepare('SELECT * FROM eng_request WHERE id=?').get(req.params.id);
-    if (!row) return res.status(404).json({ error: 'Request not found' });
+    let row = db.prepare('SELECT * FROM eng_request WHERE id=?').get(req.params.id);
+    // Ids change on every sync — fall back to matching the row by content
+    if (!row && req.body.sheet && req.body.row_num && req.body.request) {
+      row = db.prepare('SELECT * FROM eng_request WHERE sheet=? AND row_num=? AND request=?')
+        .get(String(req.body.sheet), parseInt(req.body.row_num, 10), String(req.body.request));
+    }
+    if (!row) return res.status(404).json({ error: 'List out of date — press Sync and try again' });
     if (row.sheet !== 'tech' && row.sheet !== 'fab') return res.status(400).json({ error: 'Editing only supported on Tech and Fab sheets' });
 
     const wsName = getMeta(`eng_ws_${row.sheet}`);
