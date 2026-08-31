@@ -1,0 +1,10 @@
+{
+  "_comment": "Copy to smtp-config.json and fill in — values from the old notifier .env. smtp-config.json is gitignored (contains the password).",
+  "host": "smtp.yourserver.local",
+  "port": "25",
+  "user": "",
+  "pass": "",
+  "from": "floorsync@hlmanufacturing.com",
+  "skip": "",
+  "appUrl": "http://tyler.hl.local:3000"
+}

@@ -8,3 +8,4 @@ updates/*.blockmap
 server/graph-config.json
 updates/latest.yml
 updates/latest.yml
+server/smtp-config.json

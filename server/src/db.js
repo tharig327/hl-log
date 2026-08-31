@@ -283,6 +283,9 @@ function createDb() {
       priority      TEXT,                   -- "Priority" column
       synced_at     TEXT
     );
+    CREATE TABLE IF NOT EXISTS notifier_seen (
+      id TEXT PRIMARY KEY                   -- ticket entry ids already emailed
+    );
     CREATE TABLE IF NOT EXISTS eng_seen (
       key        TEXT PRIMARY KEY,          -- sheet|request|date_open|customer_part
       first_seen TEXT

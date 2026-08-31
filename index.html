@@ -2268,15 +2268,13 @@ async function pushCustomers(){
 
 
 // ── PHOTO SERVER ─────────────────────────────────────────────────────────
-let PHOTO_SERVER = 'https://schedule-palm-tasting.ngrok-free.dev';
+let PHOTO_SERVER = ''; // same origin — photos now served by the FloorSync server
 let photoServerOnline = false;
 
 async function checkPhotoServer(){
-  PHOTO_SERVER = 'https://schedule-palm-tasting.ngrok-free.dev';
   try{
-    const pr = await fetch(PHOTO_SERVER+'/ping', {
-      signal: AbortSignal.timeout(5000),
-      headers: {'ngrok-skip-browser-warning': 'true'}
+    const pr = await fetch('/ping', {
+      signal: AbortSignal.timeout(5000)
     });
     const pj = await pr.json();
     photoServerOnline = pj.ok === true;
@@ -2300,7 +2298,7 @@ async function uploadPhoto(file, ticketId, sec){
   const fd = new FormData();
   fd.append('photo', file);
   fd.append('ticketId', ticketId || 'pending');
-  const r = await fetch(PHOTO_SERVER+'/upload', { method:'POST', body:fd, headers:{'ngrok-skip-browser-warning':'true'} });
+  const r = await fetch(PHOTO_SERVER+'/upload', { method:'POST', body:fd });
   const j = await r.json();
   if(!j.success) throw new Error(j.error||'Upload failed');
   return j.filename;
@@ -2322,7 +2320,7 @@ function renderPendingThumbs(sec){
     del.onclick = async (e) => {
       e.stopPropagation();
       if(p.uploaded){
-        try{ await fetch(PHOTO_SERVER+'/photo/'+p.filename, {method:'DELETE',headers:{'ngrok-skip-browser-warning':'true'}}); }catch(ex){}
+        try{ await fetch(PHOTO_SERVER+'/photo/'+p.filename, {method:'DELETE'}); }catch(ex){}
       }
       URL.revokeObjectURL(p.objectUrl);
       pendingPhotos[sec].splice(idx, 1);
@@ -2375,7 +2373,7 @@ const photoBlobCache = {};
 async function fetchPhotoBlob(filename){
   if(photoBlobCache[filename]) return photoBlobCache[filename];
   try{
-    const r = await fetch(PHOTO_SERVER+'/photo/'+filename, {headers:{'ngrok-skip-browser-warning':'true'}});
+    const r = await fetch(PHOTO_SERVER+'/photo/'+filename);
     if(!r.ok) throw new Error('Not found');
     const blob = await r.blob();
     const url = URL.createObjectURL(blob);
@@ -2389,7 +2387,7 @@ async function renderLightbox(){
   const main = lb.querySelector('.lb-main-img');
   const strip = lb.querySelector('.photo-lightbox-strip');
   const filename = lbPhotos[lbIdx];
-  // Load main image via blob to bypass ngrok warning
+  // Load main image via blob
   main.src = '';
   main.alt = filename;
   const blobUrl = await fetchPhotoBlob(filename);
@@ -2413,7 +2411,7 @@ async function lbDeleteCurrent(){
   const filename = lbPhotos[lbIdx];
   const currentSec = lbSec;
   // Delete from server — ignore 404 (file already gone)
-  try{ await fetch(PHOTO_SERVER+'/photo/'+filename, {method:'DELETE',headers:{'ngrok-skip-browser-warning':'true'}}); }catch(ex){}
+  try{ await fetch(PHOTO_SERVER+'/photo/'+filename, {method:'DELETE'}); }catch(ex){}
   // Remove from state entry
   const secState = state[currentSec];
   if(secState && secState.entries){
@@ -2447,7 +2445,7 @@ function removeExistingPhoto(sec, entryId, filename, idx){
   if(!entry) return;
   if(!confirm('Remove this photo from the entry?')) return;
   // Remove from server
-  fetch(PHOTO_SERVER+'/photo/'+filename, {method:'DELETE',headers:{'ngrok-skip-browser-warning':'true'}}).catch(()=>{});
+  fetch(PHOTO_SERVER+'/photo/'+filename, {method:'DELETE'}).catch(()=>{});
   // Remove from entry
   entry.photos = (entry.photos||[]).filter(f=>f!==filename);
   // Remove from thumb UI

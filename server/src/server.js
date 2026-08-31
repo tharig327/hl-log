@@ -22,6 +22,7 @@ app.use(session({
 
 const STATIC_ROOT = process.env.STATIC_ROOT || path.join(__dirname, '../..');
 app.use('/updates', express.static(path.join(STATIC_ROOT, 'updates')));
+require('./photos').registerPhotoRoutes(app);
 app.use(express.static(STATIC_ROOT));
 
 function touch() {
@@ -1404,4 +1405,8 @@ if (graphConfig()) {
   console.log('[eng-sync] Graph credentials not configured — ENG Requests sync disabled');
 }
 
-app.listen(PORT, () => console.log(`FloorSync listening on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`FloorSync listening on port ${PORT}`);
+  try { require('./notifier').startNotifier(db); }
+  catch (e) { console.error('[notifier] failed to start:', e.message); }
+});
