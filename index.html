@@ -567,8 +567,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <input type="search" id="engSearch" placeholder="Search requests…" style="flex:1;min-width:140px" oninput="renderEng()">
       <span id="engSyncLabel" style="font-size:11px;color:var(--hl-text3)"></span>
       <button class="btn" onclick="engSyncNow()" title="Pull latest from OneDrive"><i class="ti ti-refresh"></i> Sync</button>
+      <button class="btn btn-red" id="engNewBtn" onclick="openEngNew()"><i class="ti ti-plus"></i> New Request</button>
     </div>
     <div id="engNotice" style="display:none;font-size:12px;color:var(--hl-text2);background:var(--hl-surface2);border:1px solid var(--hl-border);border-radius:4px;padding:8px 10px;margin-bottom:.75rem"></div>
+    <div class="modal-overlay" id="engNewModal" style="display:none">
+      <div class="modal">
+        <h2 id="engNewTitle">New Request</h2>
+        <p style="font-size:12px;color:var(--hl-text3);margin:4px 0 12px">Adds a row to the ENG spreadsheet (Date Open = today, status G)</p>
+        <div class="field"><label>Request *</label><input id="enRequest" placeholder="e.g. setup sheet"></div>
+        <div class="field"><label>Customer / Part</label><input id="enCustomer" placeholder="e.g. Braun 605125A"></div>
+        <div class="field"><label>Notes</label><input id="enNotes" placeholder="terminal, wire, etc."></div>
+        <div class="field"><label>Assigned to</label><input id="enAssigned" placeholder="e.g. Tech"></div>
+        <div class="field"><label>Program Manager</label><input id="enPM" placeholder="e.g. Justin"></div>
+        <div class="field"><label>Target Date</label><input id="enTarget" placeholder="MM/DD/YY"></div>
+        <div class="field"><label>Priority</label><input id="enPriority" placeholder="e.g. 1 (needs a Priority column in the sheet)"></div>
+        <div class="modal-actions"><button class="btn" onclick="closeEngNew()">Cancel</button><button class="btn btn-red" id="enSubmit" onclick="submitEngNew()">Add Request</button></div>
+      </div>
+    </div>
     <div id="engList" style="overflow-x:auto"></div>
     <div id="emptyEng" class="empty" style="display:none">
       <i class="ti ti-clipboard-list" style="font-size:26px;display:block;margin-bottom:6px"></i>
@@ -1265,20 +1280,48 @@ fetch('/api/version').then(r=>r.json()).then(j=>{
   if(j.version) $('appVersion').textContent='· v'+j.version.replace(/^v/,'');
 }).catch(()=>{});
 
-async function editEngComment(id){
+async function editEngField(id,field){
   const r=engData.find(x=>x.id===id);
   if(!r) return;
-  const label=engSheet==='tech'?'Tech Comments':'Fab Comments';
-  const text=prompt(label+' — this writes back to the ENG spreadsheet:', r.team_comments||'');
+  const label=field==='priority'?'Priority':(engSheet==='tech'?'Tech Comments':'Fab Comments');
+  const text=prompt(label+' — this writes back to the ENG spreadsheet:', r[field]||'');
   if(text===null) return; // cancelled
   try{
-    const resp=await fetch('/api/eng-requests/'+id+'/comment',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});
+    const resp=await fetch('/api/eng-requests/'+id+'/comment',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({field,text})});
     const j=await resp.json();
     if(!resp.ok) throw new Error(j.error||'Save failed');
-    r.team_comments=j.team_comments;
+    r[field]=j.value;
     renderEng();
-    toast('Comment saved to spreadsheet');
+    toast(label+' saved to spreadsheet');
   }catch(e){ toast('Save failed: '+e.message,'#cc4444'); }
+}
+
+function openEngNew(){
+  if(engSheet==='proto'){ toast('New requests go on the Tech or Fab tab','#cc4444'); return; }
+  $('engNewTitle').textContent='New '+(engSheet==='tech'?'Tech':'Fab')+' Request';
+  ['enRequest','enCustomer','enNotes','enAssigned','enPM','enTarget','enPriority'].forEach(i=>$(i).value='');
+  $('engNewModal').style.display='flex';
+  $('enRequest').focus();
+}
+function closeEngNew(){ $('engNewModal').style.display='none'; }
+async function submitEngNew(){
+  const request=$('enRequest').value.trim();
+  if(!request){ toast('Request description is required','#cc4444'); return; }
+  const btn=$('enSubmit'); btn.disabled=true; btn.textContent='Adding…';
+  try{
+    const resp=await fetch('/api/eng-requests/new',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      sheet:engSheet, request,
+      customer_part:$('enCustomer').value.trim(), notes:$('enNotes').value.trim(),
+      assigned_to:$('enAssigned').value.trim(), program_manager:$('enPM').value.trim(),
+      target_date:$('enTarget').value.trim(), priority:$('enPriority').value.trim()
+    })});
+    const j=await resp.json();
+    if(!resp.ok) throw new Error(j.error||'Add failed');
+    closeEngNew();
+    toast('Request added to spreadsheet');
+    loadEng();
+  }catch(e){ toast('Add failed: '+e.message,'#cc4444'); }
+  finally{ btn.disabled=false; btn.textContent='Add Request'; }
 }
 async function loadEng(){
   try{
@@ -1329,6 +1372,7 @@ function engStatusPill(r){
 }
 function engEsc(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function renderEng(){
+  $('engNewBtn').style.display=engSheet==='proto'?'none':'';
   const lbl=$('engSyncLabel');
   if(engMeta.synced_at){
     const mins=Math.round((Date.now()-new Date(engMeta.synced_at).getTime())/60000);
@@ -1365,7 +1409,7 @@ function renderEng(){
   const teamLabel=engSheet==='tech'?'Tech Comments':'Fab Comments';
   const head=isProto
     ? '<tr><th>Description</th><th>Progress</th><th>Target</th><th>Completed</th><th>Comments</th></tr>'
-    : `<tr><th>Request</th><th>Customer / Part</th><th>Notes</th><th>Assigned</th><th>PM</th><th>Open</th><th>Target</th><th>Closed</th><th>Status</th><th>Comments</th><th>${teamLabel}</th></tr>`;
+    : `<tr><th>Request</th><th>Customer / Part</th><th>Notes</th><th>Assigned</th><th>PM</th><th>Open</th><th>Target</th><th>Closed</th><th>Status</th><th>Priority</th><th>Comments</th><th>${teamLabel}</th></tr>`;
   const body=rows.map(r=>{
     const od=engIsOverdue(r);
     const tgt=`<span style="${od?'color:#cc4444;font-weight:600':''}">${engFmtDate(r.target_date)}</span>`;
@@ -1373,7 +1417,7 @@ function renderEng(){
       return `<tr><td style="max-width:260px">${engEsc(r.request)}</td><td>${engStatusPill(r)}</td><td>${tgt}</td><td>${engFmtDate(r.date_closed)}</td><td style="max-width:280px;font-size:13px;color:var(--hl-text2)">${engEsc(r.comments)}</td></tr>`;
     }
     const comments=[r.comments,r.addl_comments].filter(Boolean).join(' · ');
-    return `<tr><td style="max-width:180px">${engEsc(r.request)}</td><td style="max-width:160px">${engEsc(r.customer_part)}</td><td style="max-width:200px;font-size:13px">${engEsc(r.notes)}</td><td>${engEsc(r.assigned_to)}</td><td>${engEsc(r.program_manager)}</td><td>${engFmtDate(r.date_open)}</td><td>${tgt}</td><td>${engFmtDate(r.date_closed)}</td><td>${engStatusPill(r)}</td><td style="max-width:260px;font-size:13px;color:var(--hl-text2)">${engEsc(comments)}</td><td style="max-width:220px;font-size:13px;color:var(--hl-text2);cursor:pointer" title="Click to edit" onclick="editEngComment(${r.id})">${r.team_comments?engEsc(r.team_comments):'<i class="ti ti-pencil" style="opacity:.4"></i>'}</td></tr>`;
+    return `<tr><td style="max-width:180px">${engEsc(r.request)}</td><td style="max-width:160px">${engEsc(r.customer_part)}</td><td style="max-width:200px;font-size:13px">${engEsc(r.notes)}</td><td>${engEsc(r.assigned_to)}</td><td>${engEsc(r.program_manager)}</td><td>${engFmtDate(r.date_open)}</td><td>${tgt}</td><td>${engFmtDate(r.date_closed)}</td><td>${engStatusPill(r)}</td><td style="cursor:pointer;font-size:13px" title="Click to edit priority" onclick="editEngField(${r.id},'priority')">${r.priority?engEsc(r.priority):'<i class="ti ti-pencil" style="opacity:.4"></i>'}</td><td style="max-width:260px;font-size:13px;color:var(--hl-text2)">${engEsc(comments)}</td><td style="max-width:220px;font-size:13px;color:var(--hl-text2);cursor:pointer" title="Click to edit" onclick="editEngField(${r.id},'team_comments')">${r.team_comments?engEsc(r.team_comments):'<i class="ti ti-pencil" style="opacity:.4"></i>'}</td></tr>`;
   }).join('');
   list.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:14px" class="eng-table"><thead>${head}</thead><tbody>${body}</tbody></table>
     <style>.eng-table th{text-align:left;padding:7px 8px;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--hl-text3);border-bottom:1px solid var(--hl-border)}

@@ -280,12 +280,14 @@ function createDb() {
       comments      TEXT,
       addl_comments TEXT,
       team_comments TEXT,                   -- "Tech Comments" / "Fab Comments" column
+      priority      TEXT,                   -- "Priority" column
       synced_at     TEXT
     );
   `);
 
-  // Migration for DBs created before team_comments existed
+  // Migrations for DBs created before these columns existed
   try { db.exec('ALTER TABLE eng_request ADD COLUMN team_comments TEXT'); } catch (e) {}
+  try { db.exec('ALTER TABLE eng_request ADD COLUMN priority TEXT'); } catch (e) {}
 
   return db;
 }

@@ -1048,12 +1048,14 @@ function parseRequestSheet(ws, sheetKey) {
   if (!headerRow) return out;
   // Locate the "Tech Comments" / "Fab Comments" column by header text so it
   // keeps working even if the column moves
-  let teamCol = 0;
+  let teamCol = 0, prioCol = 0;
   ws.getRow(headerRow).eachCell({ includeEmpty: false }, (cell, col) => {
-    if (!teamCol && /^(tech|fab)\s*comments$/i.test(String(cellText(cell.value) || '').trim())) teamCol = col;
+    const h = String(cellText(cell.value) || '').trim();
+    if (!teamCol && /^(tech|fab)\s*comments$/i.test(h)) teamCol = col;
+    if (!prioCol && /^priority$/i.test(h)) prioCol = col;
   });
-  // Remember where to write comments back (worksheet name + column)
-  out.writeInfo = { wsName: ws.name, teamCol };
+  // Remember where to write back (worksheet name + columns)
+  out.writeInfo = { wsName: ws.name, teamCol, prioCol };
   ws.eachRow((row, n) => {
     if (n <= headerRow) return;
     const c = i => cellText(row.getCell(i).value);
@@ -1067,7 +1069,8 @@ function parseRequestSheet(ws, sheetKey) {
       status: normStatus(row.getCell(9).value),
       pct_complete: null,
       comments: c(10), addl_comments: c(11),
-      team_comments: teamCol ? c(teamCol) : null
+      team_comments: teamCol ? c(teamCol) : null,
+      priority: prioCol ? c(prioCol) : null
     });
   });
   return out;
@@ -1129,11 +1132,11 @@ async function syncEngRequests() {
     db.prepare('DELETE FROM eng_request').run();
     const ins = db.prepare(`INSERT INTO eng_request
       (sheet, row_num, request, customer_part, notes, assigned_to, program_manager,
-       date_open, target_date, date_closed, status, pct_complete, comments, addl_comments, team_comments, synced_at)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
+       date_open, target_date, date_closed, status, pct_complete, comments, addl_comments, team_comments, priority, synced_at)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
     rows.forEach(r => ins.run(
       r.sheet, r.row_num, r.request, r.customer_part, r.notes, r.assigned_to, r.program_manager,
-      r.date_open, r.target_date, r.date_closed, r.status, r.pct_complete, r.comments, r.addl_comments, r.team_comments ?? null, now
+      r.date_open, r.target_date, r.date_closed, r.status, r.pct_complete, r.comments, r.addl_comments, r.team_comments ?? null, r.priority ?? null, now
     ));
     setMeta('eng_sync_at', now);
     setMeta('eng_sync_error', '');
@@ -1141,6 +1144,7 @@ async function syncEngRequests() {
       if (writeInfo[k]) {
         setMeta(`eng_ws_${k}`, writeInfo[k].wsName);
         setMeta(`eng_teamcol_${k}`, String(writeInfo[k].teamCol || 0));
+        setMeta(`eng_prioritycol_${k}`, String(writeInfo[k].prioCol || 0));
       }
     }
   });
@@ -1169,19 +1173,32 @@ app.get('/api/version', (req, res) => {
   res.json({ version: process.env.APP_VERSION || 'dev (node server.js)' });
 });
 
-// Write a team comment back into the spreadsheet cell, then update local cache
+// Editable spreadsheet-backed fields and where their column number is stored
+const ENG_WRITE_FIELDS = {
+  team_comments: { metaKey: 'eng_teamcol_', label: s => `${s === 'tech' ? 'Tech' : 'Fab'} Comments` },
+  priority:      { metaKey: 'eng_prioritycol_', label: () => 'Priority' }
+};
+
+function engWsPath(wsName) {
+  return `worksheets('${encodeURIComponent(wsName.replace(/'/g, "''"))}')`;
+}
+
+// Write a field back into the spreadsheet cell, then update local cache
 app.post('/api/eng-requests/:id/comment', requireAuth, async (req, res) => {
   try {
+    const field = String(req.body.field || 'team_comments');
+    const spec = ENG_WRITE_FIELDS[field];
+    if (!spec) return res.status(400).json({ error: 'Field not editable' });
     const text = String(req.body.text ?? '').slice(0, 2000);
     const row = db.prepare('SELECT * FROM eng_request WHERE id=?').get(req.params.id);
     if (!row) return res.status(404).json({ error: 'Request not found' });
-    if (row.sheet !== 'tech' && row.sheet !== 'fab') return res.status(400).json({ error: 'Comments only supported on Tech and Fab sheets' });
+    if (row.sheet !== 'tech' && row.sheet !== 'fab') return res.status(400).json({ error: 'Editing only supported on Tech and Fab sheets' });
 
     const wsName = getMeta(`eng_ws_${row.sheet}`);
-    const teamCol = parseInt(getMeta(`eng_teamcol_${row.sheet}`) || '0', 10);
-    if (!wsName || !teamCol) return res.status(400).json({ error: `No "${row.sheet === 'tech' ? 'Tech' : 'Fab'} Comments" column found in the spreadsheet — run a sync first` });
+    const col = parseInt(getMeta(spec.metaKey + row.sheet) || '0', 10);
+    if (!wsName || !col) return res.status(400).json({ error: `No "${spec.label(row.sheet)}" column found in the spreadsheet — add the header and run a sync` });
 
-    const wsPath = `worksheets('${encodeURIComponent(wsName.replace(/'/g, "''"))}')`;
+    const wsPath = engWsPath(wsName);
 
     // Safety check: confirm the row hasn't shifted since last sync
     const check = await graphExcel('GET', `${wsPath}/range(address='A${row.row_num}')`);
@@ -1190,11 +1207,60 @@ app.post('/api/eng-requests/:id/comment', requireAuth, async (req, res) => {
       return res.status(409).json({ error: 'The spreadsheet has changed since the last sync — press Sync and try again' });
     }
 
-    const addr = `${colLetter(teamCol)}${row.row_num}`;
+    const addr = `${colLetter(col)}${row.row_num}`;
     await graphExcel('PATCH', `${wsPath}/range(address='${addr}')`, { values: [[text]] });
 
-    db.prepare('UPDATE eng_request SET team_comments=? WHERE id=?').run(text || null, row.id);
-    res.json({ ok: true, team_comments: text || null });
+    db.prepare(`UPDATE eng_request SET ${field}=? WHERE id=?`).run(text || null, row.id);
+    res.json({ ok: true, field, value: text || null });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Create a new request row in the spreadsheet (above the "Add Lines Above" sentinel)
+app.post('/api/eng-requests/new', requireAuth, async (req, res) => {
+  try {
+    const { sheet } = req.body;
+    if (sheet !== 'tech' && sheet !== 'fab') return res.status(400).json({ error: 'sheet must be tech or fab' });
+    const request = String(req.body.request || '').trim();
+    if (!request) return res.status(400).json({ error: 'Request description is required' });
+
+    const wsName = getMeta(`eng_ws_${sheet}`);
+    if (!wsName) return res.status(400).json({ error: 'Run a sync first so the server knows the worksheet layout' });
+    const wsPath = engWsPath(wsName);
+
+    // Find the sentinel row live so rows added since last sync don't break placement
+    const colA = await graphExcel('GET', `${wsPath}/usedRange(valuesOnly=true)?$select=values,rowIndex`);
+    const values = colA.values || [];
+    const base = (colA.rowIndex || 0) + 1; // rowIndex is 0-based
+    let insertAt = 0, lastData = 0;
+    values.forEach((rowVals, i) => {
+      const a = String((rowVals && rowVals[0]) ?? '').trim();
+      if (/add lines above/i.test(a)) { if (!insertAt) insertAt = base + i; }
+      else if (a) lastData = base + i;
+    });
+    if (!insertAt) insertAt = lastData + 1;
+
+    // Insert a blank row so nothing below is overwritten
+    await graphExcel('POST', `${wsPath}/range(address='${insertAt}:${insertAt}')/insert`, { shift: 'Down' });
+
+    const d = new Date();
+    const today = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`;
+    const f = k => String(req.body[k] ?? '').slice(0, 500);
+    // A..I: Request, Customer, Notes, Assigned, PM, Date Open, Target, Date Closed, Status
+    await graphExcel('PATCH', `${wsPath}/range(address='A${insertAt}:I${insertAt}')`, {
+      values: [[request, f('customer_part'), f('notes'), f('assigned_to'), f('program_manager'), today, f('target_date'), '', 'G']]
+    });
+    // Optional header-located columns
+    for (const [field, spec] of Object.entries(ENG_WRITE_FIELDS)) {
+      const v = f(field);
+      const col = parseInt(getMeta(spec.metaKey + sheet) || '0', 10);
+      if (v && col) await graphExcel('PATCH', `${wsPath}/range(address='${colLetter(col)}${insertAt}')`, { values: [[v]] });
+    }
+
+    // Refresh the local cache so row numbers line up
+    const counts = await syncEngRequests();
+    res.json({ ok: true, counts });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
