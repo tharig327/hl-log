@@ -1114,6 +1114,7 @@ function doUnlock(userName){ if(window._splashReady) window._splashReady();
   showScreen('app'); resetInactivity();
   ['mousemove','keydown','click','touchstart'].forEach(e=>document.addEventListener(e,resetInactivity,{passive:true}));
   renderAll(); setSyncStatus('ok'); startPolling();
+  if(typeof applyHash==='function') applyHash();
   setupPhotoDrop('applicator'); setupPhotoDrop('machine'); setupPhotoDrop('setup');
   if(userName){
     toast('Welcome, '+userName+'!','#50a870');
@@ -1266,14 +1267,29 @@ function switchSection(sec){
   else if(sec==='customers') renderCustomers();
   else if(sec==='eng') loadEng();
   else renderContacts();
+  history.replaceState(null,'','#'+(sec==='eng'?engSheet:sec));
 }
 // ── ENG REQUESTS ──
 let engSheet='tech', engFilter='open', engData=[], engMeta={};
 function switchEngSheet(s){
   engSheet=s;
   ['tech','fab','proto'].forEach(t=>$('engtab-'+t).classList.toggle('active',t===s));
+  history.replaceState(null,'','#'+s);
   loadEng();
 }
+// Hash routing: #fab / #tech / #proto open that ENG tab; #machine, #customers, etc. open sections
+function applyHash(){
+  const h=(location.hash||'').replace('#','').toLowerCase();
+  if(!h) return;
+  if(['tech','fab','proto'].includes(h)){
+    engSheet=h;
+    ['tech','fab','proto'].forEach(t=>$('engtab-'+t).classList.toggle('active',t===h));
+    switchSection('eng');
+  } else if(['applicator','machine','setup','contacts','customers','eng'].includes(h)){
+    switchSection(h);
+  }
+}
+window.addEventListener('hashchange',applyHash);
 function setEngFilter(f){ engFilter=f; renderEng(); }
 
 fetch('/api/version').then(r=>r.json()).then(j=>{
