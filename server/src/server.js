@@ -1222,6 +1222,57 @@ app.post('/api/eng-requests/:id/comment', requireAuth, async (req, res) => {
   }
 });
 
+// Fixed notification recipients per sheet — eng-notify.json next to the db folder
+// (same lookup as graph-config.json), falling back to the server folder
+function engNotifyRecipients(sheet) {
+  for (const p of [
+    path.join(process.env.DB_DIR || path.join(__dirname, '../db'), '..', 'eng-notify.json'),
+    path.join(__dirname, '..', 'eng-notify.json')
+  ]) {
+    try {
+      const cfg = JSON.parse(fs.readFileSync(p, 'utf8'));
+      const list = Array.isArray(cfg[sheet]) ? cfg[sheet] : [];
+      return list.filter(r => r && r.email && !/FILL ME IN/i.test(r.name || '') && !/^someone@/i.test(r.email));
+    } catch { /* try next */ }
+  }
+  return [];
+}
+
+// Queue an email through the same notify pipeline the applicator Notify uses
+function queueEngNotification(req, sheet, body) {
+  try {
+    const recipients = engNotifyRecipients(sheet);
+    if (!recipients.length) return 0;
+    const payload = {
+      id: Date.now(),
+      section: 'eng',
+      sectionLabel: `New ENG Request (${sheet === 'tech' ? 'Tech' : 'Fab'})`,
+      statusText: 'New Request',
+      status: 'open',
+      desc: [body.request, body.customer_part].filter(Boolean).join(' — '),
+      note: body.notes || null,
+      ticketNum: null,
+      ticketUrl: null,
+      priority: body.priority || 'normal',
+      by: (req.session && req.session.userName) || null,
+      daysOpen: 0,
+      terminal: null, wire: null, awg: null, doc: null,
+      notes: [body.assigned_to && ('Assigned to: ' + body.assigned_to),
+              body.program_manager && ('PM: ' + body.program_manager),
+              body.target_date && ('Target: ' + body.target_date)].filter(Boolean).join(' · ') || null,
+      result: null,
+      recipients,
+      queuedAt: Date.now(),
+      queuedBy: (req.session && req.session.userName) || 'FloorSync'
+    };
+    db.prepare('INSERT INTO notify_queue (payload) VALUES (?)').run(JSON.stringify(payload));
+    return recipients.length;
+  } catch (e) {
+    console.error('[eng-notify] queue failed:', e.message);
+    return 0;
+  }
+}
+
 // Create a new request row in the spreadsheet (above the "Add Lines Above" sentinel)
 app.post('/api/eng-requests/new', requireAuth, async (req, res) => {
   try {
@@ -1265,7 +1316,8 @@ app.post('/api/eng-requests/new', requireAuth, async (req, res) => {
 
     // Refresh the local cache so row numbers line up
     const counts = await syncEngRequests();
-    res.json({ ok: true, counts });
+    const notified = queueEngNotification(req, sheet, req.body);
+    res.json({ ok: true, counts, notified });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

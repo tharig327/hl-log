@@ -1337,7 +1337,7 @@ async function submitEngNew(){
     const j=await resp.json();
     if(!resp.ok) throw new Error(j.error||'Add failed');
     closeEngNew();
-    toast('Request added to spreadsheet');
+    toast('Request added to spreadsheet'+(j.notified?` — ${j.notified} ${j.notified===1?'person':'people'} notified`:''));
     loadEng();
   }catch(e){ toast('Add failed: '+e.message,'#cc4444'); }
   finally{ btn.disabled=false; btn.textContent='Add Request'; }

@@ -1,0 +1,9 @@
+{
+  "_comment": "Recipients emailed when a new ENG request is created in FloorSync. Fill in real names/emails per sheet; leave a list empty to disable emails for that sheet.",
+  "tech": [
+    { "name": "FILL ME IN", "email": "someone@hlmanufacturing.com" }
+  ],
+  "fab": [
+    { "name": "FILL ME IN", "email": "someone@hlmanufacturing.com" }
+  ]
+}
